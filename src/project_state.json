@@ -1,0 +1,235 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 7,
+  "summary": "Expand Dini.Verse into an online gaming platform and game creation ecosystem, including a Dini Studio creation tool, and update the UI to include platform navigation for Home, Discover, Avatar Shop, Create, and Dini Bucks.",
+  "architectural_notes": [
+    "Project must be a real, functional website (not a simulation or mockup).",
+    "Visual theme requirement updated: use a dark blue + white interface for the main UI (overrides prior guidance to avoid blue/purple)."
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-create-a-real-navigable-multi-page-web-application-branded-as-dini-verse-that-is-clearly-roblox-inspired-home-discovery-browse-experience-details-user-profile-and-is-not-presented-as-a-mockup-or-simulation-i-e-all-pages-must-be-functional-routes-with-working-data-flows-and-persisted-state",
+      "title": "Create a real, navigable multi-page web application branded as \"Dini.Verse\" that is clearly Roblox-inspired (home, discovery/browse, experience details, user profile) and is not presented as a mockup or simulation (i.e., all pages must be functional routes with working data flows and persisted state).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-authentication-using-internet-identity-and-provide-clear-log-in-and-sign-up-entry-points-in-the-ui-treat-sign-up-as-first-time-account-setup-after-internet-identity-login-create-a-dini-verse-profile-with-username-display-name-and-optional-avatar",
+      "title": "Implement authentication using Internet Identity and provide clear \"Log in\" and \"Sign up\" entry points in the UI. Treat \"Sign up\" as first-time account setup after Internet Identity login (create a Dini.Verse profile with username/display name and optional avatar).",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-experiences-model-and-implement-core-platform-flows-browse-experiences-view-experience-details-and-create-publish-an-experience-for-authenticated-users-title-description-thumbnail-image-and-a-launch-target-such-as-an-internal-experience-page-or-a-url",
+      "title": "Add an \"Experiences\" model and implement core platform flows: browse experiences, view experience details, and create/publish an experience for authenticated users (title, description, thumbnail image, and a launch target such as an internal experience page or a URL).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-user-profile-pages-that-display-the-user-s-dini-verse-profile-username-display-name-avatar-if-present-and-show-a-list-of-experiences-they-published",
+      "title": "Create user profile pages that display the user’s Dini.Verse profile (username/display name, avatar if present) and show a list of experiences they published.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-provide-a-coherent-distinctive-visual-theme-for-dini-verse-and-apply-it-consistently-across-pages-typography-spacing-components-and-layout-avoid-a-blue-purple-palette-unless-explicitly-required-pick-an-alternative-cohesive-scheme",
+      "title": "Provide a coherent, distinctive visual theme for Dini.Verse and apply it consistently across pages (typography, spacing, components, and layout). Avoid a blue/purple palette unless explicitly required; pick an alternative cohesive scheme.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-generate-and-include-required-brand-assets-logo-favicon-and-a-hero-banner-image-as-static-files-and-render-them-in-the-ui-do-not-fetch-images-via-backend-store-generated-assets-under-frontend-public-assets-generated-and-reference-them-from-the-frontend",
+      "title": "Generate and include required brand assets (logo, favicon, and a hero/banner image) as static files and render them in the UI (do not fetch images via backend). Store generated assets under frontend/public/assets/generated and reference them from the frontend.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-top-navigation-bar-to-include-functional-routes-buttons-for-home-discover-avatar-shop-create-and-dini-bucks-ensure-the-same-destinations-are-available-in-the-mobile-menu",
+      "title": "Update the top navigation bar to include functional routes/buttons for: Home, Discover, Avatar Shop, Create, and Dini Bucks. Ensure the same destinations are available in the mobile menu.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-new-pages-routes-for-avatar-shop-create-and-dini-bucks-with-english-user-facing-text-using-the-existing-app-layout-pages-must-render-without-errors-and-clearly-indicate-the-section-the-user-is-in",
+      "title": "Add new pages/routes for Avatar Shop, Create, and Dini Bucks with English user-facing text, using the existing app layout. Pages must render without errors and clearly indicate the section the user is in.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-redesign-the-home-page-ui-to-match-a-dark-blue-and-white-interface-and-to-feature-the-signed-in-user-s-avatar-or-a-sensible-default-when-not-available-a-recommended-section-and-a-friend-activity-section-these-sections-can-be-fed-by-existing-data-e-g-experiences-and-or-empty-states-when-the-user-is-not-signed-in-but-they-must-be-present-and-styled-per-the-dark-blue-white-direction",
+      "title": "Redesign the Home page UI to match a dark blue and white interface and to feature: the signed-in user’s avatar (or a sensible default when not available), a \"Recommended\" section, and a \"Friend activity\" section. These sections can be fed by existing data (e.g., experiences) and/or empty-states when the user is not signed in, but they must be present and styled per the dark blue/white direction.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-left-side-navigation-menu-in-the-main-app-layout-that-is-visible-on-desktop-tablet-widths-and-contains-links-for-profile-inventory-groups-and-settings",
+      "title": "Add a left-side navigation menu in the main app layout that is visible on desktop/tablet widths and contains links for: Profile, Inventory, Groups, and Settings.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-functional-routes-pages-for-inventory-groups-and-settings-and-wire-them-into-the-router-and-the-new-left-side-menu",
+      "title": "Create functional routes/pages for Inventory, Groups, and Settings and wire them into the router and the new left-side menu.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-discover-page-to-support-browsing-trending-games-across-categories-including-at-least-adventure-roleplay-and-simulator",
+      "title": "Update the Discover page to support browsing trending games across categories, including at least: Adventure, Roleplay, and Simulator.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-experience-publishing-flow-so-creators-can-choose-a-category-adventure-roleplay-simulator-at-minimum-when-publishing-an-experience-and-ensure-it-is-stored-and-used-by-discover-category-browsing",
+      "title": "Update the experience publishing flow so creators can choose a category (Adventure/Roleplay/Simulator at minimum) when publishing an experience, and ensure it is stored and used by Discover category browsing.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enhance-the-experience-details-page-to-display-a-prominent-green-play-button-the-experience-description-a-player-count-display-and-thumbs-up-down-rating-controls-with-counts",
+      "title": "Enhance the Experience Details page to display: a prominent green \"Play\" button, the experience description, a player count display, and thumbs up/down rating controls with counts.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-during-the-in-page-play-mode-for-an-experience-display-standard-gameplay-controls-guidance-wasd-to-move-space-to-jump-mouse-to-control-the-camera-and-allow-per-experience-customization-of-this-controls-text",
+      "title": "During the in-page play mode for an experience, display standard gameplay controls guidance: WASD to move, Space to jump, Mouse to control the camera, and allow per-experience customization of this controls text.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-in-game-menu-ui-during-play-mode-with-options-to-leave-reset-character-and-settings-accessible-while-the-experience-is-in-play-mode",
+      "title": "Add an in-game menu UI during play mode with options to Leave, Reset Character, and Settings, accessible while the experience is in play mode.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Create a full website similar to Roblox branded as \"Dini.Verse\" (not a mockup/simulation).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add user authentication with login and sign-up flows.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Add an online gaming platform layer where users can play games made by other users.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Add a game creation system centered on \"Dini Studio\" so users can create their own games for the platform.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Update the home page to a dark blue and white interface featuring user avatar, recommended games, and friend activity.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Add top navigation bar buttons/routes: Home, Discover, Avatar Shop, Create, and Dini Bucks (virtual currency).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Add a \"Dini Bucks\" virtual currency section surfaced in navigation.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Add a left-side navigation menu with Profile, Inventory, Groups, and Settings sections.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Implement a Discover page that highlights trending games and supports browsing by categories (e.g., Adventure, Roleplay, Simulator).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Add a game/experience details view with a prominent green Play button, description, player count, and thumbs up/down ratings.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Define and display standard gameplay controls guidance (WASD movement, space jump, mouse camera), allowing per-game customization.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Add an in-game menu with options to Leave, Reset Character, and adjust Settings.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Extend the Experience data model to include category and basic public stats needed for the details page: player count and thumbs up/down counts, and provide backend methods to read/update these stats.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-21",
+      "summary": "If upgrading persisted backend state is required due to Experience type changes, add a conditional backend migration that preserves existing users/experiences and backfills new Experience fields with defaults.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Dini.Verse",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

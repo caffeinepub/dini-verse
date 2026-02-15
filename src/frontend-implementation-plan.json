@@ -1,0 +1,187 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Roblox-style sidebar navigation, Discover categories/trending, and enhanced experience details/play UI",
+  "requirements": [
+    {
+      "id": "REQ-10",
+      "summary": "Add a persistent left sidebar navigation (md+ only) in the main layout with links to Profile, Inventory, Groups, and Settings while preserving the existing top header.",
+      "acceptanceCriteria": [
+        "When visiting any route that uses the main AppLayout, a left sidebar is rendered on >= md breakpoints without breaking the existing top header.",
+        "Sidebar includes clickable nav items labeled \"Profile\", \"Inventory\", \"Groups\", and \"Settings\" (English text).",
+        "\"Profile\" navigates to the existing /profile route.",
+        "The sidebar does not require editing any files under frontend/src/components/ui or other immutable paths."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/layout/LeftSidebar.tsx",
+          "operation": "create",
+          "description": "Create a md+ left sidebar navigation component using TanStack Router <Link> entries for Profile (/profile), Inventory (/inventory), Groups (/groups), and Settings (/settings)."
+        },
+        {
+          "path": "frontend/src/components/layout/AppLayout.tsx",
+          "operation": "modify",
+          "description": "Update the layout structure to include the new LeftSidebar on >= md breakpoints (while keeping SiteHeader as the top sticky header) and render the routed content alongside it."
+        }
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "summary": "Create Inventory, Groups, and Settings pages and register routes for them, wired into the router and sidebar navigation.",
+      "acceptanceCriteria": [
+        "New routes exist for Inventory, Groups, and Settings and can be navigated to from the left sidebar.",
+        "Each page renders without errors and clearly indicates the section (e.g., page title \"Inventory\", \"Groups\", \"Settings\").",
+        "All user-facing text is in English."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/Inventory.tsx",
+          "operation": "create",
+          "description": "Add an Inventory page with an English title and basic placeholder content consistent with project non-goals."
+        },
+        {
+          "path": "frontend/src/pages/Groups.tsx",
+          "operation": "create",
+          "description": "Add a Groups page with an English title and basic placeholder content consistent with project non-goals."
+        },
+        {
+          "path": "frontend/src/pages/Settings.tsx",
+          "operation": "create",
+          "description": "Add a Settings page with an English title and basic placeholder content consistent with project non-goals."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register new routes for /inventory, /groups, and /settings in the TanStack Router route tree and ensure they render within AppLayout."
+        },
+        {
+          "path": "frontend/src/components/layout/LeftSidebar.tsx",
+          "operation": "modify",
+          "description": "Ensure the sidebar navigation includes working links to the newly registered Inventory, Groups, and Settings routes."
+        }
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "summary": "Update Discover to browse trending experiences by category (Adventure/Roleplay/Simulator) with a category UI and a Trending section backed by persisted data from the backend actor.",
+      "acceptanceCriteria": [
+        "Discover page provides a visible category browsing UI (e.g., tabs/chips/filters) with categories including \"Adventure\", \"Roleplay\", and \"Simulator\".",
+        "Discover page includes a \"Trending\" section that shows experiences, and switching category updates the visible set of experiences.",
+        "Experiences can be associated with a category in persisted data (not only hardcoded client-side)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useExperiences.ts",
+          "operation": "modify",
+          "description": "Add React Query hooks to fetch trending experiences by category and to fetch experiences by category (using existing backend actor methods) so Discover can switch categories without hardcoding."
+        },
+        {
+          "path": "frontend/src/pages/Discover.tsx",
+          "operation": "modify",
+          "description": "Add a category selection UI (Adventure/Roleplay/Simulator) and a dedicated \"Trending\" section that updates based on the selected category, using the new hooks and rendering results via ExperienceGrid."
+        }
+      ]
+    },
+    {
+      "id": "REQ-14",
+      "summary": "Update the publish experience flow to require selecting a category (Adventure/Roleplay/Simulator) and ensure Discover category browsing uses stored categories.",
+      "acceptanceCriteria": [
+        "Publish Experience dialog includes a required category input with options including \"Adventure\", \"Roleplay\", and \"Simulator\".",
+        "Submitting a new experience stores the selected category in the backend.",
+        "Discover category browsing uses the stored category to filter experiences."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/experiences/PublishExperienceDialog.tsx",
+          "operation": "modify",
+          "description": "Add a required category input (Adventure/Roleplay/Simulator) and pass the selected category to the create experience mutation call; keep all labels/help text in English."
+        },
+        {
+          "path": "frontend/src/hooks/useExperiences.ts",
+          "operation": "modify",
+          "description": "Extend the create experience mutation to accept and forward the required category (and any other required publishing fields) to the backend actor method so the category is persisted."
+        },
+        {
+          "path": "frontend/src/pages/Discover.tsx",
+          "operation": "modify",
+          "description": "Ensure the Discover category browsing and Trending section rely on backend-provided category data (via category/trending hooks) rather than hardcoded client lists."
+        }
+      ]
+    },
+    {
+      "id": "REQ-15",
+      "summary": "Enhance Experience Details to show a prominent green Play button, description, persisted player count, and thumbs up/down rating controls with live UI updates.",
+      "acceptanceCriteria": [
+        "Experience Details page shows a visually prominent green Play button (label \"Play\") when not currently playing.",
+        "Experience Details page renders player count (e.g., \"Players: 0\") and thumbs up/down controls with counts sourced from persisted backend data.",
+        "Clicking thumbs up/down updates the counts (and persists via backend) and updates the UI without a full page refresh.",
+        "All user-facing text is in English."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useExperiences.ts",
+          "operation": "modify",
+          "description": "Add mutations for rating an experience (thumbs up/down) and for incrementing player count, and ensure related experience queries are invalidated/refetched to update counts without a full page refresh."
+        },
+        {
+          "path": "frontend/src/components/experiences/ExperienceRatingControls.tsx",
+          "operation": "create",
+          "description": "Create a reusable rating controls component (thumbs up/down buttons + counts) that calls the rating mutation and displays updated counts in English."
+        },
+        {
+          "path": "frontend/src/pages/ExperienceDetails.tsx",
+          "operation": "modify",
+          "description": "Update the details UI to include: a prominent green Play button, player count display sourced from the loaded experience data, and the ExperienceRatingControls component; on Play, trigger player count increment and update the UI state."
+        }
+      ]
+    },
+    {
+      "id": "REQ-16",
+      "summary": "Show gameplay controls guidance during play mode with default text and per-experience override sourced from persisted experience data.",
+      "acceptanceCriteria": [
+        "When play mode is active, the UI shows a \"Controls\" section listing: \"WASD: Move\", \"Space: Jump\", and \"Mouse: Camera\" (English).",
+        "Each experience can optionally override/customize the controls guidance stored with that experience; if no custom controls exist, the standard defaults are shown.",
+        "Controls guidance is persisted in the backend as part of the experience data (not only hardcoded UI)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/experiences/PublishExperienceDialog.tsx",
+          "operation": "modify",
+          "description": "Add an optional \"Gameplay Controls\" input to allow creators to customize controls guidance, and pass it along when publishing so it is stored with the experience."
+        },
+        {
+          "path": "frontend/src/hooks/useExperiences.ts",
+          "operation": "modify",
+          "description": "Extend the create experience mutation to include gameplay controls text (when provided) and ensure Experience Details can access the persisted field (via the existing getExperience shape)."
+        },
+        {
+          "path": "frontend/src/pages/ExperienceDetails.tsx",
+          "operation": "modify",
+          "description": "When play mode is active, render a \"Controls\" section that shows the experience-provided controls guidance if present; otherwise display the English default lines (WASD/Space/Mouse)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-17",
+      "summary": "Add an in-game menu UI during play mode with Leave, Reset Character, and Settings actions, all accessible while playing.",
+      "acceptanceCriteria": [
+        "When play mode is active, an in-game menu can be opened that displays buttons labeled \"Leave\", \"Reset Character\", and \"Settings\" (English).",
+        "\"Leave\" exits play mode and returns the user to the normal Experience Details view state.",
+        "\"Reset Character\" performs a visible reset action in the simulated play mode (e.g., shows a confirmation/toast and resets simulated state).",
+        "\"Settings\" opens a settings panel/modal within play mode (it can be basic/placeholder but must render and be interactable)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/experiences/InGameMenu.tsx",
+          "operation": "create",
+          "description": "Create an in-game menu component for play mode that can open/close and presents English actions: Leave, Reset Character, and Settings (settings can be a simple modal/panel)."
+        },
+        {
+          "path": "frontend/src/pages/ExperienceDetails.tsx",
+          "operation": "modify",
+          "description": "Wire InGameMenu into the play mode overlay: Leave should exit play mode, Reset Character should reset simulated play state and show a visible confirmation/toast, and Settings should open an interactable panel/modal."
+        }
+      ]
+    }
+  ]
+}
