@@ -1,9 +1,10 @@
 import { Link } from '@tanstack/react-router';
-import { User, Package, Users, Settings } from 'lucide-react';
+import { User, Package, Users, Settings, MessageCircle } from 'lucide-react';
 
 export default function LeftSidebar() {
   const navItems = [
     { to: '/profile', label: 'Profile', icon: User },
+    { to: '/social', label: 'Social', icon: MessageCircle },
     { to: '/inventory', label: 'Inventory', icon: Package },
     { to: '/groups', label: 'Groups', icon: Users },
     { to: '/settings', label: 'Settings', icon: Settings },

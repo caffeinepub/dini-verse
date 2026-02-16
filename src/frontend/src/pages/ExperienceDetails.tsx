@@ -9,6 +9,7 @@ import { ArrowLeft, Play, User, Users } from 'lucide-react';
 import { useState } from 'react';
 import ExperienceRatingControls from '../components/experiences/ExperienceRatingControls';
 import InGameMenu from '../components/experiences/InGameMenu';
+import CreatorFollowButton from '../components/experiences/CreatorFollowButton';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { toast } from 'sonner';
 
@@ -207,7 +208,7 @@ export default function ExperienceDetails() {
             <CardHeader>
               <CardTitle>Creator</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
                   {creator?.avatar && (
@@ -222,6 +223,9 @@ export default function ExperienceDetails() {
                   <div className="text-sm text-muted-foreground">Creator</div>
                 </div>
               </div>
+              {experience.author && (
+                <CreatorFollowButton authorPrincipal={experience.author} />
+              )}
             </CardContent>
           </Card>
         </div>

@@ -2,35 +2,16 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-left-side-navigation-menu-in-the-main-app-layout-that-is-visible-on-desktop-tablet-widths-and-contains-links-for-profile-inventory-groups-and-settings",
-      "featureTitle": "Add a left-side navigation menu in the main app layout that is visible on desktop/tablet widths and contains links for: Profile, Inventory, Groups, and Settings.",
-      "files": [
-        "frontend/src/components/layout/AppLayout.tsx",
-        "frontend/src/components/layout/LeftSidebar.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-10"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-create-functional-routes-pages-for-inventory-groups-and-settings-and-wire-them-into-the-router-and-the-new-left-side-menu",
-      "featureTitle": "Create functional routes/pages for Inventory, Groups, and Settings and wire them into the router and the new left-side menu.",
+      "featureId": "feature-add-a-social-area-in-the-frontend-with-navigation-entry-and-routes-pages-to-manage-friends-requests-friends-list-messages-inbox-conversations-thread-view-compose-parties-current-party-invites-and-following-followed-creators-list",
+      "featureTitle": "Add a Social area in the frontend with navigation entry and routes/pages to manage: Friends (requests + friends list), Messages (inbox/conversations + thread view + compose), Parties (current party + invites), and Following (followed creators list).",
       "files": [
         "frontend/src/App.tsx",
         "frontend/src/components/layout/LeftSidebar.tsx",
-        "frontend/src/pages/Groups.tsx",
-        "frontend/src/pages/Inventory.tsx",
-        "frontend/src/pages/Settings.tsx"
+        "frontend/src/components/social/FollowingPanel.tsx",
+        "frontend/src/components/social/FriendsPanel.tsx",
+        "frontend/src/components/social/MessagesPanel.tsx",
+        "frontend/src/components/social/PartiesPanel.tsx",
+        "frontend/src/pages/Social.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -42,16 +23,19 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-11"
+        "REQ-6"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-discover-page-to-support-browsing-trending-games-across-categories-including-at-least-adventure-roleplay-and-simulator",
-      "featureTitle": "Update the Discover page to support browsing trending games across categories, including at least: Adventure, Roleplay, and Simulator.",
+      "featureId": "feature-create-new-react-query-hooks-for-social-apis-friends-messages-parties-following-user-search-using-the-existing-actor-pattern-and-query-invalidation-conventions-already-used-by-experiences-and-profiles",
+      "featureTitle": "Create new React Query hooks for social APIs (friends, messages, parties, following, user search) using the existing actor pattern and query invalidation conventions already used by experiences and profiles.",
       "files": [
-        "frontend/src/hooks/useExperiences.ts",
-        "frontend/src/pages/Discover.tsx"
+        "frontend/src/hooks/useSocialFollowing.ts",
+        "frontend/src/hooks/useSocialFriends.ts",
+        "frontend/src/hooks/useSocialMessages.ts",
+        "frontend/src/hooks/useSocialParties.ts",
+        "frontend/src/hooks/useUserDiscovery.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -63,38 +47,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-12"
+        "REQ-7"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-experience-publishing-flow-so-creators-can-choose-a-category-adventure-roleplay-simulator-at-minimum-when-publishing-an-experience-and-ensure-it-is-stored-and-used-by-discover-category-browsing",
-      "featureTitle": "Update the experience publishing flow so creators can choose a category (Adventure/Roleplay/Simulator at minimum) when publishing an experience, and ensure it is stored and used by Discover category browsing.",
+      "featureId": "feature-add-follow-creator-ui-on-the-experience-details-page-for-the-experience-author-reflecting-current-follow-state-and-follower-count-when-available",
+      "featureTitle": "Add “Follow creator” UI on the Experience Details page for the experience author, reflecting current follow state and follower count when available.",
       "files": [
-        "frontend/src/components/experiences/PublishExperienceDialog.tsx",
-        "frontend/src/hooks/useExperiences.ts",
-        "frontend/src/pages/Discover.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-14"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-enhance-the-experience-details-page-to-display-a-prominent-green-play-button-the-experience-description-a-player-count-display-and-thumbs-up-down-rating-controls-with-counts",
-      "featureTitle": "Enhance the Experience Details page to display: a prominent green \"Play\" button, the experience description, a player count display, and thumbs up/down rating controls with counts.",
-      "files": [
-        "frontend/src/components/experiences/ExperienceRatingControls.tsx",
-        "frontend/src/hooks/useExperiences.ts",
+        "frontend/src/components/experiences/CreatorFollowButton.tsx",
         "frontend/src/pages/ExperienceDetails.tsx"
       ],
       "components": [
@@ -107,17 +68,19 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-15"
+        "REQ-8"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-during-the-in-page-play-mode-for-an-experience-display-standard-gameplay-controls-guidance-wasd-to-move-space-to-jump-mouse-to-control-the-camera-and-allow-per-experience-customization-of-this-controls-text",
-      "featureTitle": "During the in-page play mode for an experience, display standard gameplay controls guidance: WASD to move, Space to jump, Mouse to control the camera, and allow per-experience customization of this controls text.",
+      "featureId": "feature-apply-a-coherent-consistent-visual-theme-for-the-new-social-pages-that-matches-the-existing-tailwind-shadcn-design-system-typography-spacing-card-layouts-and-icon-usage-without-introducing-new-product-features-beyond-the-requested-social-functionality",
+      "featureTitle": "Apply a coherent, consistent visual theme for the new social pages that matches the existing Tailwind/shadcn design system (typography, spacing, card layouts, and icon usage), without introducing new product features beyond the requested social functionality.",
       "files": [
-        "frontend/src/components/experiences/PublishExperienceDialog.tsx",
-        "frontend/src/hooks/useExperiences.ts",
-        "frontend/src/pages/ExperienceDetails.tsx"
+        "frontend/src/components/social/FollowingPanel.tsx",
+        "frontend/src/components/social/FriendsPanel.tsx",
+        "frontend/src/components/social/MessagesPanel.tsx",
+        "frontend/src/components/social/PartiesPanel.tsx",
+        "frontend/src/pages/Social.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -129,28 +92,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-16"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-an-in-game-menu-ui-during-play-mode-with-options-to-leave-reset-character-and-settings-accessible-while-the-experience-is-in-play-mode",
-      "featureTitle": "Add an in-game menu UI during play mode with options to Leave, Reset Character, and Settings, accessible while the experience is in play mode.",
-      "files": [
-        "frontend/src/components/experiences/InGameMenu.tsx",
-        "frontend/src/pages/ExperienceDetails.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-17"
+        "REQ-9"
       ],
       "confidence": "high"
     }

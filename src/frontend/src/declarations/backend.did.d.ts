@@ -30,6 +30,25 @@ export interface Experience {
   'gameplayControls' : string,
 }
 export type ExternalBlob = Uint8Array;
+export interface FriendRequest {
+  'to' : Principal,
+  'status' : FriendRequestStatus,
+  'from' : Principal,
+}
+export type FriendRequestStatus = { 'cancelled' : null } |
+  { 'pending' : null } |
+  { 'accepted' : null } |
+  { 'declined' : null };
+export interface Message {
+  'id' : bigint,
+  'content' : string,
+  'read' : boolean,
+  'sender' : Principal,
+  'timestamp' : Time,
+  'receiver' : Principal,
+}
+export interface MessageInput { 'content' : string, 'receiver' : Principal }
+export type Time = bigint;
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
@@ -73,15 +92,29 @@ export interface _SERVICE {
   'getExperience' : ActorMethod<[string], [] | [Experience]>,
   'getExperiencesByAuthor' : ActorMethod<[Principal], Array<Experience>>,
   'getExperiencesByCategory' : ActorMethod<[Category], Array<Experience>>,
+  'getFriendsList' : ActorMethod<[], Array<Principal>>,
   'getGameplayControls' : ActorMethod<[string], string>,
+  'getMessages' : ActorMethod<[Principal], Array<Message>>,
+  'getPendingFriendRequests' : ActorMethod<[], Array<Principal>>,
   'getTrendingExperiences' : ActorMethod<[Category], Array<Experience>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [DiniVerseUser]>,
   'incrementPlayerCount' : ActorMethod<[string], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'rateExperience' : ActorMethod<[string, boolean], undefined>,
+  'respondToFriendRequest' : ActorMethod<
+    [Principal, { 'accept' : null } | { 'decline' : null }],
+    undefined
+  >,
   'saveCallerUserProfile' : ActorMethod<[DiniVerseUser], undefined>,
   'searchExperiences' : ActorMethod<[string], Array<Experience>>,
+  'searchUsersByDisplayName' : ActorMethod<
+    [string],
+    Array<[Principal, DiniVerseUser]>
+  >,
+  'sendFriendRequest' : ActorMethod<[Principal], FriendRequest>,
+  'sendMessage' : ActorMethod<[MessageInput], Message>,
   'signUp' : ActorMethod<[string, [] | [ExternalBlob]], undefined>,
+  'unfriend' : ActorMethod<[Principal], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

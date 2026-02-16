@@ -1,185 +1,144 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Roblox-style sidebar navigation, Discover categories/trending, and enhanced experience details/play UI",
+  "title": "DiniVerse Social — Frontend social hub, hooks, and creator following UI",
   "requirements": [
     {
-      "id": "REQ-10",
-      "summary": "Add a persistent left sidebar navigation (md+ only) in the main layout with links to Profile, Inventory, Groups, and Settings while preserving the existing top header.",
+      "id": "REQ-6",
+      "summary": "Add a Social area with sidebar navigation and a hub page containing Friends, Messages, Parties, and Following sections with auth-aware empty/loading states.",
       "acceptanceCriteria": [
-        "When visiting any route that uses the main AppLayout, a left sidebar is rendered on >= md breakpoints without breaking the existing top header.",
-        "Sidebar includes clickable nav items labeled \"Profile\", \"Inventory\", \"Groups\", and \"Settings\" (English text).",
-        "\"Profile\" navigates to the existing /profile route.",
-        "The sidebar does not require editing any files under frontend/src/components/ui or other immutable paths."
+        "Left sidebar includes a new “Social” (or equivalent) navigation link that routes to the social hub.",
+        "Social hub renders four sections/tabs: Friends, Messages, Parties, Following.",
+        "Each section supports empty states and loading states using existing UI patterns (cards, skeletons, muted text).",
+        "All actions that require authentication are blocked with clear English messaging and a navigation path to Sign Up / Log In."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/layout/LeftSidebar.tsx",
-          "operation": "create",
-          "description": "Create a md+ left sidebar navigation component using TanStack Router <Link> entries for Profile (/profile), Inventory (/inventory), Groups (/groups), and Settings (/settings)."
-        },
-        {
-          "path": "frontend/src/components/layout/AppLayout.tsx",
           "operation": "modify",
-          "description": "Update the layout structure to include the new LeftSidebar on >= md breakpoints (while keeping SiteHeader as the top sticky header) and render the routed content alongside it."
-        }
-      ]
-    },
-    {
-      "id": "REQ-11",
-      "summary": "Create Inventory, Groups, and Settings pages and register routes for them, wired into the router and sidebar navigation.",
-      "acceptanceCriteria": [
-        "New routes exist for Inventory, Groups, and Settings and can be navigated to from the left sidebar.",
-        "Each page renders without errors and clearly indicates the section (e.g., page title \"Inventory\", \"Groups\", \"Settings\").",
-        "All user-facing text is in English."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/Inventory.tsx",
-          "operation": "create",
-          "description": "Add an Inventory page with an English title and basic placeholder content consistent with project non-goals."
-        },
-        {
-          "path": "frontend/src/pages/Groups.tsx",
-          "operation": "create",
-          "description": "Add a Groups page with an English title and basic placeholder content consistent with project non-goals."
-        },
-        {
-          "path": "frontend/src/pages/Settings.tsx",
-          "operation": "create",
-          "description": "Add a Settings page with an English title and basic placeholder content consistent with project non-goals."
+          "description": "Add a new \"Social\" navigation item (with an appropriate lucide icon) linking to the new social hub route. Ensure styling matches existing sidebar items."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Register new routes for /inventory, /groups, and /settings in the TanStack Router route tree and ensure they render within AppLayout."
+          "description": "Register a new route (e.g., /social) that renders the Social hub page, ensuring it is reachable via navigation and consistent with the existing TanStack Router setup."
         },
         {
-          "path": "frontend/src/components/layout/LeftSidebar.tsx",
-          "operation": "modify",
-          "description": "Ensure the sidebar navigation includes working links to the newly registered Inventory, Groups, and Settings routes."
-        }
-      ]
-    },
-    {
-      "id": "REQ-12",
-      "summary": "Update Discover to browse trending experiences by category (Adventure/Roleplay/Simulator) with a category UI and a Trending section backed by persisted data from the backend actor.",
-      "acceptanceCriteria": [
-        "Discover page provides a visible category browsing UI (e.g., tabs/chips/filters) with categories including \"Adventure\", \"Roleplay\", and \"Simulator\".",
-        "Discover page includes a \"Trending\" section that shows experiences, and switching category updates the visible set of experiences.",
-        "Experiences can be associated with a category in persisted data (not only hardcoded client-side)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useExperiences.ts",
-          "operation": "modify",
-          "description": "Add React Query hooks to fetch trending experiences by category and to fetch experiences by category (using existing backend actor methods) so Discover can switch categories without hardcoding."
-        },
-        {
-          "path": "frontend/src/pages/Discover.tsx",
-          "operation": "modify",
-          "description": "Add a category selection UI (Adventure/Roleplay/Simulator) and a dedicated \"Trending\" section that updates based on the selected category, using the new hooks and rendering results via ExperienceGrid."
-        }
-      ]
-    },
-    {
-      "id": "REQ-14",
-      "summary": "Update the publish experience flow to require selecting a category (Adventure/Roleplay/Simulator) and ensure Discover category browsing uses stored categories.",
-      "acceptanceCriteria": [
-        "Publish Experience dialog includes a required category input with options including \"Adventure\", \"Roleplay\", and \"Simulator\".",
-        "Submitting a new experience stores the selected category in the backend.",
-        "Discover category browsing uses the stored category to filter experiences."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/experiences/PublishExperienceDialog.tsx",
-          "operation": "modify",
-          "description": "Add a required category input (Adventure/Roleplay/Simulator) and pass the selected category to the create experience mutation call; keep all labels/help text in English."
-        },
-        {
-          "path": "frontend/src/hooks/useExperiences.ts",
-          "operation": "modify",
-          "description": "Extend the create experience mutation to accept and forward the required category (and any other required publishing fields) to the backend actor method so the category is persisted."
-        },
-        {
-          "path": "frontend/src/pages/Discover.tsx",
-          "operation": "modify",
-          "description": "Ensure the Discover category browsing and Trending section rely on backend-provided category data (via category/trending hooks) rather than hardcoded client lists."
-        }
-      ]
-    },
-    {
-      "id": "REQ-15",
-      "summary": "Enhance Experience Details to show a prominent green Play button, description, persisted player count, and thumbs up/down rating controls with live UI updates.",
-      "acceptanceCriteria": [
-        "Experience Details page shows a visually prominent green Play button (label \"Play\") when not currently playing.",
-        "Experience Details page renders player count (e.g., \"Players: 0\") and thumbs up/down controls with counts sourced from persisted backend data.",
-        "Clicking thumbs up/down updates the counts (and persists via backend) and updates the UI without a full page refresh.",
-        "All user-facing text is in English."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useExperiences.ts",
-          "operation": "modify",
-          "description": "Add mutations for rating an experience (thumbs up/down) and for incrementing player count, and ensure related experience queries are invalidated/refetched to update counts without a full page refresh."
-        },
-        {
-          "path": "frontend/src/components/experiences/ExperienceRatingControls.tsx",
+          "path": "frontend/src/pages/Social.tsx",
           "operation": "create",
-          "description": "Create a reusable rating controls component (thumbs up/down buttons + counts) that calls the rating mutation and displays updated counts in English."
+          "description": "Implement the Social hub page with four sections/tabs (Friends, Messages, Parties, Following) using existing shadcn/tailwind layout primitives (Card, headings, muted text). Gate authenticated actions using the existing authorization flow (Internet Identity + role/profile patterns) with clear English prompts that direct users to Log in or Sign up. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/ExperienceDetails.tsx",
-          "operation": "modify",
-          "description": "Update the details UI to include: a prominent green Play button, player count display sourced from the loaded experience data, and the ExperienceRatingControls component; on Play, trigger player count increment and update the UI state."
-        }
-      ]
-    },
-    {
-      "id": "REQ-16",
-      "summary": "Show gameplay controls guidance during play mode with default text and per-experience override sourced from persisted experience data.",
-      "acceptanceCriteria": [
-        "When play mode is active, the UI shows a \"Controls\" section listing: \"WASD: Move\", \"Space: Jump\", and \"Mouse: Camera\" (English).",
-        "Each experience can optionally override/customize the controls guidance stored with that experience; if no custom controls exist, the standard defaults are shown.",
-        "Controls guidance is persisted in the backend as part of the experience data (not only hardcoded UI)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/experiences/PublishExperienceDialog.tsx",
-          "operation": "modify",
-          "description": "Add an optional \"Gameplay Controls\" input to allow creators to customize controls guidance, and pass it along when publishing so it is stored with the experience."
-        },
-        {
-          "path": "frontend/src/hooks/useExperiences.ts",
-          "operation": "modify",
-          "description": "Extend the create experience mutation to include gameplay controls text (when provided) and ensure Experience Details can access the persisted field (via the existing getExperience shape)."
-        },
-        {
-          "path": "frontend/src/pages/ExperienceDetails.tsx",
-          "operation": "modify",
-          "description": "When play mode is active, render a \"Controls\" section that shows the experience-provided controls guidance if present; otherwise display the English default lines (WASD/Space/Mouse)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-17",
-      "summary": "Add an in-game menu UI during play mode with Leave, Reset Character, and Settings actions, all accessible while playing.",
-      "acceptanceCriteria": [
-        "When play mode is active, an in-game menu can be opened that displays buttons labeled \"Leave\", \"Reset Character\", and \"Settings\" (English).",
-        "\"Leave\" exits play mode and returns the user to the normal Experience Details view state.",
-        "\"Reset Character\" performs a visible reset action in the simulated play mode (e.g., shows a confirmation/toast and resets simulated state).",
-        "\"Settings\" opens a settings panel/modal within play mode (it can be basic/placeholder but must render and be interactable)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/experiences/InGameMenu.tsx",
+          "path": "frontend/src/components/social/FriendsPanel.tsx",
           "operation": "create",
-          "description": "Create an in-game menu component for play mode that can open/close and presents English actions: Leave, Reset Character, and Settings (settings can be a simple modal/panel)."
+          "description": "Create the Friends tab content: user search (to find users by display name), pending requests, and friends list with actions (send request, accept/decline, cancel/unfriend) wired to React Query hooks. Include loading and empty states consistent with existing cards/skeleton patterns. Verify the component's usage instructions before implementing."
         },
+        {
+          "path": "frontend/src/components/social/MessagesPanel.tsx",
+          "operation": "create",
+          "description": "Create the Messages tab content: a simple conversation selector and a thread view, plus a compose form that lets users choose a recipient (via user search) and send a message. Provide clear empty/loading states and auth-required messaging. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/social/PartiesPanel.tsx",
+          "operation": "create",
+          "description": "Create the Parties tab content: current party state and invites list with actions (create party, invite, accept/decline invite, leave). Until backend capabilities are available, show appropriate disabled/empty states without adding non-requested features. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/social/FollowingPanel.tsx",
+          "operation": "create",
+          "description": "Create the Following tab content: list followed creators and allow unfollow actions. Include loading/empty states and clear auth-required messaging. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Add React Query hooks for social features (friends, messages, parties, following, and user search) using the existing actor pattern and query invalidation conventions.",
+      "acceptanceCriteria": [
+        "Hooks exist for: searching users, sending/responding to friend requests, listing friends, sending/fetching messages, party create/invite/respond/leave, follow/unfollow and listing followed creators.",
+        "Mutations invalidate the appropriate cached queries so the UI updates after actions without a manual refresh.",
+        "Hooks do not require edits to immutable hook files; they are implemented as new hook modules or modifications to non-immutable files only."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useSocialFriends.ts",
+          "operation": "create",
+          "description": "Create React Query hooks for friend workflows (list friends, list incoming/outgoing pending requests as supported, send request, respond accept/decline, cancel/unfriend) using the existing actor pattern from useActor and invalidating relevant query keys after mutations. Use the authorization component’s frontend guidance for handling auth state and authorization failures gracefully. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useSocialMessages.ts",
+          "operation": "create",
+          "description": "Create React Query hooks for messaging workflows (list conversations if available, fetch thread/messages, send message) using the actor pattern and invalidate/refetch message-related queries after sending. Handle authorization failures with clear English UI messaging. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useSocialParties.ts",
+          "operation": "create",
+          "description": "Create React Query hooks for party workflows (get current party, create party, invite, accept/decline invite, leave) using the actor pattern and invalidate party-related query keys after mutations. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useSocialFollowing.ts",
+          "operation": "create",
+          "description": "Create React Query hooks for creator following workflows (get followed creators, follow, unfollow, follower count where supported) using the actor pattern and invalidate follow-related query keys after mutations so the UI updates without refresh. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useUserDiscovery.ts",
+          "operation": "create",
+          "description": "Create a React Query hook for user discovery/search (search users by display name) backed by the existing actor pattern; ensure it can be used by Friends and Messages compose flows and returns principals + public profile fields (including avatar reference when present). Use blob-storage ExternalBlob direct URL display patterns for avatars. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Add Follow/Unfollow creator UI on Experience Details for the experience author, reflecting follow state and follower count when available.",
+      "acceptanceCriteria": [
+        "When viewing an experience, the Creator card shows a Follow/Unfollow button for the author (hidden/disabled when not authenticated).",
+        "Toggling follow updates the button state and follower count (if displayed) after the request completes.",
+        "The UI prevents following yourself when the experience author equals the current user principal."
+      ],
+      "file_operations": [
         {
           "path": "frontend/src/pages/ExperienceDetails.tsx",
           "operation": "modify",
-          "description": "Wire InGameMenu into the play mode overlay: Leave should exit play mode, Reset Character should reset simulated play state and show a visible confirmation/toast, and Settings should open an interactable panel/modal."
+          "description": "Enhance the Creator card to include a Follow/Unfollow control and follower count display (when available) for the experience author. Use the new following hooks for state/mutations, disable or hide the action when unauthenticated, and prevent self-follow by comparing the author principal to the current identity principal (authorization component guidance). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/experiences/CreatorFollowButton.tsx",
+          "operation": "create",
+          "description": "Add a small reusable UI component for Follow/Unfollow that accepts an author principal and renders the correct state (followed/unfollowed, pending) plus optional follower count. Reuse existing shadcn Button/Card typography and show clear English auth-required messaging when disabled. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Apply consistent Tailwind/shadcn visual styling across the new Social UI to match existing app layout and tone.",
+      "acceptanceCriteria": [
+        "All new social screens use consistent layout primitives (container width, card styling, headings) aligned with existing pages like Home/Groups.",
+        "User-facing text is English and uses the same tone as existing pages (clear, minimal, “Coming soon” only when truly not implemented)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/Social.tsx",
+          "operation": "modify",
+          "description": "Refine Social hub layout to match existing page patterns (e.g., container spacing, H1/H2 hierarchy, Card sections, muted helper text), ensuring consistent typography and spacing with pages like Groups/Home. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/social/FriendsPanel.tsx",
+          "operation": "modify",
+          "description": "Align Friends panel UI with existing shadcn patterns (Card sections, Button variants, muted text, loading placeholders) and ensure all user-facing text is clear English. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/social/MessagesPanel.tsx",
+          "operation": "modify",
+          "description": "Align Messages panel UI with existing patterns (thread layout, empty/loading states, form controls) and ensure clear English copy with minimal placeholders. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/social/PartiesPanel.tsx",
+          "operation": "modify",
+          "description": "Align Parties panel UI with existing patterns and ensure any unimplemented backend-dependent actions are presented as disabled with clear English explanation (avoid adding new product features). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/social/FollowingPanel.tsx",
+          "operation": "modify",
+          "description": "Align Following panel UI with existing patterns and ensure consistent English text and empty/loading states. Verify the component's usage instructions before implementing."
         }
       ]
     }

@@ -12,6 +12,7 @@ import DiniBucks from './pages/DiniBucks';
 import Inventory from './pages/Inventory';
 import Groups from './pages/Groups';
 import Settings from './pages/Settings';
+import Social from './pages/Social';
 import { Toaster } from '@/components/ui/sonner';
 
 const rootRoute = createRootRoute({
@@ -84,6 +85,12 @@ const settingsRoute = createRoute({
   component: Settings,
 });
 
+const socialRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/social',
+  component: Social,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   discoverRoute,
@@ -96,6 +103,7 @@ const routeTree = rootRoute.addChildren([
   inventoryRoute,
   groupsRoute,
   settingsRoute,
+  socialRoute,
 ]);
 
 const router = createRouter({ routeTree });

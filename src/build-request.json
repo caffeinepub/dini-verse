@@ -1,180 +1,186 @@
 {
   "kind": "build_request",
-  "title": "Add Roblox-style left sidebar navigation, Discover categories/trending, and enhanced experience play/details UI",
+  "title": "Add social features: friends, private messaging, parties, and creator following",
+  "projectName": "DiniVerse Social",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-10",
-      "text": "Add a left-side navigation menu in the main app layout that is visible on desktop/tablet widths and contains links for: Profile, Inventory, Groups, and Settings.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "On the left side, there's a menu with your profile, inventory, groups, and settings."
-        ]
-      },
-      "acceptanceCriteria": [
-        "When visiting any route that uses the main AppLayout, a left sidebar is rendered on >= md breakpoints without breaking the existing top header.",
-        "Sidebar includes clickable nav items labeled \"Profile\", \"Inventory\", \"Groups\", and \"Settings\" (English text).",
-        "\"Profile\" navigates to the existing /profile route.",
-        "The sidebar does not require editing any files under frontend/src/components/ui or other immutable paths."
-      ]
-    },
-    {
-      "id": "REQ-11",
-      "text": "Create functional routes/pages for Inventory, Groups, and Settings and wire them into the router and the new left-side menu.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "On the left side, there's a menu with your profile, inventory, groups, and settings."
-        ]
-      },
-      "acceptanceCriteria": [
-        "New routes exist for Inventory, Groups, and Settings and can be navigated to from the left sidebar.",
-        "Each page renders without errors and clearly indicates the section (e.g., page title \"Inventory\", \"Groups\", \"Settings\").",
-        "All user-facing text is in English."
-      ]
-    },
-    {
-      "id": "REQ-12",
-      "text": "Update the Discover page to support browsing trending games across categories, including at least: Adventure, Roleplay, and Simulator.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "The Discover page shows trending games across categories like Adventure, Roleplay, and Simulator."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Discover page provides a visible category browsing UI (e.g., tabs/chips/filters) with categories including \"Adventure\", \"Roleplay\", and \"Simulator\".",
-        "Discover page includes a \"Trending\" section that shows experiences, and switching category updates the visible set of experiences.",
-        "Experiences can be associated with a category in persisted data (not only hardcoded client-side)."
-      ]
-    },
-    {
-      "id": "REQ-13",
-      "text": "Extend the Experience data model to include category and basic public stats needed for the details page: player count and thumbs up/down counts, and provide backend methods to read/update these stats.",
+      "id": "REQ-1",
+      "text": "Implement backend social graph features: friend requests (send, accept, decline/cancel), friends list, and friend request inbox/outbox, all scoped to authenticated users and keyed by Principal.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "When you click a game, you see a green Play button, game description, player count, and thumbs up/down ratings."
+          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
         ]
       },
       "acceptanceCriteria": [
-        "Backend Experience type persists a category value and fields for player count and thumbs up/down counts (with sensible defaults for existing experiences).",
-        "There is a backend update method to register a thumbs up/down action for an experience (authenticated users only) and return updated counts.",
-        "There is a backend query method to retrieve experience details including these stats (or the existing getExperience returns the extended shape)."
+        "An authenticated user can send a friend request to another existing user principal and cannot send a request to themselves.",
+        "The recipient can list pending incoming friend requests and accept or decline them.",
+        "The sender can list pending outgoing friend requests and cancel them.",
+        "When a friend request is accepted, both users appear in each other’s friends list.",
+        "Unauthorized callers (not having #user permission) cannot use friend-request or friends APIs."
       ]
     },
     {
-      "id": "REQ-14",
-      "text": "Update the experience publishing flow so creators can choose a category (Adventure/Roleplay/Simulator at minimum) when publishing an experience, and ensure it is stored and used by Discover category browsing.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "The Discover page shows trending games across categories like Adventure, Roleplay, and Simulator."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Publish Experience dialog includes a required category input with options including \"Adventure\", \"Roleplay\", and \"Simulator\".",
-        "Submitting a new experience stores the selected category in the backend.",
-        "Discover category browsing uses the stored category to filter experiences."
-      ]
-    },
-    {
-      "id": "REQ-15",
-      "text": "Enhance the Experience Details page to display: a prominent green \"Play\" button, the experience description, a player count display, and thumbs up/down rating controls with counts.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "When you click a game, you see a green Play button, game description, player count, and thumbs up/down ratings."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Experience Details page shows a visually prominent green Play button (label \"Play\") when not currently playing.",
-        "Experience Details page renders player count (e.g., \"Players: 0\") and thumbs up/down controls with counts sourced from persisted backend data.",
-        "Clicking thumbs up/down updates the counts (and persists via backend) and updates the UI without a full page refresh.",
-        "All user-facing text is in English."
-      ]
-    },
-    {
-      "id": "REQ-16",
-      "text": "During the in-page play mode for an experience, display standard gameplay controls guidance: WASD to move, Space to jump, Mouse to control the camera, and allow per-experience customization of this controls text.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "During gameplay, typical controls include WASD for movement, spacebar to jump, and mouse for camera control, though each game can customize these."
-        ]
-      },
-      "acceptanceCriteria": [
-        "When play mode is active, the UI shows a \"Controls\" section listing: \"WASD: Move\", \"Space: Jump\", and \"Mouse: Camera\" (English).",
-        "Each experience can optionally override/customize the controls guidance stored with that experience; if no custom controls exist, the standard defaults are shown.",
-        "Controls guidance is persisted in the backend as part of the experience data (not only hardcoded UI)."
-      ]
-    },
-    {
-      "id": "REQ-17",
-      "text": "Add an in-game menu UI during play mode with options to Leave, Reset Character, and Settings, accessible while the experience is in play mode.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "There's also an in-game menu with options to leave, reset character, or adjust settings."
-        ]
-      },
-      "acceptanceCriteria": [
-        "When play mode is active, an in-game menu can be opened that displays buttons labeled \"Leave\", \"Reset Character\", and \"Settings\" (English).",
-        "\"Leave\" exits play mode and returns the user to the normal Experience Details view state.",
-        "\"Reset Character\" performs a visible reset action in the simulated play mode (e.g., shows a confirmation/toast and resets simulated state).",
-        "\"Settings\" opens a settings panel/modal within play mode (it can be basic/placeholder but must render and be interactable)."
-      ]
-    },
-    {
-      "id": "REQ-18",
-      "text": "If upgrading persisted backend state is required due to Experience type changes, add a conditional backend migration that preserves existing users/experiences and backfills new Experience fields with defaults.",
+      "id": "REQ-2",
+      "text": "Implement backend private messaging: direct message threads between two Principals with APIs to create/find a conversation, send messages, list conversations, and fetch messages for a conversation.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
+        ],
+        "quotes": [
+          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
         ]
       },
       "acceptanceCriteria": [
-        "Existing stored experiences remain accessible after deployment.",
-        "Existing experiences receive default values for new fields (category, player count, thumbs up/down, controls guidance) without trapping.",
-        "Migration is implemented only if needed per the project migration policy (conditional)."
+        "An authenticated user can send a message to another existing user principal.",
+        "A user can list their conversations (at least one entry after sending/receiving a message).",
+        "A user can fetch messages for a conversation and sees messages ordered oldest-to-newest.",
+        "Only the two participants in a conversation can read its messages."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement backend party system: create party, invite users, accept/decline invites, join/leave party, list current party state for the caller, and optionally associate a party with an experienceId to support “joining games together”.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+        ]
+      },
+      "acceptanceCriteria": [
+        "An authenticated user can create a party and becomes the leader.",
+        "A party leader can invite another user principal; invitees can list their pending party invites.",
+        "An invitee can accept an invite and becomes a member of the party; they can also decline.",
+        "Any member can leave the party; if the leader leaves, leadership is reassigned or the party is dissolved (documented behavior).",
+        "A party can store an optional experienceId; members can fetch the party state and see that value."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Implement backend creator following: allow authenticated users to follow and unfollow another Principal, list followed creators for the caller, and list follower count for a given creator principal.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+        ]
+      },
+      "acceptanceCriteria": [
+        "An authenticated user can follow and unfollow another principal and cannot follow themselves.",
+        "The caller can list all creators they currently follow.",
+        "For any principal, the backend can return follower count (0 if none).",
+        "Follow state is reflected consistently after follow/unfollow without requiring a page refresh (frontend invalidates queries)."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Add backend user discovery endpoints needed for social features: list/search user profiles by display name (returning principals + public profile fields) so users can find people to friend/message/follow.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+        ]
+      },
+      "acceptanceCriteria": [
+        "There is a query method to search users by a text term (case-insensitive) and return a bounded list of results.",
+        "Search results include the user principal and displayName (and avatar reference if available).",
+        "Unauthenticated users may use discovery only if explicitly intended; otherwise discovery requires #user permission (choose and apply consistently across endpoints)."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Add a Social area in the frontend with navigation entry and routes/pages to manage: Friends (requests + friends list), Messages (inbox/conversations + thread view + compose), Parties (current party + invites), and Following (followed creators list).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Left sidebar includes a new “Social” (or equivalent) navigation link that routes to the social hub.",
+        "Social hub renders four sections/tabs: Friends, Messages, Parties, Following.",
+        "Each section supports empty states and loading states using existing UI patterns (cards, skeletons, muted text).",
+        "All actions that require authentication are blocked with clear English messaging and a navigation path to Sign Up / Log In."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Create new React Query hooks for social APIs (friends, messages, parties, following, user search) using the existing actor pattern and query invalidation conventions already used by experiences and profiles.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Hooks exist for: searching users, sending/responding to friend requests, listing friends, sending/fetching messages, party create/invite/respond/leave, follow/unfollow and listing followed creators.",
+        "Mutations invalidate the appropriate cached queries so the UI updates after actions without a manual refresh.",
+        "Hooks do not require edits to immutable hook files; they are implemented as new hook modules or modifications to non-immutable files only."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Add “Follow creator” UI on the Experience Details page for the experience author, reflecting current follow state and follower count when available.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+        ]
+      },
+      "acceptanceCriteria": [
+        "When viewing an experience, the Creator card shows a Follow/Unfollow button for the author (hidden/disabled when not authenticated).",
+        "Toggling follow updates the button state and follower count (if displayed) after the request completes.",
+        "The UI prevents following yourself when the experience author equals the current user principal."
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "text": "Apply a coherent, consistent visual theme for the new social pages that matches the existing Tailwind/shadcn design system (typography, spacing, card layouts, and icon usage), without introducing new product features beyond the requested social functionality.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All new social screens use consistent layout primitives (container width, card styling, headings) aligned with existing pages like Home/Groups.",
+        "User-facing text is English and uses the same tone as existing pages (clear, minimal, “Coming soon” only when truly not implemented)."
       ]
     }
   ],
   "constraints": [
-    "Use English for all user-facing text.",
-    "Backend must remain a single Motoko actor with all logic in backend/main.mo; only add backend/migration.mo if required for state upgrades.",
-    "Do not edit frontend immutable paths (including frontend/src/components/ui, frontend/src/hooks/useInternetIdentity.ts/tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx)."
+    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services/canisters.",
+    "Do not edit frontend paths marked immutable in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*). Compose existing UI components instead.",
+    "No real-time transport (no WebSockets/push). Social updates should work via queries/refetching.",
+    "Use English for all user-facing text."
   ],
   "nonGoals": [
-    "Implementing real 3D gameplay, physics, or a full game runtime.",
-    "Real-time player count updates (no WebSockets/real-time infrastructure).",
-    "Complex social systems for groups, inventory item ownership, or settings persistence beyond basic placeholders unless explicitly required by the above requirements."
+    "Group/community system beyond the requested party system (the existing Groups page can remain a placeholder unless needed for navigation).",
+    "End-to-end encryption or advanced moderation/reporting tools for messaging.",
+    "Third-party integrations for chat/social graphs outside the Internet Computer canister.",
+    "Cross-device push notifications or email notifications for friend requests/messages."
   ],
   "imageRequirements": {
     "required": [],
