@@ -1,10 +1,8 @@
-import { ReactNode } from 'react';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
-import { useGetCurrentUserProfile } from '../../hooks/useUserProfile';
+import { ReactNode, useEffect } from 'react';
+import { useSessionAuth } from '../../hooks/useSessionAuth';
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus } from 'lucide-react';
 
 interface RequireProfileProps {
@@ -12,17 +10,24 @@ interface RequireProfileProps {
 }
 
 export default function RequireProfile({ children }: RequireProfileProps) {
-  const { identity, login } = useInternetIdentity();
-  const { data: userProfile, isLoading, isFetched } = useGetCurrentUserProfile();
+  const { isAuthenticated, isLoading, fetchCurrentUser } = useSessionAuth();
   const navigate = useNavigate();
 
-  const isAuthenticated = !!identity;
-
   useEffect(() => {
-    if (isAuthenticated && isFetched && userProfile === null) {
-      navigate({ to: '/signup' });
+    if (isAuthenticated) {
+      fetchCurrentUser();
     }
-  }, [isAuthenticated, isFetched, userProfile, navigate]);
+  }, [isAuthenticated, fetchCurrentUser]);
+
+  if (isLoading) {
+    return (
+      <div className="container py-16">
+        <div className="flex items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -31,41 +36,34 @@ export default function RequireProfile({ children }: RequireProfileProps) {
           <CardHeader>
             <CardTitle>Authentication Required</CardTitle>
             <CardDescription>
-              You need to be logged in to access this page.
+              You need to be logged in to access this page
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <Button onClick={login} className="gap-2">
-              <LogIn className="h-4 w-4" />
-              Log in
-            </Button>
-            <Button
-              onClick={() => {
-                login();
-                navigate({ to: '/signup' });
-              }}
-              variant="outline"
-              className="gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              Sign up
-            </Button>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Please log in to your account or create a new one to access this feature.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => navigate({ to: '/login' })}
+                className="flex-1 gap-2"
+              >
+                <LogIn className="h-4 w-4" />
+                Log In
+              </Button>
+              <Button
+                onClick={() => navigate({ to: '/signup' })}
+                variant="outline"
+                className="flex-1 gap-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                Sign Up
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
     );
-  }
-
-  if (isLoading || !isFetched) {
-    return (
-      <div className="container py-16">
-        <div className="text-center">Loading...</div>
-      </div>
-    );
-  }
-
-  if (userProfile === null) {
-    return null;
   }
 
   return <>{children}</>;

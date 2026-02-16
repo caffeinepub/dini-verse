@@ -1,144 +1,120 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "DiniVerse Social — Frontend social hub, hooks, and creator following UI",
+  "title": "Dini Verse: On-platform session authentication UI and state refactor",
   "requirements": [
     {
-      "id": "REQ-6",
-      "summary": "Add a Social area with sidebar navigation and a hub page containing Friends, Messages, Parties, and Following sections with auth-aware empty/loading states.",
+      "id": "REQ-3",
+      "summary": "Replace disabled login/signup pages with in-app username/password forms wired to backend auth capabilities.",
       "acceptanceCriteria": [
-        "Left sidebar includes a new “Social” (or equivalent) navigation link that routes to the social hub.",
-        "Social hub renders four sections/tabs: Friends, Messages, Parties, Following.",
-        "Each section supports empty states and loading states using existing UI patterns (cards, skeletons, muted text).",
-        "All actions that require authentication are blocked with clear English messaging and a navigation path to Sign Up / Log In."
+        "/login renders an on-platform login form (username + password) and submits to the backend authentication API.",
+        "/signup renders an on-platform signup form (at minimum: username, display name, password) and submits to the backend authentication API.",
+        "After successful login/signup, the user is treated as authenticated in the UI and can access account-gated areas without seeing 'Accounts disabled' notices.",
+        "User-facing validation and error messages are in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/layout/LeftSidebar.tsx",
+          "path": "frontend/src/pages/Login.tsx",
           "operation": "modify",
-          "description": "Add a new \"Social\" navigation item (with an appropriate lucide icon) linking to the new social hub route. Ensure styling matches existing sidebar items."
+          "description": "Replace the \"Login Disabled\" notice with a login form (username/password), client-side validation, English error messaging, and submit handling that calls the new on-platform backend login capability via the session auth hook."
+        },
+        {
+          "path": "frontend/src/pages/SignUp.tsx",
+          "operation": "modify",
+          "description": "Replace the \"Sign Up Disabled\" notice with a signup form (username/display name/password), client-side validation, English error messaging, and submit handling that calls the new on-platform backend signup capability via the session auth hook."
+        },
+        {
+          "path": "frontend/src/hooks/useSessionAuth.ts",
+          "operation": "modify",
+          "description": "Update the hook API to support form-driven login/signup (username/password) flows, returning clear success/error states that the /login and /signup pages can render."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Register a new route (e.g., /social) that renders the Social hub page, ensuring it is reachable via navigation and consistent with the existing TanStack Router setup."
+          "description": "Verify /login and /signup routes remain registered and accessible, and ensure any navigation assumptions still hold after replacing the disabled auth pages."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Refactor frontend auth state to use an on-platform session token persisted across reloads, without modifying immutable auth/actor/provider files.",
+      "acceptanceCriteria": [
+        "Frontend session state persists across reloads (e.g., via localStorage) using the backend session token.",
+        "AuthButtons shows appropriate actions when signed out (e.g., Login / Sign Up) and Logout when signed in.",
+        "RequireProfile no longer shows AccountsDisabledNotice for signed-out users; instead it should prompt users to log in (or redirect to /login) based on the new on-platform auth state.",
+        "No changes are made to immutable paths (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/sessionToken.ts",
+          "operation": "create",
+          "description": "Add a small utility for getting/setting/clearing the on-platform session token in localStorage (single source of truth for persistence across reloads)."
+        },
+        {
+          "path": "frontend/src/hooks/useSessionAuth.ts",
+          "operation": "modify",
+          "description": "Refactor session auth to stop relying on Internet Identity and instead: (1) call backend signup/login/logout capabilities, (2) store/restore the session token via localStorage, (3) provide isAuthenticated based on token presence/validation, and (4) clear cached queries on logout. Do not modify any immutable hook/provider files."
+        },
+        {
+          "path": "frontend/src/hooks/useCurrentUser.ts",
+          "operation": "modify",
+          "description": "Ensure current user derivation reflects on-platform session state (token-based) and continues to provide isAuthenticated/isLoading/currentUser consistently to the UI."
+        },
+        {
+          "path": "frontend/src/backend.d.ts",
+          "operation": "modify",
+          "description": "Update the frontend backend interface typings to include the new on-platform auth/session methods (e.g., signup/login/logout/session validation and any token-based profile access used by the refactor) so the frontend can compile against the updated canister API."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Update user/profile-related React Query hooks to work with the new session auth model (token-based), ensuring guest browsing queries remain usable while profile/write actions use the session token where required."
+        },
+        {
+          "path": "frontend/src/hooks/useExperiences.ts",
+          "operation": "modify",
+          "description": "Adjust experience mutations that require authentication (e.g., create/rate) to use the on-platform session token flow (via the session auth hook) and surface Unauthorized errors as English user-facing messages rather than showing \"accounts disabled\" UI."
+        },
+        {
+          "path": "frontend/src/components/auth/AuthButtons.tsx",
+          "operation": "modify",
+          "description": "When signed out, replace the \"Accounts disabled\" text with Login and Sign Up actions that navigate to /login and /signup; when signed in, keep Logout and ensure it clears token/session state via the session auth hook."
+        },
+        {
+          "path": "frontend/src/components/auth/RequireProfile.tsx",
+          "operation": "modify",
+          "description": "Replace AccountsDisabledNotice behavior for signed-out users with a login prompt/redirect approach driven by the new session auth state (e.g., render a login-required card with a button to /login)."
+        },
+        {
+          "path": "frontend/src/components/auth/AccountsDisabledNotice.tsx",
+          "operation": "modify",
+          "description": "Refactor this component into a login-required prompt (English copy) that no longer claims accounts are disabled, and provide clear navigation affordances to /login and /signup where appropriate."
+        },
+        {
+          "path": "frontend/src/pages/Profile.tsx",
+          "operation": "modify",
+          "description": "Ensure the profile page gating aligns with the new session auth behavior (token-based) and does not show disabled-account messaging for guests; instead guide to login when needed."
         },
         {
           "path": "frontend/src/pages/Social.tsx",
-          "operation": "create",
-          "description": "Implement the Social hub page with four sections/tabs (Friends, Messages, Parties, Following) using existing shadcn/tailwind layout primitives (Card, headings, muted text). Gate authenticated actions using the existing authorization flow (Internet Identity + role/profile patterns) with clear English prompts that direct users to Log in or Sign up. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/social/FriendsPanel.tsx",
-          "operation": "create",
-          "description": "Create the Friends tab content: user search (to find users by display name), pending requests, and friends list with actions (send request, accept/decline, cancel/unfriend) wired to React Query hooks. Include loading and empty states consistent with existing cards/skeleton patterns. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/social/MessagesPanel.tsx",
-          "operation": "create",
-          "description": "Create the Messages tab content: a simple conversation selector and a thread view, plus a compose form that lets users choose a recipient (via user search) and send a message. Provide clear empty/loading states and auth-required messaging. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/social/PartiesPanel.tsx",
-          "operation": "create",
-          "description": "Create the Parties tab content: current party state and invites list with actions (create party, invite, accept/decline invite, leave). Until backend capabilities are available, show appropriate disabled/empty states without adding non-requested features. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/social/FollowingPanel.tsx",
-          "operation": "create",
-          "description": "Create the Following tab content: list followed creators and allow unfollow actions. Include loading/empty states and clear auth-required messaging. Verify the component's usage instructions before implementing."
+          "operation": "modify",
+          "description": "Update any signed-out rendering that currently shows a disabled-accounts notice so it instead prompts the user to log in (or uses RequireProfile), consistent with on-platform session auth."
         }
       ]
     },
     {
-      "id": "REQ-7",
-      "summary": "Add React Query hooks for social features (friends, messages, parties, following, and user search) using the existing actor pattern and query invalidation conventions.",
+      "id": "REQ-5",
+      "summary": "Update auth change-control banner copy to reflect on-platform authentication while still stating external redirects are disabled.",
       "acceptanceCriteria": [
-        "Hooks exist for: searching users, sending/responding to friend requests, listing friends, sending/fetching messages, party create/invite/respond/leave, follow/unfollow and listing followed creators.",
-        "Mutations invalidate the appropriate cached queries so the UI updates after actions without a manual refresh.",
-        "Hooks do not require edits to immutable hook files; they are implemented as new hook modules or modifications to non-immutable files only."
+        "The banner continues to clearly state that external login redirects are disabled.",
+        "The banner text no longer implies that authentication is disabled if on-platform authentication is now enabled.",
+        "All banner/user-facing text is in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useSocialFriends.ts",
-          "operation": "create",
-          "description": "Create React Query hooks for friend workflows (list friends, list incoming/outgoing pending requests as supported, send request, respond accept/decline, cancel/unfriend) using the existing actor pattern from useActor and invalidating relevant query keys after mutations. Use the authorization component’s frontend guidance for handling auth state and authorization failures gracefully. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useSocialMessages.ts",
-          "operation": "create",
-          "description": "Create React Query hooks for messaging workflows (list conversations if available, fetch thread/messages, send message) using the actor pattern and invalidate/refetch message-related queries after sending. Handle authorization failures with clear English UI messaging. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useSocialParties.ts",
-          "operation": "create",
-          "description": "Create React Query hooks for party workflows (get current party, create party, invite, accept/decline invite, leave) using the actor pattern and invalidate party-related query keys after mutations. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useSocialFollowing.ts",
-          "operation": "create",
-          "description": "Create React Query hooks for creator following workflows (get followed creators, follow, unfollow, follower count where supported) using the actor pattern and invalidate follow-related query keys after mutations so the UI updates without refresh. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useUserDiscovery.ts",
-          "operation": "create",
-          "description": "Create a React Query hook for user discovery/search (search users by display name) backed by the existing actor pattern; ensure it can be used by Friends and Messages compose flows and returns principals + public profile fields (including avatar reference when present). Use blob-storage ExternalBlob direct URL display patterns for avatars. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "summary": "Add Follow/Unfollow creator UI on Experience Details for the experience author, reflecting follow state and follower count when available.",
-      "acceptanceCriteria": [
-        "When viewing an experience, the Creator card shows a Follow/Unfollow button for the author (hidden/disabled when not authenticated).",
-        "Toggling follow updates the button state and follower count (if displayed) after the request completes.",
-        "The UI prevents following yourself when the experience author equals the current user principal."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/ExperienceDetails.tsx",
+          "path": "frontend/src/components/layout/AuthChangeBanner.tsx",
           "operation": "modify",
-          "description": "Enhance the Creator card to include a Follow/Unfollow control and follower count display (when available) for the experience author. Use the new following hooks for state/mutations, disable or hide the action when unauthenticated, and prevent self-follow by comparing the author principal to the current identity principal (authorization component guidance). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/experiences/CreatorFollowButton.tsx",
-          "operation": "create",
-          "description": "Add a small reusable UI component for Follow/Unfollow that accepts an author principal and renders the correct state (followed/unfollowed, pending) plus optional follower count. Reuse existing shadcn Button/Card typography and show clear English auth-required messaging when disabled. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "summary": "Apply consistent Tailwind/shadcn visual styling across the new Social UI to match existing app layout and tone.",
-      "acceptanceCriteria": [
-        "All new social screens use consistent layout primitives (container width, card styling, headings) aligned with existing pages like Home/Groups.",
-        "User-facing text is English and uses the same tone as existing pages (clear, minimal, “Coming soon” only when truly not implemented)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/Social.tsx",
-          "operation": "modify",
-          "description": "Refine Social hub layout to match existing page patterns (e.g., container spacing, H1/H2 hierarchy, Card sections, muted helper text), ensuring consistent typography and spacing with pages like Groups/Home. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/social/FriendsPanel.tsx",
-          "operation": "modify",
-          "description": "Align Friends panel UI with existing shadcn patterns (Card sections, Button variants, muted text, loading placeholders) and ensure all user-facing text is clear English. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/social/MessagesPanel.tsx",
-          "operation": "modify",
-          "description": "Align Messages panel UI with existing patterns (thread layout, empty/loading states, form controls) and ensure clear English copy with minimal placeholders. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/social/PartiesPanel.tsx",
-          "operation": "modify",
-          "description": "Align Parties panel UI with existing patterns and ensure any unimplemented backend-dependent actions are presented as disabled with clear English explanation (avoid adding new product features). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/social/FollowingPanel.tsx",
-          "operation": "modify",
-          "description": "Align Following panel UI with existing patterns and ensure consistent English text and empty/loading states. Verify the component's usage instructions before implementing."
+          "description": "Update banner messaging to state that authentication is available on-platform (in-app) while clearly noting that external login redirects are disabled; keep all text in English."
         }
       ]
     }

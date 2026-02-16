@@ -1,17 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Add core social functionality to DiniVerse Social: friends, private messaging, parties for joining experiences together, and creator following, with supporting user discovery and frontend pages.
+**Goal:** Enable first-party, on-platform username/password authentication with session-based login (no Internet Identity and no external redirects).
 
 **Planned changes:**
-- Implement backend friend requests and friends list APIs scoped to authenticated users (send/accept/decline/cancel; inbox/outbox; mutual friends on accept).
-- Implement backend direct messaging between two principals (create/find conversation, send message, list conversations, fetch messages with access limited to participants).
-- Implement backend party system (create party, invite/respond, join/leave, view party state; optional experienceId association).
-- Implement backend creator following (follow/unfollow, list followed creators, follower count per principal).
-- Add backend user discovery/search endpoints to find users by display name for friending/messaging/following.
-- Add a new Social area in the frontend (nav + hub) with sections for Friends, Messages, Parties, and Following, including loading/empty states and auth-gated messaging.
-- Create new React Query hooks for social APIs using existing actor patterns and query invalidation so UI updates after actions.
-- Add Follow/Unfollow UI on the Experience Details page for the experience author, reflecting follow state and follower count when available.
-- Ensure new social pages match the existing Tailwind/shadcn visual theme and English UI copy.
+- Add Motoko backend canister methods for username/password signup and login, ensuring unique usernames and storing only hashed/derived password data.
+- Implement backend session token management (issue/validate/logout) and gate existing write/mutation actions using a valid session token while keeping read-only browsing available to guests.
+- Replace the frontend “Login Disabled / Sign Up Disabled” flow with on-platform `/login` and `/signup` forms that call the backend auth APIs and show English validation/error messages.
+- Refactor frontend auth state to persist the backend session token across reloads (e.g., localStorage), update AuthButtons/RequireProfile behavior to use session auth, and avoid edits to immutable frontend files/paths.
+- Update existing banner/change-control messaging to remain accurate: external redirects remain disabled while on-platform auth is enabled.
 
-**User-visible outcome:** Signed-in users can find other users, send/accept friend requests, message other users in 1:1 threads, create and manage parties (optionally tied to an experience), and follow/unfollow creators (including from Experience Details), with the Social hub providing dedicated pages for these features.
+**User-visible outcome:** Users can sign up and log in directly داخل the app using username/password, stay logged in across reloads, log out, and access account-gated/write features once authenticated—while guests can still browse read-only content without external login redirects.

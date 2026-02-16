@@ -1,45 +1,21 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from '@tanstack/react-router';
+import { useSessionAuth } from '../hooks/useSessionAuth';
 import FriendsPanel from '../components/social/FriendsPanel';
 import MessagesPanel from '../components/social/MessagesPanel';
 import PartiesPanel from '../components/social/PartiesPanel';
 import FollowingPanel from '../components/social/FollowingPanel';
+import AccountsDisabledNotice from '../components/auth/AccountsDisabledNotice';
 
 export default function Social() {
-  const { identity } = useInternetIdentity();
-  const navigate = useNavigate();
+  const { isAuthenticated } = useSessionAuth();
   const [activeTab, setActiveTab] = useState('friends');
-
-  const isAuthenticated = !!identity;
 
   if (!isAuthenticated) {
     return (
       <div className="container py-16">
-        <Card className="max-w-md mx-auto">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>
-              Please log in to access social features
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Connect with friends, send messages, join parties, and follow your favorite creators.
-            </p>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate({ to: '/signup' })}>
-                Sign Up
-              </Button>
-              <Button variant="outline" onClick={() => navigate({ to: '/' })}>
-                Back to Home
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <AccountsDisabledNotice />
       </div>
     );
   }

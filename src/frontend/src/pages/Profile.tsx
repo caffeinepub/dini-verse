@@ -1,36 +1,71 @@
 import RequireProfile from '../components/auth/RequireProfile';
-import { useGetCurrentUserProfile } from '../hooks/useUserProfile';
-import { useGetExperiencesByAuthor } from '../hooks/useExperiences';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import ProfileHeaderCard from '../components/profile/ProfileHeaderCard';
-import ExperienceGrid from '../components/experiences/ExperienceGrid';
+import { useSessionAuth } from '../hooks/useSessionAuth';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { User, Settings } from 'lucide-react';
 
 export default function Profile() {
-  const { identity } = useInternetIdentity();
-  const { data: userProfile, isLoading: profileLoading } = useGetCurrentUserProfile();
-  const { data: experiences, isLoading: experiencesLoading } = useGetExperiencesByAuthor(
-    identity?.getPrincipal()
-  );
+  const { currentUser } = useSessionAuth();
 
   return (
     <RequireProfile>
       <div className="container py-8">
         <div className="space-y-8">
-          <ProfileHeaderCard profile={userProfile} isLoading={profileLoading} />
+          {currentUser && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Profile</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20">
+                      {currentUser.avatar && <AvatarImage src={currentUser.avatar} alt={currentUser.displayName} />}
+                      <AvatarFallback className="text-2xl">
+                        {currentUser.displayName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h2 className="text-2xl font-bold">{currentUser.displayName}</h2>
+                      <p className="text-sm text-muted-foreground">
+                        @{currentUser.username}
+                      </p>
+                    </div>
+                  </div>
 
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">My Experiences</h2>
-              <p className="text-muted-foreground">
-                {experiences?.length || 0} published experience{experiences?.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-            <ExperienceGrid
-              experiences={experiences || []}
-              isLoading={experiencesLoading}
-              emptyMessage="You haven't published any experiences yet. Start creating!"
-            />
-          </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button variant="outline" className="gap-2">
+                      <User className="h-4 w-4" />
+                      Edit Profile
+                    </Button>
+                    <Button variant="outline" className="gap-2">
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Account Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Display Name</p>
+                      <p className="text-base">{currentUser.displayName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Username</p>
+                      <p className="text-base">@{currentUser.username}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       </div>
     </RequireProfile>

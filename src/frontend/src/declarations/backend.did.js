@@ -46,30 +46,6 @@ export const DiniVerseUser = IDL.Record({
   'displayName' : IDL.Text,
   'avatar' : IDL.Opt(ExternalBlob),
 });
-export const Time = IDL.Int;
-export const Message = IDL.Record({
-  'id' : IDL.Nat,
-  'content' : IDL.Text,
-  'read' : IDL.Bool,
-  'sender' : IDL.Principal,
-  'timestamp' : Time,
-  'receiver' : IDL.Principal,
-});
-export const FriendRequestStatus = IDL.Variant({
-  'cancelled' : IDL.Null,
-  'pending' : IDL.Null,
-  'accepted' : IDL.Null,
-  'declined' : IDL.Null,
-});
-export const FriendRequest = IDL.Record({
-  'to' : IDL.Principal,
-  'status' : FriendRequestStatus,
-  'from' : IDL.Principal,
-});
-export const MessageInput = IDL.Record({
-  'content' : IDL.Text,
-  'receiver' : IDL.Principal,
-});
 
 export const idlService = IDL.Service({
   '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -100,16 +76,9 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'createExperience' : IDL.Func(
-      [IDL.Text, IDL.Text, IDL.Opt(ExternalBlob), Category, IDL.Text],
-      [IDL.Text],
-      [],
-    ),
   'getAllExperiences' : IDL.Func([], [IDL.Vec(Experience)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(DiniVerseUser)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-  'getCurrentUserProfile' : IDL.Func([], [IDL.Opt(DiniVerseUser)], ['query']),
-  'getExperience' : IDL.Func([IDL.Text], [IDL.Opt(Experience)], ['query']),
   'getExperiencesByAuthor' : IDL.Func(
       [IDL.Principal],
       [IDL.Vec(Experience)],
@@ -118,14 +87,6 @@ export const idlService = IDL.Service({
   'getExperiencesByCategory' : IDL.Func(
       [Category],
       [IDL.Vec(Experience)],
-      ['query'],
-    ),
-  'getFriendsList' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
-  'getGameplayControls' : IDL.Func([IDL.Text], [IDL.Text], ['query']),
-  'getMessages' : IDL.Func([IDL.Principal], [IDL.Vec(Message)], ['query']),
-  'getPendingFriendRequests' : IDL.Func(
-      [],
-      [IDL.Vec(IDL.Principal)],
       ['query'],
     ),
   'getTrendingExperiences' : IDL.Func(
@@ -138,28 +99,8 @@ export const idlService = IDL.Service({
       [IDL.Opt(DiniVerseUser)],
       ['query'],
     ),
-  'incrementPlayerCount' : IDL.Func([IDL.Text], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'rateExperience' : IDL.Func([IDL.Text, IDL.Bool], [], []),
-  'respondToFriendRequest' : IDL.Func(
-      [
-        IDL.Principal,
-        IDL.Variant({ 'accept' : IDL.Null, 'decline' : IDL.Null }),
-      ],
-      [],
-      [],
-    ),
-  'saveCallerUserProfile' : IDL.Func([DiniVerseUser], [], []),
   'searchExperiences' : IDL.Func([IDL.Text], [IDL.Vec(Experience)], ['query']),
-  'searchUsersByDisplayName' : IDL.Func(
-      [IDL.Text],
-      [IDL.Vec(IDL.Tuple(IDL.Principal, DiniVerseUser))],
-      ['query'],
-    ),
-  'sendFriendRequest' : IDL.Func([IDL.Principal], [FriendRequest], []),
-  'sendMessage' : IDL.Func([MessageInput], [Message], []),
-  'signUp' : IDL.Func([IDL.Text, IDL.Opt(ExternalBlob)], [], []),
-  'unfriend' : IDL.Func([IDL.Principal], [], []),
 });
 
 export const idlInitArgs = [];
@@ -203,30 +144,6 @@ export const idlFactory = ({ IDL }) => {
     'displayName' : IDL.Text,
     'avatar' : IDL.Opt(ExternalBlob),
   });
-  const Time = IDL.Int;
-  const Message = IDL.Record({
-    'id' : IDL.Nat,
-    'content' : IDL.Text,
-    'read' : IDL.Bool,
-    'sender' : IDL.Principal,
-    'timestamp' : Time,
-    'receiver' : IDL.Principal,
-  });
-  const FriendRequestStatus = IDL.Variant({
-    'cancelled' : IDL.Null,
-    'pending' : IDL.Null,
-    'accepted' : IDL.Null,
-    'declined' : IDL.Null,
-  });
-  const FriendRequest = IDL.Record({
-    'to' : IDL.Principal,
-    'status' : FriendRequestStatus,
-    'from' : IDL.Principal,
-  });
-  const MessageInput = IDL.Record({
-    'content' : IDL.Text,
-    'receiver' : IDL.Principal,
-  });
   
   return IDL.Service({
     '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -257,16 +174,9 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'createExperience' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Opt(ExternalBlob), Category, IDL.Text],
-        [IDL.Text],
-        [],
-      ),
     'getAllExperiences' : IDL.Func([], [IDL.Vec(Experience)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(DiniVerseUser)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-    'getCurrentUserProfile' : IDL.Func([], [IDL.Opt(DiniVerseUser)], ['query']),
-    'getExperience' : IDL.Func([IDL.Text], [IDL.Opt(Experience)], ['query']),
     'getExperiencesByAuthor' : IDL.Func(
         [IDL.Principal],
         [IDL.Vec(Experience)],
@@ -275,14 +185,6 @@ export const idlFactory = ({ IDL }) => {
     'getExperiencesByCategory' : IDL.Func(
         [Category],
         [IDL.Vec(Experience)],
-        ['query'],
-      ),
-    'getFriendsList' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
-    'getGameplayControls' : IDL.Func([IDL.Text], [IDL.Text], ['query']),
-    'getMessages' : IDL.Func([IDL.Principal], [IDL.Vec(Message)], ['query']),
-    'getPendingFriendRequests' : IDL.Func(
-        [],
-        [IDL.Vec(IDL.Principal)],
         ['query'],
       ),
     'getTrendingExperiences' : IDL.Func(
@@ -295,32 +197,12 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(DiniVerseUser)],
         ['query'],
       ),
-    'incrementPlayerCount' : IDL.Func([IDL.Text], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'rateExperience' : IDL.Func([IDL.Text, IDL.Bool], [], []),
-    'respondToFriendRequest' : IDL.Func(
-        [
-          IDL.Principal,
-          IDL.Variant({ 'accept' : IDL.Null, 'decline' : IDL.Null }),
-        ],
-        [],
-        [],
-      ),
-    'saveCallerUserProfile' : IDL.Func([DiniVerseUser], [], []),
     'searchExperiences' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(Experience)],
         ['query'],
       ),
-    'searchUsersByDisplayName' : IDL.Func(
-        [IDL.Text],
-        [IDL.Vec(IDL.Tuple(IDL.Principal, DiniVerseUser))],
-        ['query'],
-      ),
-    'sendFriendRequest' : IDL.Func([IDL.Principal], [FriendRequest], []),
-    'sendMessage' : IDL.Func([MessageInput], [Message], []),
-    'signUp' : IDL.Func([IDL.Text, IDL.Opt(ExternalBlob)], [], []),
-    'unfriend' : IDL.Func([IDL.Principal], [], []),
   });
 };
 

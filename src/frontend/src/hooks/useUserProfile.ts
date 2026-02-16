@@ -1,19 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { DiniVerseUser } from '../backend';
 import { ExternalBlob } from '../backend';
 import type { Principal } from '@icp-sdk/core/principal';
+
+// Temporary type until backend is updated with session auth
+interface UserProfile {
+  displayName: string;
+  avatar?: ExternalBlob;
+}
 
 export function useGetCurrentUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
 
-  const query = useQuery<DiniVerseUser | null>({
+  const query = useQuery<UserProfile | null>({
     queryKey: ['currentUserProfile'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getCurrentUserProfile();
+      // Backend method doesn't exist yet - return null
+      // TODO: Replace with session-based getCurrentUser call
+      return null;
     },
-    enabled: !!actor && !actorFetching,
+    enabled: false, // Disabled until backend implements session auth
     retry: false,
   });
 
@@ -27,13 +33,14 @@ export function useGetCurrentUserProfile() {
 export function useGetUserProfile(principal: Principal | undefined) {
   const { actor, isFetching: actorFetching } = useActor();
 
-  return useQuery<DiniVerseUser | null>({
+  return useQuery<UserProfile | null>({
     queryKey: ['userProfile', principal?.toString()],
     queryFn: async () => {
-      if (!actor || !principal) return null;
-      return actor.getUserProfile(principal);
+      // Backend method doesn't exist - return null
+      // TODO: Replace with session-based user lookup
+      return null;
     },
-    enabled: !!actor && !actorFetching && !!principal,
+    enabled: false, // Disabled until backend implements session auth
   });
 }
 
@@ -49,8 +56,9 @@ export function useSignUp() {
       displayName: string;
       avatar: ExternalBlob | null;
     }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.signUp(displayName, avatar);
+      // Backend method doesn't exist yet
+      // TODO: Replace with session-based signup
+      throw new Error('Backend signup not yet implemented with session auth');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });

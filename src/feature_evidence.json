@@ -2,16 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-social-area-in-the-frontend-with-navigation-entry-and-routes-pages-to-manage-friends-requests-friends-list-messages-inbox-conversations-thread-view-compose-parties-current-party-invites-and-following-followed-creators-list",
-      "featureTitle": "Add a Social area in the frontend with navigation entry and routes/pages to manage: Friends (requests + friends list), Messages (inbox/conversations + thread view + compose), Parties (current party + invites), and Following (followed creators list).",
+      "featureId": "feature-update-the-frontend-authentication-ui-to-provide-on-platform-login-and-sign-up-experiences-forms-within-the-app-and-remove-the-current-login-disabled-sign-up-disabled-experience-for-normal-usage",
+      "featureTitle": "Update the frontend authentication UI to provide on-platform Login and Sign Up experiences (forms within the app) and remove the current 'Login Disabled'/'Sign Up Disabled' experience for normal usage.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/layout/LeftSidebar.tsx",
-        "frontend/src/components/social/FollowingPanel.tsx",
-        "frontend/src/components/social/FriendsPanel.tsx",
-        "frontend/src/components/social/MessagesPanel.tsx",
-        "frontend/src/components/social/PartiesPanel.tsx",
-        "frontend/src/pages/Social.tsx"
+        "frontend/src/hooks/useSessionAuth.ts",
+        "frontend/src/pages/Login.tsx",
+        "frontend/src/pages/SignUp.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,19 +19,22 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-6"
+        "REQ-3"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-create-new-react-query-hooks-for-social-apis-friends-messages-parties-following-user-search-using-the-existing-actor-pattern-and-query-invalidation-conventions-already-used-by-experiences-and-profiles",
-      "featureTitle": "Create new React Query hooks for social APIs (friends, messages, parties, following, user search) using the existing actor pattern and query invalidation conventions already used by experiences and profiles.",
+      "featureId": "feature-refactor-the-frontend-auth-state-management-to-use-the-new-on-platform-session-auth-instead-of-internet-identity-while-avoiding-edits-to-immutable-provider-hook-files",
+      "featureTitle": "Refactor the frontend auth state management to use the new on-platform session auth (instead of Internet Identity) while avoiding edits to immutable provider/hook files.",
       "files": [
-        "frontend/src/hooks/useSocialFollowing.ts",
-        "frontend/src/hooks/useSocialFriends.ts",
-        "frontend/src/hooks/useSocialMessages.ts",
-        "frontend/src/hooks/useSocialParties.ts",
-        "frontend/src/hooks/useUserDiscovery.ts"
+        "frontend/src/components/auth/AccountsDisabledNotice.tsx",
+        "frontend/src/components/auth/AuthButtons.tsx",
+        "frontend/src/components/auth/RequireProfile.tsx",
+        "frontend/src/hooks/useExperiences.ts",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/hooks/useSessionAuth.ts",
+        "frontend/src/pages/Profile.tsx",
+        "frontend/src/utils/sessionToken.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -47,16 +46,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-7"
+        "REQ-4"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-follow-creator-ui-on-the-experience-details-page-for-the-experience-author-reflecting-current-follow-state-and-follower-count-when-available",
-      "featureTitle": "Add “Follow creator” UI on the Experience Details page for the experience author, reflecting current follow state and follower count when available.",
+      "featureId": "feature-update-the-existing-change-control-auth-banner-messaging-to-remain-accurate-after-enabling-on-platform-authentication-i-e-reflect-that-authentication-is-on-platform-and-still-avoids-external-redirects",
+      "featureTitle": "Update the existing change-control/auth banner messaging to remain accurate after enabling on-platform authentication (i.e., reflect that authentication is on-platform and still avoids external redirects).",
       "files": [
-        "frontend/src/components/experiences/CreatorFollowButton.tsx",
-        "frontend/src/pages/ExperienceDetails.tsx"
+        "frontend/src/components/layout/AuthChangeBanner.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -68,31 +66,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-8"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-apply-a-coherent-consistent-visual-theme-for-the-new-social-pages-that-matches-the-existing-tailwind-shadcn-design-system-typography-spacing-card-layouts-and-icon-usage-without-introducing-new-product-features-beyond-the-requested-social-functionality",
-      "featureTitle": "Apply a coherent, consistent visual theme for the new social pages that matches the existing Tailwind/shadcn design system (typography, spacing, card layouts, and icon usage), without introducing new product features beyond the requested social functionality.",
-      "files": [
-        "frontend/src/components/social/FollowingPanel.tsx",
-        "frontend/src/components/social/FriendsPanel.tsx",
-        "frontend/src/components/social/MessagesPanel.tsx",
-        "frontend/src/components/social/PartiesPanel.tsx",
-        "frontend/src/pages/Social.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-9"
+        "REQ-5"
       ],
       "confidence": "high"
     }

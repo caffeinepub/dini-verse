@@ -6,6 +6,7 @@ import Discover from './pages/Discover';
 import ExperienceDetails from './pages/ExperienceDetails';
 import Profile from './pages/Profile';
 import SignUp from './pages/SignUp';
+import Login from './pages/Login';
 import AvatarShop from './pages/AvatarShop';
 import Create from './pages/Create';
 import DiniBucks from './pages/DiniBucks';
@@ -47,6 +48,12 @@ const signUpRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/signup',
   component: SignUp,
+});
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: Login,
 });
 
 const avatarShopRoute = createRoute({
@@ -97,6 +104,7 @@ const routeTree = rootRoute.addChildren([
   experienceRoute,
   profileRoute,
   signUpRoute,
+  loginRoute,
   avatarShopRoute,
   createRoute_,
   diniBucksRoute,

@@ -1,199 +1,116 @@
 {
   "kind": "build_request",
-  "title": "Add social features: friends, private messaging, parties, and creator following",
-  "projectName": "DiniVerse Social",
+  "title": "Add first-party on-platform authentication (no external redirects)",
+  "projectName": "Dini Verse",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Implement backend social graph features: friend requests (send, accept, decline/cancel), friends list, and friend request inbox/outbox, all scoped to authenticated users and keyed by Principal.",
+      "text": "Implement first-party (on-platform) authentication in the Motoko backend using username/password signup and login, without relying on Internet Identity or any external authentication redirects.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+          "add on-platform authentication"
         ]
       },
       "acceptanceCriteria": [
-        "An authenticated user can send a friend request to another existing user principal and cannot send a request to themselves.",
-        "The recipient can list pending incoming friend requests and accept or decline them.",
-        "The sender can list pending outgoing friend requests and cancel them.",
-        "When a friend request is accepted, both users appear in each other’s friends list.",
-        "Unauthorized callers (not having #user permission) cannot use friend-request or friends APIs."
+        "Backend exposes explicit canister methods for signup and login using username/password (no Internet Identity required).",
+        "Passwords are not stored in plaintext (store a derived/hashed representation).",
+        "Usernames are unique and attempts to re-register an existing username return a clear error.",
+        "The authentication flow does not depend on caller being an authenticated principal (works for anonymous visitors)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Implement backend private messaging: direct message threads between two Principals with APIs to create/find a conversation, send messages, list conversations, and fetch messages for a conversation.",
+      "text": "Add backend session management so authenticated users can remain logged in across page reloads using an on-platform session token, and enforce authorization for write actions based on a valid session.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+          "add on-platform authentication"
         ]
       },
       "acceptanceCriteria": [
-        "An authenticated user can send a message to another existing user principal.",
-        "A user can list their conversations (at least one entry after sending/receiving a message).",
-        "A user can fetch messages for a conversation and sees messages ordered oldest-to-newest.",
-        "Only the two participants in a conversation can read its messages."
+        "Backend issues a session token on successful login and can validate it on subsequent calls.",
+        "Backend provides a logout method that invalidates the active session token.",
+        "Write actions that currently require #user permission (e.g., createExperience, saveCallerUserProfile, social/messaging mutations) are gated by a valid session token instead of Internet Identity-based caller permissions.",
+        "Read-only queries (e.g., browsing experiences and viewing profiles) continue to work for guests without trapping with Unauthorized errors."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Implement backend party system: create party, invite users, accept/decline invites, join/leave party, list current party state for the caller, and optionally associate a party with an experienceId to support “joining games together”.",
-      "target": "backend",
+      "text": "Update the frontend authentication UI to provide on-platform Login and Sign Up experiences (forms within the app) and remove the current 'Login Disabled'/'Sign Up Disabled' experience for normal usage.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+          "add on-platform authentication"
         ]
       },
       "acceptanceCriteria": [
-        "An authenticated user can create a party and becomes the leader.",
-        "A party leader can invite another user principal; invitees can list their pending party invites.",
-        "An invitee can accept an invite and becomes a member of the party; they can also decline.",
-        "Any member can leave the party; if the leader leaves, leadership is reassigned or the party is dissolved (documented behavior).",
-        "A party can store an optional experienceId; members can fetch the party state and see that value."
+        "/login renders an on-platform login form (username + password) and submits to the backend authentication API.",
+        "/signup renders an on-platform signup form (at minimum: username, display name, password) and submits to the backend authentication API.",
+        "After successful login/signup, the user is treated as authenticated in the UI and can access account-gated areas without seeing 'Accounts disabled' notices.",
+        "User-facing validation and error messages are in English."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Implement backend creator following: allow authenticated users to follow and unfollow another Principal, list followed creators for the caller, and list follower count for a given creator principal.",
-      "target": "backend",
+      "text": "Refactor the frontend auth state management to use the new on-platform session auth (instead of Internet Identity) while avoiding edits to immutable provider/hook files.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+          "add on-platform authentication"
         ]
       },
       "acceptanceCriteria": [
-        "An authenticated user can follow and unfollow another principal and cannot follow themselves.",
-        "The caller can list all creators they currently follow.",
-        "For any principal, the backend can return follower count (0 if none).",
-        "Follow state is reflected consistently after follow/unfollow without requiring a page refresh (frontend invalidates queries)."
+        "Frontend session state persists across reloads (e.g., via localStorage) using the backend session token.",
+        "AuthButtons shows appropriate actions when signed out (e.g., Login / Sign Up) and Logout when signed in.",
+        "RequireProfile no longer shows AccountsDisabledNotice for signed-out users; instead it should prompt users to log in (or redirect to /login) based on the new on-platform auth state.",
+        "No changes are made to immutable paths (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*)."
       ]
     },
     {
       "id": "REQ-5",
-      "text": "Add backend user discovery endpoints needed for social features: list/search user profiles by display name (returning principals + public profile fields) so users can find people to friend/message/follow.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
-        ]
-      },
-      "acceptanceCriteria": [
-        "There is a query method to search users by a text term (case-insensitive) and return a bounded list of results.",
-        "Search results include the user principal and displayName (and avatar reference if available).",
-        "Unauthenticated users may use discovery only if explicitly intended; otherwise discovery requires #user permission (choose and apply consistently across endpoints)."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Add a Social area in the frontend with navigation entry and routes/pages to manage: Friends (requests + friends list), Messages (inbox/conversations + thread view + compose), Parties (current party + invites), and Following (followed creators list).",
+      "text": "Update the existing change-control/auth banner messaging to remain accurate after enabling on-platform authentication (i.e., reflect that authentication is on-platform and still avoids external redirects).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
+          "add on-platform authentication"
         ]
       },
       "acceptanceCriteria": [
-        "Left sidebar includes a new “Social” (or equivalent) navigation link that routes to the social hub.",
-        "Social hub renders four sections/tabs: Friends, Messages, Parties, Following.",
-        "Each section supports empty states and loading states using existing UI patterns (cards, skeletons, muted text).",
-        "All actions that require authentication are blocked with clear English messaging and a navigation path to Sign Up / Log In."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Create new React Query hooks for social APIs (friends, messages, parties, following, user search) using the existing actor pattern and query invalidation conventions already used by experiences and profiles.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Hooks exist for: searching users, sending/responding to friend requests, listing friends, sending/fetching messages, party create/invite/respond/leave, follow/unfollow and listing followed creators.",
-        "Mutations invalidate the appropriate cached queries so the UI updates after actions without a manual refresh.",
-        "Hooks do not require edits to immutable hook files; they are implemented as new hook modules or modifications to non-immutable files only."
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "text": "Add “Follow creator” UI on the Experience Details page for the experience author, reflecting current follow state and follower count when available.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Add: Social features include friend requests, private messaging, party systems for joining games together, and the ability to follow favorite creators."
-        ]
-      },
-      "acceptanceCriteria": [
-        "When viewing an experience, the Creator card shows a Follow/Unfollow button for the author (hidden/disabled when not authenticated).",
-        "Toggling follow updates the button state and follower count (if displayed) after the request completes.",
-        "The UI prevents following yourself when the experience author equals the current user principal."
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "text": "Apply a coherent, consistent visual theme for the new social pages that matches the existing Tailwind/shadcn design system (typography, spacing, card layouts, and icon usage), without introducing new product features beyond the requested social functionality.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ]
-      },
-      "acceptanceCriteria": [
-        "All new social screens use consistent layout primitives (container width, card styling, headings) aligned with existing pages like Home/Groups.",
-        "User-facing text is English and uses the same tone as existing pages (clear, minimal, “Coming soon” only when truly not implemented)."
+        "The banner continues to clearly state that external login redirects are disabled.",
+        "The banner text no longer implies that authentication is disabled if on-platform authentication is now enabled.",
+        "All banner/user-facing text is in English."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services/canisters.",
-    "Do not edit frontend paths marked immutable in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*). Compose existing UI components instead.",
-    "No real-time transport (no WebSockets/push). Social updates should work via queries/refetching.",
-    "Use English for all user-facing text."
+    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce multiple backend services.",
+    "Do not add or depend on third-party authentication providers (including Internet Identity) or any off-platform authentication redirects.",
+    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and anything under frontend/src/components/ui."
   ],
   "nonGoals": [
-    "Group/community system beyond the requested party system (the existing Groups page can remain a placeholder unless needed for navigation).",
-    "End-to-end encryption or advanced moderation/reporting tools for messaging.",
-    "Third-party integrations for chat/social graphs outside the Internet Computer canister.",
-    "Cross-device push notifications or email notifications for friend requests/messages."
+    "Implementing OAuth/social login (Google, GitHub, etc.).",
+    "Adding external databases or non-IC storage services for authentication data.",
+    "Adding real-time auth synchronization (e.g., websockets) across tabs/devices."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

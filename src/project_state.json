@@ -7,34 +7,26 @@
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-add-a-social-area-in-the-frontend-with-navigation-entry-and-routes-pages-to-manage-friends-requests-friends-list-messages-inbox-conversations-thread-view-compose-parties-current-party-invites-and-following-followed-creators-list",
-      "title": "Add a Social area in the frontend with navigation entry and routes/pages to manage: Friends (requests + friends list), Messages (inbox/conversations + thread view + compose), Parties (current party + invites), and Following (followed creators list).",
+      "id": "feature-update-the-frontend-authentication-ui-to-provide-on-platform-login-and-sign-up-experiences-forms-within-the-app-and-remove-the-current-login-disabled-sign-up-disabled-experience-for-normal-usage",
+      "title": "Update the frontend authentication UI to provide on-platform Login and Sign Up experiences (forms within the app) and remove the current 'Login Disabled'/'Sign Up Disabled' experience for normal usage.",
       "reqIds": [
-        "REQ-6"
+        "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-create-new-react-query-hooks-for-social-apis-friends-messages-parties-following-user-search-using-the-existing-actor-pattern-and-query-invalidation-conventions-already-used-by-experiences-and-profiles",
-      "title": "Create new React Query hooks for social APIs (friends, messages, parties, following, user search) using the existing actor pattern and query invalidation conventions already used by experiences and profiles.",
+      "id": "feature-refactor-the-frontend-auth-state-management-to-use-the-new-on-platform-session-auth-instead-of-internet-identity-while-avoiding-edits-to-immutable-provider-hook-files",
+      "title": "Refactor the frontend auth state management to use the new on-platform session auth (instead of Internet Identity) while avoiding edits to immutable provider/hook files.",
       "reqIds": [
-        "REQ-7"
+        "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-follow-creator-ui-on-the-experience-details-page-for-the-experience-author-reflecting-current-follow-state-and-follower-count-when-available",
-      "title": "Add “Follow creator” UI on the Experience Details page for the experience author, reflecting current follow state and follower count when available.",
+      "id": "feature-update-the-existing-change-control-auth-banner-messaging-to-remain-accurate-after-enabling-on-platform-authentication-i-e-reflect-that-authentication-is-on-platform-and-still-avoids-external-redirects",
+      "title": "Update the existing change-control/auth banner messaging to remain accurate after enabling on-platform authentication (i.e., reflect that authentication is on-platform and still avoids external redirects).",
       "reqIds": [
-        "REQ-8"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-apply-a-coherent-consistent-visual-theme-for-the-new-social-pages-that-matches-the-existing-tailwind-shadcn-design-system-typography-spacing-card-layouts-and-icon-usage-without-introducing-new-product-features-beyond-the-requested-social-functionality",
-      "title": "Apply a coherent, consistent visual theme for the new social pages that matches the existing Tailwind/shadcn design system (typography, spacing, card layouts, and icon usage), without introducing new product features beyond the requested social functionality.",
-      "reqIds": [
-        "REQ-9"
+        "REQ-5"
       ],
       "version": 1
     }
@@ -42,13 +34,13 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add social features: friend requests, private messaging, party system for joining games together, and ability to follow favorite creators",
+      "summary": "Add on-platform authentication (built-in user login/auth system)",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Implement backend social graph features: friend requests (send, accept, decline/cancel), friends list, and friend request inbox/outbox, all scoped to authenticated users and keyed by Principal.",
+      "summary": "Implement first-party (on-platform) authentication in the Motoko backend using username/password signup and login, without relying on Internet Identity or any external authentication redirects.",
       "reqIds": [
         "REQ-1"
       ],
@@ -56,38 +48,14 @@
     },
     {
       "id": "AR-3",
-      "summary": "Implement backend private messaging: direct message threads between two Principals with APIs to create/find a conversation, send messages, list conversations, and fetch messages for a conversation.",
+      "summary": "Add backend session management so authenticated users can remain logged in across page reloads using an on-platform session token, and enforce authorization for write actions based on a valid session.",
       "reqIds": [
         "REQ-2"
       ],
       "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Implement backend party system: create party, invite users, accept/decline invites, join/leave party, list current party state for the caller, and optionally associate a party with an experienceId to support “joining games together”.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Implement backend creator following: allow authenticated users to follow and unfollow another Principal, list followed creators for the caller, and list follower count for a given creator principal.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "Add backend user discovery endpoints needed for social features: list/search user profiles by display name (returning principals + public profile fields) so users can find people to friend/message/follow.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "status": "pending"
     }
   ],
-  "projectName": "DiniVerse Social",
+  "projectName": "Dini Verse",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -1,45 +1,14 @@
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
-import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
+import { useSessionAuth } from '../../hooks/useSessionAuth';
 import { useNavigate } from '@tanstack/react-router';
-import { LogIn, LogOut, UserPlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { LogOut, LogIn, UserPlus } from 'lucide-react';
 
 export default function AuthButtons() {
-  const { login, clear, loginStatus, identity } = useInternetIdentity();
-  const queryClient = useQueryClient();
+  const { isAuthenticated, logout, isLoading } = useSessionAuth();
   const navigate = useNavigate();
 
-  const isAuthenticated = !!identity;
-  const isLoggingIn = loginStatus === 'logging-in';
-
-  const handleLogin = async () => {
-    try {
-      await login();
-    } catch (error: any) {
-      console.error('Login error:', error);
-      if (error.message === 'User is already authenticated') {
-        await clear();
-        setTimeout(() => login(), 300);
-      }
-    }
-  };
-
-  const handleSignUp = async () => {
-    if (isAuthenticated) {
-      navigate({ to: '/signup' });
-    } else {
-      try {
-        await login();
-        navigate({ to: '/signup' });
-      } catch (error: any) {
-        console.error('Sign up error:', error);
-      }
-    }
-  };
-
   const handleLogout = async () => {
-    await clear();
-    queryClient.clear();
+    await logout();
     navigate({ to: '/' });
   };
 
@@ -49,9 +18,14 @@ export default function AuthButtons() {
         onClick={handleLogout}
         variant="outline"
         size="sm"
+        disabled={isLoading}
         className="gap-2"
       >
-        <LogOut className="h-4 w-4" />
+        {isLoading ? (
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        ) : (
+          <LogOut className="h-4 w-4" />
+        )}
         Log out
       </Button>
     );
@@ -60,23 +34,22 @@ export default function AuthButtons() {
   return (
     <div className="flex items-center gap-2">
       <Button
-        onClick={handleLogin}
-        disabled={isLoggingIn}
-        variant="outline"
+        onClick={() => navigate({ to: '/login' })}
+        variant="ghost"
         size="sm"
         className="gap-2"
       >
         <LogIn className="h-4 w-4" />
-        {isLoggingIn ? 'Logging in...' : 'Log in'}
+        Log In
       </Button>
       <Button
-        onClick={handleSignUp}
-        disabled={isLoggingIn}
+        onClick={() => navigate({ to: '/signup' })}
+        variant="default"
         size="sm"
         className="gap-2"
       >
         <UserPlus className="h-4 w-4" />
-        Sign up
+        Sign Up
       </Button>
     </div>
   );

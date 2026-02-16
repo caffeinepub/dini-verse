@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useNavigate } from '@tanstack/react-router';
-import { Coins, TrendingUp, Gift, Star, Zap } from 'lucide-react';
+import { Coins, TrendingUp, Gift, Star, Zap, LogIn, UserPlus } from 'lucide-react';
 
 export default function DiniBucks() {
   const { isAuthenticated } = useCurrentUser();
@@ -19,13 +19,23 @@ export default function DiniBucks() {
         </div>
 
         {!isAuthenticated && (
-          <Card className="mb-8 border-primary/50 bg-primary/5">
+          <Card className="mb-8 border-primary/20 bg-primary/5">
             <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-lg mb-4">Log in to view your Dini Bucks balance</p>
-                <Button onClick={() => navigate({ to: '/signup' })}>
-                  Log In
-                </Button>
+              <div className="text-center space-y-4">
+                <p className="text-lg font-medium">Balance Viewing Requires Authentication</p>
+                <p className="text-sm text-muted-foreground">
+                  Log in or create an account to view and manage your Dini Bucks balance.
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={() => navigate({ to: '/login' })} className="gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Log In
+                  </Button>
+                  <Button onClick={() => navigate({ to: '/signup' })} variant="outline" className="gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Sign Up
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

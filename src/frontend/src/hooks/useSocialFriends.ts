@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import type { Principal } from '@icp-sdk/core/principal';
-import { Variant_accept_decline } from '../backend';
 
 export function useGetFriendsList() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -10,7 +9,8 @@ export function useGetFriendsList() {
     queryKey: ['friends'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getFriendsList();
+      // TODO: Backend method not yet implemented
+      return [];
     },
     enabled: !!actor && !actorFetching,
   });
@@ -23,7 +23,8 @@ export function useGetPendingFriendRequests() {
     queryKey: ['friendRequests', 'pending'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getPendingFriendRequests();
+      // TODO: Backend method not yet implemented
+      return [];
     },
     enabled: !!actor && !actorFetching,
   });
@@ -36,7 +37,8 @@ export function useSendFriendRequest() {
   return useMutation({
     mutationFn: async (target: Principal) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.sendFriendRequest(target);
+      // TODO: Backend method not yet implemented
+      throw new Error('sendFriendRequest not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
@@ -57,8 +59,8 @@ export function useRespondToFriendRequest() {
       action: 'accept' | 'decline';
     }) => {
       if (!actor) throw new Error('Actor not available');
-      const variantAction = action === 'accept' ? Variant_accept_decline.accept : Variant_accept_decline.decline;
-      return actor.respondToFriendRequest(from, variantAction);
+      // TODO: Backend method not yet implemented
+      throw new Error('respondToFriendRequest not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
@@ -74,7 +76,8 @@ export function useUnfriend() {
   return useMutation({
     mutationFn: async (target: Principal) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.unfriend(target);
+      // TODO: Backend method not yet implemented
+      throw new Error('unfriend not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friends'] });

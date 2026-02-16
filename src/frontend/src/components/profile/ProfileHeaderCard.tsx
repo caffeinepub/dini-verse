@@ -3,10 +3,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from '@tanstack/react-router';
 import { Sparkles, Compass } from 'lucide-react';
-import type { DiniVerseUser } from '../../backend';
+import { ExternalBlob } from '../../backend';
+
+// Temporary type until backend is updated with session auth
+interface UserProfile {
+  displayName: string;
+  avatar?: ExternalBlob;
+}
 
 interface ProfileHeaderCardProps {
-  profile: DiniVerseUser | null | undefined;
+  profile: UserProfile | null | undefined;
   isLoading: boolean;
 }
 

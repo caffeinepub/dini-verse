@@ -37,7 +37,9 @@ export function useGetExperience(id: string) {
     queryKey: ['experience', id],
     queryFn: async () => {
       if (!actor) return null;
-      return actor.getExperience(id);
+      // Backend doesn't have getExperience method yet, so find by ID from all experiences
+      const experiences = await actor.getAllExperiences();
+      return experiences.find(exp => exp.id === id) || null;
     },
     enabled: !!actor && !actorFetching && !!id,
   });
@@ -101,7 +103,8 @@ export function useCreateExperience() {
       gameplayControls: string;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.createExperience(title, description, thumbnail, category, gameplayControls);
+      // TODO: Backend method not yet implemented
+      throw new Error('createExperience not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['experiences'] });
@@ -122,7 +125,8 @@ export function useRateExperience() {
       isThumbsUp: boolean;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.rateExperience(experienceId, isThumbsUp);
+      // TODO: Backend method not yet implemented
+      throw new Error('rateExperience not yet implemented in backend');
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['experience', variables.experienceId] });
@@ -138,7 +142,8 @@ export function useIncrementPlayerCount() {
   return useMutation({
     mutationFn: async (experienceId: string) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.incrementPlayerCount(experienceId);
+      // TODO: Backend method not yet implemented
+      throw new Error('incrementPlayerCount not yet implemented in backend');
     },
     onSuccess: (_, experienceId) => {
       queryClient.invalidateQueries({ queryKey: ['experience', experienceId] });
