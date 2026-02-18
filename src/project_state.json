@@ -3,30 +3,24 @@
   "projectStateVersion": 3,
   "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "Settings page still fails to load and shows error: \"Failed to load settings. Please try again later.\""
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-update-the-frontend-authentication-ui-to-provide-on-platform-login-and-sign-up-experiences-forms-within-the-app-and-remove-the-current-login-disabled-sign-up-disabled-experience-for-normal-usage",
-      "title": "Update the frontend authentication UI to provide on-platform Login and Sign Up experiences (forms within the app) and remove the current 'Login Disabled'/'Sign Up Disabled' experience for normal usage.",
+      "id": "feature-improve-settings-page-error-reporting-so-that-when-fetching-settings-fails-the-ui-includes-the-actual-error-message-in-english-in-addition-to-the-existing-generic-text-to-make-deployment-regressions-diagnosable",
+      "title": "Improve Settings page error reporting so that when fetching settings fails, the UI includes the actual error message (in English) in addition to the existing generic text, to make deployment regressions diagnosable.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-refactor-the-frontend-auth-state-management-to-use-the-new-on-platform-session-auth-instead-of-internet-identity-while-avoiding-edits-to-immutable-provider-hook-files",
-      "title": "Refactor the frontend auth state management to use the new on-platform session auth (instead of Internet Identity) while avoiding edits to immutable provider/hook files.",
+      "id": "feature-redeploy-a-new-production-build-that-includes-the-backend-settings-fix-and-the-improved-frontend-error-reporting",
+      "title": "Redeploy a new production build that includes the backend settings fix and the improved frontend error reporting.",
       "reqIds": [
         "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-existing-change-control-auth-banner-messaging-to-remain-accurate-after-enabling-on-platform-authentication-i-e-reflect-that-authentication-is-on-platform-and-still-avoids-external-redirects",
-      "title": "Update the existing change-control/auth banner messaging to remain accurate after enabling on-platform authentication (i.e., reflect that authentication is on-platform and still avoids external redirects).",
-      "reqIds": [
-        "REQ-5"
       ],
       "version": 1
     }
@@ -34,21 +28,15 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add on-platform authentication (built-in user login/auth system)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Implement first-party (on-platform) authentication in the Motoko backend using username/password signup and login, without relying on Internet Identity or any external authentication redirects.",
+      "summary": "Update the backend settings retrieval API so that calling getOrCreateCallerSettings() never fails solely due to missing access-control permissions or missing prior settings initialization; it must always return a valid UserSettings record for the caller (creating and persisting defaults when needed).",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
     },
     {
-      "id": "AR-3",
-      "summary": "Add backend session management so authenticated users can remain logged in across page reloads using an on-platform session token, and enforce authorization for write actions based on a valid session.",
+      "id": "AR-2",
+      "summary": "Ensure backend settings mutation methods (updateDisplayName, updateDisplayNameAndAvatar, updateVisibility, deleteAvatar) cannot fail solely because settings were not previously initialized; each method must reuse the same “get or initialize defaults” flow before applying updates.",
       "reqIds": [
         "REQ-2"
       ],

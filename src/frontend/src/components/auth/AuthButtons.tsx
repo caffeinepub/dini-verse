@@ -12,20 +12,24 @@ export default function AuthButtons() {
     navigate({ to: '/' });
   };
 
+  if (isLoading) {
+    return (
+      <Button variant="outline" size="sm" disabled className="gap-2">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        Loading...
+      </Button>
+    );
+  }
+
   if (isAuthenticated) {
     return (
       <Button
         onClick={handleLogout}
         variant="outline"
         size="sm"
-        disabled={isLoading}
         className="gap-2"
       >
-        {isLoading ? (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        ) : (
-          <LogOut className="h-4 w-4" />
-        )}
+        <LogOut className="h-4 w-4" />
         Log out
       </Button>
     );

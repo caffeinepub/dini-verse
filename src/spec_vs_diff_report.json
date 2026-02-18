@@ -1,88 +1,57 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T17:00:25.015Z",
-  "summary": "Frontend UI and state were partially refactored toward an on-platform session-token model (login/signup pages, localStorage token utility, updated auth buttons and banner). However, the backend username/password auth + session management and backend-enforced authorization are not evidenced in the diff, and the frontend currently uses mock tokens with TODOs instead of calling backend auth APIs.",
+  "generatedAt": "2026-02-18T14:13:29.863Z",
+  "summary": "REQ-3 is implemented via improved error normalization (formatError) and rendering error.message details on the Settings page, while keeping React Query retry disabled. Backend changes show a new default-settings initializer and a migration hook, but the diff excerpt is truncated before proving that getOrCreateCallerSettings and all mutation methods were updated to always initialize defaults and avoid auth traps. Redeploy (REQ-4) cannot be verified from code diff alone. Several unrelated frontend UI/layout changes appear in the diff summary file and were not requested.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Implement first-party username/password signup and login in the Motoko backend (explicit canister methods), with non-plaintext password storage and unique usernames, working for anonymous callers.",
-      "reason": "The diff for backend/main.mo (truncated) shows experience read-only query methods and type/storage definitions, but no evidence of new canister methods for signup/login, no password hashing/derivation, and no username uniqueness/error handling.",
+      "requirement": "Update getOrCreateCallerSettings() so it never fails solely due to missing access-control permissions or missing prior settings initialization; always return and persist default UserSettings when absent.",
+      "reason": "backend/main.mo is truncated before showing the implementation of getOrCreateCallerSettings() and any removal/avoidance of authorization trapping; only a helper initializeDefaultSettings(caller) is visible, which is not sufficient evidence that the public API now guarantees non-trapping behavior and persistence in all cases.",
       "evidence": [
-        "backend/main.mo"
+        "backend/main.mo (truncated)"
       ]
     },
     {
       "id": "REQ-2",
-      "requirement": "Add backend session management: issue/validate session tokens, provide logout invalidation, and gate write actions by valid session token while keeping read-only queries guest-accessible.",
-      "reason": "No evidence in backend/main.mo of session token issuance/validation/logout methods, nor of write-method authorization changes to use session tokens. Frontend hooks explicitly note backend methods are not implemented and throw TODO errors for mutations.",
+      "requirement": "Ensure updateDisplayName, updateDisplayNameAndAvatar, updateVisibility, deleteAvatar cannot fail solely because settings were not previously initialized; reuse the same get-or-initialize flow.",
+      "reason": "The diff summary does not show the implementations of updateDisplayName, updateDisplayNameAndAvatar, updateVisibility, or deleteAvatar in backend/main.mo, so it cannot be confirmed they now initialize defaults instead of trapping when settings are missing.",
       "evidence": [
-        "backend/main.mo",
-        "frontend/src/hooks/useSessionAuth.ts",
-        "frontend/src/hooks/useExperiences.ts",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/hooks/useSocialFriends.ts",
-        "frontend/src/hooks/useSocialMessages.ts"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "/login and /signup submit to the backend authentication API (username/password; signup includes username, display name, password) and after success the user is authenticated without 'accounts disabled' notices.",
-      "reason": "Login.tsx and SignUp.tsx call useSessionAuth.login/signup, but useSessionAuth.ts contains TODOs for backend calls and instead generates a mock token; no evidence of actual backend authentication API integration.",
-      "evidence": [
-        "frontend/src/pages/Login.tsx",
-        "frontend/src/pages/SignUp.tsx",
-        "frontend/src/hooks/useSessionAuth.ts"
+        "backend/main.mo (truncated)"
       ]
     },
     {
       "id": "REQ-4",
-      "requirement": "Frontend auth state persists across reloads using the backend session token, and auth state is based on validating that token with the backend (without editing immutable hook/provider files).",
-      "reason": "Session token is persisted in localStorage (sessionToken.ts), but useSessionAuth.ts explicitly does not validate with the backend (TODOs) and assumes a token is valid if it exists, setting a placeholder user. This does not meet the requirement to use the new on-platform session auth backed by backend validation.",
-      "evidence": [
-        "frontend/src/utils/sessionToken.ts",
-        "frontend/src/hooks/useSessionAuth.ts"
-      ]
+      "requirement": "Redeploy a new production build that includes REQ-1 through REQ-3.",
+      "reason": "No deployment/release artifact or pipeline change is shown in the diff summary; code changes alone do not evidence a completed redeploy.",
+      "evidence": []
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Mock session token generation and placeholder user state that assumes any stored token is valid (no backend validation).",
-      "reason": "BuildRequest requires on-platform authentication backed by Motoko canister methods and session validation; the diff implements a temporary client-only mock token approach instead.",
+      "description": "Broad frontend UI/navigation/layout changes (logo asset with retina support, header styling, footer attribution/UTM tracking, route/page feature changes across Home/Discover/ExperienceDetails/Profile/SignUp, etc.).",
+      "reason": "The BuildRequest explicitly limits scope to fixing Settings load/auth trap and improving Settings error-message visibility; the diff summary file indicates many additional UI/feature changes not requested.",
       "evidence": [
-        "frontend/src/hooks/useSessionAuth.ts"
+        "frontend-file-summaries.txt"
       ]
     },
     {
-      "description": "Multiple frontend mutations and social features explicitly stubbed to throw 'not yet implemented in backend' errors.",
-      "reason": "Not requested as a feature; indicates incomplete or placeholder implementations unrelated to the requested authentication functionality (and does not implement session-gated write actions).",
+      "description": "New frontend error-normalization utility (formatError) used across multiple settings mutations (not only settings fetch).",
+      "reason": "REQ-3 only requires improved error reporting when fetching settings fails; extending normalized error handling to updateDisplayName/updateDisplayNameAndAvatar/updateVisibility/deleteAvatar is extra behavior beyond the stated requirement.",
       "evidence": [
-        "frontend/src/hooks/useExperiences.ts",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/hooks/useSocialFriends.ts",
-        "frontend/src/hooks/useSocialMessages.ts"
+        "frontend/src/utils/formatError.ts",
+        "frontend/src/hooks/useAccountSettings.ts"
       ]
     }
   ],
-  "confidence": 0.78,
+  "confidence": 0.62,
   "changed_files": [
     "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/auth/AccountsDisabledNotice.tsx",
-    "frontend/src/components/auth/AuthButtons.tsx",
-    "frontend/src/components/auth/RequireProfile.tsx",
-    "frontend/src/components/layout/AuthChangeBanner.tsx",
-    "frontend/src/hooks/useExperiences.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/hooks/useSessionAuth.ts",
-    "frontend/src/hooks/useSocialFriends.ts",
-    "frontend/src/hooks/useSocialMessages.ts",
-    "frontend/src/pages/Create.tsx",
-    "frontend/src/pages/DiniBucks.tsx",
-    "frontend/src/pages/Login.tsx",
-    "frontend/src/pages/Profile.tsx",
-    "frontend/src/pages/SignUp.tsx",
-    "frontend/src/utils/sessionToken.ts",
+    "frontend/src/hooks/useAccountSettings.ts",
+    "frontend/src/pages/Settings.tsx",
+    "frontend/src/utils/formatError.ts",
     "project_state.json"
   ]
 }

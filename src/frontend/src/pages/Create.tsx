@@ -1,11 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useSessionAuth } from '../hooks/useSessionAuth';
 import { useNavigate } from '@tanstack/react-router';
-import { Code, Box, Palette, Zap, Layers, Play, LogIn, UserPlus } from 'lucide-react';
+import { Gamepad2, Shirt } from 'lucide-react';
 
 export default function Create() {
-  const { isAuthenticated } = useSessionAuth();
   const navigate = useNavigate();
 
   return (
@@ -14,113 +11,56 @@ export default function Create() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Create</h1>
           <p className="text-muted-foreground">
-            Build amazing experiences with Dini Studio
+            Choose what you want to create
           </p>
         </div>
 
-        {!isAuthenticated && (
-          <Card className="mb-8 border-primary/20 bg-primary/5">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                <p className="text-lg font-medium">Creation Features Require Authentication</p>
-                <p className="text-sm text-muted-foreground">
-                  Log in or create an account to access the full Dini Studio creation suite.
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button onClick={() => navigate({ to: '/login' })} className="gap-2">
-                    <LogIn className="h-4 w-4" />
-                    Log In
-                  </Button>
-                  <Button onClick={() => navigate({ to: '/signup' })} variant="outline" className="gap-2">
-                    <UserPlus className="h-4 w-4" />
-                    Sign Up
-                  </Button>
-                </div>
-              </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card 
+            className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
+            onClick={() => navigate({ to: '/create/games' })}
+          >
+            <CardHeader className="pb-4">
+              <Gamepad2 className="h-16 w-16 text-primary mb-4" />
+              <CardTitle className="text-2xl">Create Games/Experiences</CardTitle>
+              <CardDescription className="text-base">
+                Build immersive games and experiences with our easy drag-and-drop 2D builder. 
+                Create props using shapes, decals, and simple controls. Perfect for beginners and pros alike.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>• Drag-and-drop 2D shape builder</li>
+                <li>• Upload and position decals</li>
+                <li>• Resize, rotate, and layer elements</li>
+                <li>• Adjust colors, transparency, and positioning</li>
+                <li>• Save and share your props</li>
+              </ul>
             </CardContent>
           </Card>
-        )}
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <Box className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>3D Viewport</CardTitle>
-              <CardDescription>
-                Build your world with an intuitive 3D editor
+          <Card 
+            className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
+            onClick={() => navigate({ to: '/create/ugc-accessories' })}
+          >
+            <CardHeader className="pb-4">
+              <Shirt className="h-16 w-16 text-primary mb-4" />
+              <CardTitle className="text-2xl">Create UGC Accessories</CardTitle>
+              <CardDescription className="text-base">
+                Design custom accessories for your avatar. Create unique clothing, hats, gear, and more 
+                to express your style or share with the community.
               </CardDescription>
             </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Layers className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Object Library</CardTitle>
-              <CardDescription>
-                Access thousands of pre-built objects and assets
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Code className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Scripting</CardTitle>
-              <CardDescription>
-                Add interactivity with visual scripting or code
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Palette className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Materials</CardTitle>
-              <CardDescription>
-                Customize textures and materials for your objects
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Zap className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Physics</CardTitle>
-              <CardDescription>
-                Add realistic physics and interactions
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Play className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Test & Publish</CardTitle>
-              <CardDescription>
-                Test your experience and publish to the community
-              </CardDescription>
-            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>• Design custom avatar accessories</li>
+                <li>• Create clothing and gear</li>
+                <li>• Share with the community</li>
+                <li>• Express your unique style</li>
+              </ul>
+            </CardContent>
           </Card>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Getting Started</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              Dini Studio is a powerful creation platform that lets you build immersive 3D experiences without extensive coding knowledge.
-            </p>
-            <p className="text-muted-foreground">
-              Whether you're creating an adventure game, a roleplay world, or a simulator, Dini Studio provides all the tools you need to bring your vision to life.
-            </p>
-            <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground">
-                <strong>Note:</strong> The full Dini Studio creation suite is currently under development. Stay tuned for updates!
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

@@ -1,112 +1,69 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T17:00:25.019Z",
+  "generatedAt": "2026-02-18T14:13:29.867Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 3,
+    "total": 4,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Implement first-party (on-platform) authentication in the Motoko backend using username/password signup and login, without relying on Internet Identity or any external authentication redirects.",
+        "summary": "Update the backend settings retrieval API so that calling getOrCreateCallerSettings() never fails solely due to missing access-control permissions or missing prior settings initialization; it must always return a valid UserSettings record for the caller (creating and persisting defaults when needed).",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Add backend session management so authenticated users can remain logged in across page reloads using an on-platform session token, and enforce authorization for write actions based on a valid session.",
+        "summary": "Ensure backend settings mutation methods (updateDisplayName, updateDisplayNameAndAvatar, updateVisibility, deleteAvatar) cannot fail solely because settings were not previously initialized; each method must reuse the same “get or initialize defaults” flow before applying updates.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Update the frontend authentication UI to provide on-platform Login and Sign Up experiences (forms within the app) and remove the current 'Login Disabled'/'Sign Up Disabled' experience for normal usage.",
+        "summary": "Improve Settings page error reporting so that when fetching settings fails, the UI includes the actual error message (in English) in addition to the existing generic text, to make deployment regressions diagnosable.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/Login.tsx",
-          "frontend/src/pages/SignUp.tsx",
-          "frontend/src/hooks/useSessionAuth.ts",
-          "frontend/src/App.tsx"
+          "frontend/src/utils/formatError.ts",
+          "frontend/src/hooks/useAccountSettings.ts",
+          "frontend/src/pages/Settings.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/Login.tsx",
-          "frontend/src/pages/SignUp.tsx",
-          "frontend/src/hooks/useSessionAuth.ts"
+          "frontend/src/utils/formatError.ts",
+          "frontend/src/hooks/useAccountSettings.ts",
+          "frontend/src/pages/Settings.tsx"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Refactor the frontend auth state management to use the new on-platform session auth (instead of Internet Identity) while avoiding edits to immutable provider/hook files.",
+        "summary": "Redeploy a new production build that includes the backend settings fix and the improved frontend error reporting.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/sessionToken.ts",
-          "frontend/src/hooks/useSessionAuth.ts",
-          "frontend/src/hooks/useCurrentUser.ts",
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useExperiences.ts",
-          "frontend/src/components/auth/AuthButtons.tsx",
-          "frontend/src/components/auth/RequireProfile.tsx",
-          "frontend/src/components/auth/AccountsDisabledNotice.tsx",
-          "frontend/src/pages/Profile.tsx",
-          "frontend/src/pages/Social.tsx"
+          "frontend/src/pages/Settings.tsx",
+          "frontend/src/hooks/useAccountSettings.ts"
         ],
         "matchedFiles": [
-          "frontend/src/utils/sessionToken.ts",
-          "frontend/src/hooks/useSessionAuth.ts",
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useExperiences.ts",
-          "frontend/src/components/auth/AuthButtons.tsx",
-          "frontend/src/components/auth/RequireProfile.tsx",
-          "frontend/src/components/auth/AccountsDisabledNotice.tsx",
-          "frontend/src/pages/Profile.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Update the existing change-control/auth banner messaging to remain accurate after enabling on-platform authentication (i.e., reflect that authentication is on-platform and still avoids external redirects).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/layout/AuthChangeBanner.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/layout/AuthChangeBanner.tsx"
+          "frontend/src/pages/Settings.tsx",
+          "frontend/src/hooks/useAccountSettings.ts"
         ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/auth/AccountsDisabledNotice.tsx",
-    "frontend/src/components/auth/AuthButtons.tsx",
-    "frontend/src/components/auth/RequireProfile.tsx",
-    "frontend/src/components/layout/AuthChangeBanner.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useExperiences.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/hooks/useSessionAuth.ts",
-    "frontend/src/hooks/useSocialFriends.ts",
-    "frontend/src/hooks/useSocialMessages.ts",
-    "frontend/src/pages/Create.tsx",
-    "frontend/src/pages/DiniBucks.tsx",
-    "frontend/src/pages/Login.tsx",
-    "frontend/src/pages/Profile.tsx",
-    "frontend/src/pages/SignUp.tsx",
-    "frontend/src/utils/sessionToken.ts",
+    "frontend/src/hooks/useAccountSettings.ts",
+    "frontend/src/pages/Settings.tsx",
+    "frontend/src/utils/formatError.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

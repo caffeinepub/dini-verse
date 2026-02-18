@@ -14,6 +14,8 @@ import Inventory from './pages/Inventory';
 import Groups from './pages/Groups';
 import Settings from './pages/Settings';
 import Social from './pages/Social';
+import CreateGamesBuilder2D from './pages/CreateGamesBuilder2D';
+import CreateUGCAccessories from './pages/CreateUGCAccessories';
 import { Toaster } from '@/components/ui/sonner';
 
 const rootRoute = createRootRoute({
@@ -68,6 +70,18 @@ const createRoute_ = createRoute({
   component: Create,
 });
 
+const createGamesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/create/games',
+  component: CreateGamesBuilder2D,
+});
+
+const createUGCRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/create/ugc-accessories',
+  component: CreateUGCAccessories,
+});
+
 const diniBucksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dini-bucks',
@@ -107,6 +121,8 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   avatarShopRoute,
   createRoute_,
+  createGamesRoute,
+  createUGCRoute,
   diniBucksRoute,
   inventoryRoute,
   groupsRoute,
@@ -124,7 +140,7 @@ declare module '@tanstack/react-router' {
 
 export default function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <RouterProvider router={router} />
       <Toaster />
     </ThemeProvider>

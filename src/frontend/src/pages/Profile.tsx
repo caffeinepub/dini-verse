@@ -1,5 +1,6 @@
 import RequireProfile from '../components/auth/RequireProfile';
 import { useSessionAuth } from '../hooks/useSessionAuth';
+import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { User, Settings } from 'lucide-react';
 
 export default function Profile() {
   const { currentUser } = useSessionAuth();
+  const navigate = useNavigate();
 
   return (
     <RequireProfile>
@@ -39,7 +41,11 @@ export default function Profile() {
                       <User className="h-4 w-4" />
                       Edit Profile
                     </Button>
-                    <Button variant="outline" className="gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="gap-2"
+                      onClick={() => navigate({ to: '/settings' })}
+                    >
                       <Settings className="h-4 w-4" />
                       Settings
                     </Button>

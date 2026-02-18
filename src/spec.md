@@ -1,13 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Enable first-party, on-platform username/password authentication with session-based login (no Internet Identity and no external redirects).
+**Goal:** Fix the Settings page load failure by ensuring settings APIs always return initialized defaults (no auth/initialization traps) and by showing the underlying error message in the UI for easier diagnosis.
 
 **Planned changes:**
-- Add Motoko backend canister methods for username/password signup and login, ensuring unique usernames and storing only hashed/derived password data.
-- Implement backend session token management (issue/validate/logout) and gate existing write/mutation actions using a valid session token while keeping read-only browsing available to guests.
-- Replace the frontend “Login Disabled / Sign Up Disabled” flow with on-platform `/login` and `/signup` forms that call the backend auth APIs and show English validation/error messages.
-- Refactor frontend auth state to persist the backend session token across reloads (e.g., localStorage), update AuthButtons/RequireProfile behavior to use session auth, and avoid edits to immutable frontend files/paths.
-- Update existing banner/change-control messaging to remain accurate: external redirects remain disabled while on-platform auth is enabled.
+- Backend: Update `getOrCreateCallerSettings()` so it always returns a valid `UserSettings` record for the caller, creating and persisting default settings when none exist, and avoiding failures solely due to missing permissions/initialization.
+- Backend: Update settings mutation methods (`updateDisplayName`, `updateDisplayNameAndAvatar`, `updateVisibility`, `deleteAvatar`) to reuse the same “get or initialize defaults” flow so first-time users can successfully mutate settings.
+- Frontend: Improve Settings page fetch failure alert to include the actual underlying error message (in English) in addition to the existing generic text, without enabling infinite retries.
+- Deploy: Produce and redeploy a new production build containing the backend fixes and improved frontend error reporting.
 
-**User-visible outcome:** Users can sign up and log in directly داخل the app using username/password, stay logged in across reloads, log out, and access account-gated/write features once authenticated—while guests can still browse read-only content without external login redirects.
+**User-visible outcome:** Authenticated users can open `/settings` and see their settings (with defaults created on first use), and if loading fails, the alert shows both the generic message and the specific underlying error message.

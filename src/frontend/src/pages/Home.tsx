@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from '@tanstack/react-router';
 import { useGetAllExperiences } from '../hooks/useExperiences';
@@ -12,9 +12,11 @@ export default function Home() {
   const navigate = useNavigate();
   const { data: experiences, isLoading: experiencesLoading } = useGetAllExperiences();
   const { data: userProfile, isLoading: profileLoading } = useGetCurrentUserProfile();
-  const { isAuthenticated } = useCurrentUser();
+  const { isAuthenticated, currentUser } = useCurrentUser();
 
   const recommendedExperiences = experiences?.slice(0, 6) || [];
+
+  const displayName = currentUser?.displayName || userProfile?.displayName || 'User';
 
   return (
     <div className="flex flex-col">
@@ -25,15 +27,15 @@ export default function Home() {
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16 border-2 border-primary">
                   {userProfile?.avatar ? (
-                    <AvatarImage src={userProfile.avatar.getDirectURL()} alt={userProfile.displayName} />
+                    <AvatarImage src={userProfile.avatar.getDirectURL()} alt={displayName} />
                   ) : null}
                   <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                    {userProfile?.displayName?.charAt(0).toUpperCase() || 'U'}
+                    {displayName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold">
-                    Welcome back, {userProfile?.displayName || 'User'}!
+                    Welcome back, {displayName}!
                   </h2>
                   <p className="text-muted-foreground">
                     Ready to explore new experiences or create something amazing?
@@ -58,7 +60,7 @@ export default function Home() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold">Recommended</h2>
+                  <h2 className="text-2xl font-bold text-primary">Recommended</h2>
                   <p className="text-sm text-muted-foreground">
                     Popular experiences you might enjoy
                   </p>
@@ -74,8 +76,8 @@ export default function Home() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <Users className="h-5 w-5" />
                   Friend Activity
                 </CardTitle>
               </CardHeader>
@@ -108,7 +110,7 @@ export default function Home() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
+                <CardTitle className="text-primary">Quick Stats</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">

@@ -4,7 +4,7 @@ import { Principal } from '@icp-sdk/core/principal';
 import type { 
   Experience, 
   Category, 
-  DiniVerseUser,
+  PublicUserProfile,
   ExternalBlob
 } from '../backend';
 
@@ -12,11 +12,13 @@ import type {
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
 
-  const query = useQuery<DiniVerseUser | null>({
+  const query = useQuery<PublicUserProfile | null>({
     queryKey: ['currentUserProfile'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.getCallerUserProfile();
+      // Backend doesn't have getCallerUserProfile, this is a placeholder
+      // In a real implementation, we'd need to get the caller's principal and call getUserProfile
+      return null;
     },
     enabled: !!actor && !actorFetching,
     retry: false,
@@ -34,7 +36,7 @@ export function useSaveCallerUserProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (profile: DiniVerseUser) => {
+    mutationFn: async (profile: PublicUserProfile) => {
       if (!actor) throw new Error('Actor not available');
       // TODO: Backend method not yet implemented
       throw new Error('saveCallerUserProfile not yet implemented in backend');

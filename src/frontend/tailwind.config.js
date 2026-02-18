@@ -15,6 +15,9 @@ export default {
             }
         },
         extend: {
+            fontFamily: {
+                sans: ['Builder Sans', 'Outfit', 'system-ui', '-apple-system', 'sans-serif'],
+            },
             colors: {
                 border: 'oklch(var(--border))',
                 input: 'oklch(var(--input))',
@@ -65,6 +68,11 @@ export default {
                     'accent-foreground': 'oklch(var(--sidebar-accent-foreground))',
                     border: 'oklch(var(--sidebar-border))',
                     ring: 'oklch(var(--sidebar-ring))'
+                },
+                header: {
+                    DEFAULT: 'oklch(var(--header))',
+                    foreground: 'oklch(var(--header-foreground))',
+                    accent: 'oklch(var(--header-accent))'
                 }
             },
             borderRadius: {

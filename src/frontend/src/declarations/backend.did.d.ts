@@ -13,10 +13,6 @@ import type { Principal } from '@icp-sdk/core/principal';
 export type Category = { 'roleplay' : null } |
   { 'simulator' : null } |
   { 'adventure' : null };
-export interface DiniVerseUser {
-  'displayName' : string,
-  'avatar' : [] | [ExternalBlob],
-}
 export interface Experience {
   'id' : string,
   'title' : string,
@@ -30,9 +26,32 @@ export interface Experience {
   'gameplayControls' : string,
 }
 export type ExternalBlob = Uint8Array;
+export interface PublicUserProfile {
+  'displayName' : string,
+  'visibility' : { 'offline' : null } |
+    { 'online' : null },
+  'avatar' : [] | [ExternalBlob],
+}
+export type Time = bigint;
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface UserSettings {
+  'username' : string,
+  'displayName' : string,
+  'createdAt' : Time,
+  'lastDisplayNameChange' : Time,
+  'passwordResetAttempts' : bigint,
+  'updatedAt' : Time,
+  'lastPasswordChange' : Time,
+  'visibility' : { 'offline' : null } |
+    { 'online' : null },
+  'lastUsernameChange' : Time,
+  'lastPasswordResetAttempt' : Time,
+  'avatar' : [] | [ExternalBlob],
+}
+export type Visibility = { 'offline' : null } |
+  { 'online' : null };
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -62,15 +81,24 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'deleteAvatar' : ActorMethod<[], undefined>,
   'getAllExperiences' : ActorMethod<[], Array<Experience>>,
-  'getCallerUserProfile' : ActorMethod<[], [] | [DiniVerseUser]>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [PublicUserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getExperiencesByAuthor' : ActorMethod<[Principal], Array<Experience>>,
   'getExperiencesByCategory' : ActorMethod<[Category], Array<Experience>>,
+  'getOrCreateCallerSettings' : ActorMethod<[], UserSettings>,
   'getTrendingExperiences' : ActorMethod<[Category], Array<Experience>>,
-  'getUserProfile' : ActorMethod<[Principal], [] | [DiniVerseUser]>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'saveCallerUserProfile' : ActorMethod<[PublicUserProfile], undefined>,
   'searchExperiences' : ActorMethod<[string], Array<Experience>>,
+  'updateDisplayName' : ActorMethod<[string], undefined>,
+  'updateDisplayNameAndAvatar' : ActorMethod<
+    [string, [] | [ExternalBlob]],
+    undefined
+  >,
+  'updateVisibility' : ActorMethod<[Visibility], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

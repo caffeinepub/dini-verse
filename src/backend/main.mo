@@ -1,46 +1,51 @@
-import Array "mo:core/Array";
-import Text "mo:core/Text";
-import Principal "mo:core/Principal";
-import Runtime "mo:core/Runtime";
-import Map "mo:core/Map";
-import Set "mo:core/Set";
-import Iter "mo:core/Iter";
 import Nat "mo:core/Nat";
+import Text "mo:core/Text";
+import Runtime "mo:core/Runtime";
+import Principal "mo:core/Principal";
+import Map "mo:core/Map";
 import Order "mo:core/Order";
-
-import Time "mo:core/Time";
 import List "mo:core/List";
-import VarArray "mo:core/VarArray";
-import Int "mo:core/Int";
+import Time "mo:core/Time";
+import Storage "blob-storage/Storage";
 
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 import MixinStorage "blob-storage/Mixin";
-import Storage "blob-storage/Storage";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
-  // Initialize the user system state
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
-
   include MixinStorage();
 
-  /////////////////////////////////////////////////////////////////////
-  // Types
-  /////////////////////////////////////////////////////////////////////
+  type PublicUserProfile = {
+    displayName : Text;
+    avatar : ?Storage.ExternalBlob;
+    visibility : { #online; #offline };
+  };
 
-  public type Category = {
+  type UserSettings = {
+    username : Text;
+    displayName : Text;
+    visibility : { #online; #offline };
+    avatar : ?Storage.ExternalBlob;
+    lastUsernameChange : Time.Time;
+    lastDisplayNameChange : Time.Time;
+    lastPasswordChange : Time.Time;
+    createdAt : Time.Time;
+    updatedAt : Time.Time;
+    passwordResetAttempts : Nat;
+    lastPasswordResetAttempt : Time.Time;
+  };
+
+  type Category = {
     #adventure;
     #roleplay;
     #simulator;
   };
 
-  public type DiniVerseUser = {
-    displayName : Text;
-    avatar : ?Storage.ExternalBlob;
-  };
-
-  public type Experience = {
+  type Experience = {
     id : Text;
     title : Text;
     description : Text;
@@ -59,75 +64,33 @@ actor {
     };
 
     public func compareByPopularity(exp1 : Experience, exp2 : Experience) : Order.Order {
-      let exp1Popularity = exp1.playerCount + exp1.thumbsUp - exp1.thumbsDown;
-      let exp2Popularity = exp2.playerCount + exp2.thumbsUp - exp2.thumbsDown;
-      Nat.compare(exp2Popularity, exp1Popularity);
+      Nat.compare(
+        exp2.playerCount + exp2.thumbsUp - exp2.thumbsDown,
+        exp1.playerCount + exp1.thumbsUp - exp1.thumbsDown,
+      );
     };
   };
 
-  public type FriendRequestStatus = {
-    #pending;
-    #accepted;
-    #declined;
-    #cancelled;
+  type Visibility = {
+    #online;
+    #offline;
   };
 
-  public type FriendRequest = {
-    from : Principal;
-    to : Principal;
-    status : FriendRequestStatus;
-  };
-
-  public type Message = {
-    id : Nat;
-    sender : Principal;
-    receiver : Principal;
-    content : Text;
-    timestamp : Time.Time;
-    read : Bool;
-  };
-
-  public type MessageDto = {
-    id : Nat;
-    sender : Principal;
-    receiver : Principal;
-    content : Text;
-    timestamp : Time.Time;
-    read : Bool;
-  };
-
-  public type MessageInput = {
-    receiver : Principal;
-    content : Text;
-  };
-
-  /////////////////////////////////////////////////////////////////////
-  // Storage
-  /////////////////////////////////////////////////////////////////////
   let experiences = Map.empty<Text, Experience>();
-  let friendships : Map.Map<Principal, Set.Set<Principal>> = Map.empty();
-  let friendRequests = Map.empty<Principal, Set.Set<Principal>>();
-  let messages = Map.empty<Principal, Map.Map<Principal, List.List<Message>>>();
-  let userProfiles = Map.empty<Principal, DiniVerseUser>();
-
-  /////////////////////////////////////////////////////////////////////
-  // Experience Management
-  /////////////////////////////////////////////////////////////////////
+  let userProfiles = Map.empty<Principal, PublicUserProfile>();
+  let userSettings = Map.empty<Principal, UserSettings>();
 
   public query ({ caller }) func getAllExperiences() : async [Experience] {
-    // Anyone including guests can view experiences (read-only)
     experiences.values().toArray().sort(Experience.compareByTitle);
   };
 
   public query ({ caller }) func getExperiencesByAuthor(author : Principal) : async [Experience] {
-    // Anyone including guests can view experiences (read-only)
     experiences.values().filter(
       func(exp) { exp.author == author }
     ).toArray();
   };
 
   public query ({ caller }) func searchExperiences(searchTerm : Text) : async [Experience] {
-    // Anyone including guests can search experiences (read-only)
     if (searchTerm.size() == 0) {
       return experiences.values().toArray();
     };
@@ -140,35 +103,226 @@ actor {
   };
 
   public query ({ caller }) func getExperiencesByCategory(category : Category) : async [Experience] {
-    // Anyone including guests can view experiences (read-only)
     experiences.values().filter(
       func(exp) { exp.category == category }
     ).toArray();
   };
 
   public query ({ caller }) func getTrendingExperiences(category : Category) : async [Experience] {
-    // Anyone including guests can view experiences (read-only)
-    let allExperiences = experiences.values().toArray();
-    let filtered = allExperiences.filter(
+    let filtered = experiences.values().filter(
       func(exp) { exp.category == category }
-    );
+    ).toArray();
     filtered.sort(Experience.compareByPopularity);
   };
 
-  /////////////////////////////////////////////////////////////////////
-  // User Profile Management (frontend requirement)
-  /////////////////////////////////////////////////////////////////////
-  public query ({ caller }) func getCallerUserProfile() : async ?DiniVerseUser {
+  private func initializeDefaultSettings(caller : Principal) : UserSettings {
+    let now = Time.now();
+    let defaultSettings = {
+      username = "";
+      displayName = "Anonymous";
+      visibility = #online;
+      avatar = null;
+      lastUsernameChange = now;
+      lastDisplayNameChange = now;
+      lastPasswordChange = now;
+      createdAt = now;
+      updatedAt = now;
+      passwordResetAttempts = 0;
+      lastPasswordResetAttempt = now;
+    };
+
+    userSettings.add(caller, defaultSettings);
+
+    let defaultProfile = {
+      displayName = "Anonymous";
+      avatar = null;
+      visibility = #online;
+    };
+    userProfiles.add(caller, defaultProfile);
+
+    defaultSettings;
+  };
+
+  private func getOrInitializeSettings(caller : Principal) : UserSettings {
+    switch (userSettings.get(caller)) {
+      case (?settings) { settings };
+      case (null) { initializeDefaultSettings(caller) };
+    };
+  };
+
+  public shared ({ caller }) func getOrCreateCallerSettings() : async UserSettings {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can get caller user profile");
+      Runtime.trap("Unauthorized: Only users can get settings");
+    };
+    getOrInitializeSettings(caller);
+  };
+
+  public shared ({ caller }) func updateDisplayName(newDisplayName : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update display name");
+    };
+
+    let currentTime = Time.now();
+    let settings = getOrInitializeSettings(caller);
+
+    let lastChangeTime = settings.lastDisplayNameChange;
+    if (currentTime < lastChangeTime + 86400000000000) {
+      Runtime.trap("Display name can only be changed once per day");
+    };
+
+    let updatedSettings = {
+      settings with
+      displayName = newDisplayName;
+      lastDisplayNameChange = currentTime;
+      updatedAt = currentTime;
+    };
+
+    let existingProfile = userProfiles.get(caller);
+
+    let updatedProfile = switch (existingProfile) {
+      case (null) {
+        {
+          displayName = newDisplayName;
+          avatar = null;
+          visibility = settings.visibility;
+        };
+      };
+      case (?profile) {
+        { profile with displayName = newDisplayName };
+      };
+    };
+
+    userSettings.add(caller, updatedSettings);
+    userProfiles.add(caller, updatedProfile);
+  };
+
+  public shared ({ caller }) func updateDisplayNameAndAvatar(newDisplayName : Text, avatar : ?Storage.ExternalBlob) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update display name and avatar");
+    };
+
+    let currentTime = Time.now();
+    let settings = getOrInitializeSettings(caller);
+
+    let displayNameChanged = newDisplayName != settings.displayName;
+    if (displayNameChanged and currentTime < settings.lastDisplayNameChange + 86400000000000) {
+      Runtime.trap("Display name can only be changed once per day");
+    };
+
+    let updatedSettings = {
+      settings with
+      displayName = newDisplayName;
+      avatar;
+      lastDisplayNameChange = currentTime;
+    };
+
+    let existingProfile = userProfiles.get(caller);
+
+    let updatedProfile = switch (existingProfile) {
+      case (null) {
+        {
+          displayName = newDisplayName;
+          avatar;
+          visibility = settings.visibility;
+        };
+      };
+      case (?profile) {
+        { profile with displayName = newDisplayName; avatar };
+      };
+    };
+
+    userSettings.add(caller, updatedSettings);
+    userProfiles.add(caller, updatedProfile);
+  };
+
+  public shared ({ caller }) func updateVisibility(visibility : Visibility) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update visibility");
+    };
+
+    let currentTime = Time.now();
+    let settings = getOrInitializeSettings(caller);
+
+    let updatedSettings = {
+      settings with
+      visibility;
+      updatedAt = currentTime;
+    };
+
+    let existingProfile = userProfiles.get(caller);
+
+    let updatedProfile = switch (existingProfile) {
+      case (null) {
+        {
+          displayName = settings.displayName;
+          avatar = settings.avatar;
+          visibility;
+        };
+      };
+      case (?profile) {
+        { profile with visibility };
+      };
+    };
+
+    userSettings.add(caller, updatedSettings);
+    userProfiles.add(caller, updatedProfile);
+  };
+
+  public shared ({ caller }) func deleteAvatar() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete avatars");
+    };
+
+    let settings = getOrInitializeSettings(caller);
+
+    let updatedSettings = { settings with avatar = null };
+    userSettings.add(caller, updatedSettings);
+
+    switch (userProfiles.get(caller)) {
+      case (null) {};
+      case (?profile) {
+        let updatedProfile = { profile with avatar = null };
+        userProfiles.add(caller, updatedProfile);
+      };
+    };
+  };
+
+  public query ({ caller }) func getCallerUserProfile() : async ?PublicUserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can get their profile");
     };
     userProfiles.get(caller);
   };
 
-  public query ({ caller }) func getUserProfile(user : Principal) : async ?DiniVerseUser {
+  public shared ({ caller }) func saveCallerUserProfile(profile : PublicUserProfile) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can get user profiles");
+      Runtime.trap("Unauthorized: Only users can save profiles");
     };
-    userProfiles.get(user);
+    userProfiles.add(caller, profile);
+  };
+
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?PublicUserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    switch (userProfiles.get(user)) {
+      case (null) { null };
+      case (?profile) {
+        switch (userSettings.get(user)) {
+          case (null) { ?profile };
+          case (?settings) {
+            switch (settings.visibility) {
+              case (#offline) {
+                let profileWithOffline = {
+                  profile with visibility = #offline;
+                };
+                ?profileWithOffline;
+              };
+              case (_) { ?profile };
+            };
+          };
+        };
+      };
+    };
   };
 };

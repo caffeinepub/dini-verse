@@ -2,12 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-frontend-authentication-ui-to-provide-on-platform-login-and-sign-up-experiences-forms-within-the-app-and-remove-the-current-login-disabled-sign-up-disabled-experience-for-normal-usage",
-      "featureTitle": "Update the frontend authentication UI to provide on-platform Login and Sign Up experiences (forms within the app) and remove the current 'Login Disabled'/'Sign Up Disabled' experience for normal usage.",
+      "featureId": "feature-improve-settings-page-error-reporting-so-that-when-fetching-settings-fails-the-ui-includes-the-actual-error-message-in-english-in-addition-to-the-existing-generic-text-to-make-deployment-regressions-diagnosable",
+      "featureTitle": "Improve Settings page error reporting so that when fetching settings fails, the UI includes the actual error message (in English) in addition to the existing generic text, to make deployment regressions diagnosable.",
       "files": [
-        "frontend/src/hooks/useSessionAuth.ts",
-        "frontend/src/pages/Login.tsx",
-        "frontend/src/pages/SignUp.tsx"
+        "frontend/src/hooks/useAccountSettings.ts",
+        "frontend/src/pages/Settings.tsx",
+        "frontend/src/utils/formatError.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -24,17 +24,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-refactor-the-frontend-auth-state-management-to-use-the-new-on-platform-session-auth-instead-of-internet-identity-while-avoiding-edits-to-immutable-provider-hook-files",
-      "featureTitle": "Refactor the frontend auth state management to use the new on-platform session auth (instead of Internet Identity) while avoiding edits to immutable provider/hook files.",
+      "featureId": "feature-redeploy-a-new-production-build-that-includes-the-backend-settings-fix-and-the-improved-frontend-error-reporting",
+      "featureTitle": "Redeploy a new production build that includes the backend settings fix and the improved frontend error reporting.",
       "files": [
-        "frontend/src/components/auth/AccountsDisabledNotice.tsx",
-        "frontend/src/components/auth/AuthButtons.tsx",
-        "frontend/src/components/auth/RequireProfile.tsx",
-        "frontend/src/hooks/useExperiences.ts",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/hooks/useSessionAuth.ts",
-        "frontend/src/pages/Profile.tsx",
-        "frontend/src/utils/sessionToken.ts"
+        "frontend/src/hooks/useAccountSettings.ts",
+        "frontend/src/pages/Settings.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -47,26 +41,6 @@
       ],
       "testIds": [
         "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-the-existing-change-control-auth-banner-messaging-to-remain-accurate-after-enabling-on-platform-authentication-i-e-reflect-that-authentication-is-on-platform-and-still-avoids-external-redirects",
-      "featureTitle": "Update the existing change-control/auth banner messaging to remain accurate after enabling on-platform authentication (i.e., reflect that authentication is on-platform and still avoids external redirects).",
-      "files": [
-        "frontend/src/components/layout/AuthChangeBanner.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
       ],
       "confidence": "high"
     }

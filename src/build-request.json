@@ -1,113 +1,86 @@
 {
   "kind": "build_request",
-  "title": "Add first-party on-platform authentication (no external redirects)",
+  "title": "Fix Settings page load failure by removing auth trap and improving error reporting",
   "projectName": "Dini Verse",
-  "priority": "normal",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Implement first-party (on-platform) authentication in the Motoko backend using username/password signup and login, without relying on Internet Identity or any external authentication redirects.",
+      "text": "Update the backend settings retrieval API so that calling getOrCreateCallerSettings() never fails solely due to missing access-control permissions or missing prior settings initialization; it must always return a valid UserSettings record for the caller (creating and persisting defaults when needed).",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-5"
         ],
         "quotes": [
-          "add on-platform authentication"
+          "no, the settings page doesn't behave any better, it says the same error \"Failed to load settings. Please try again later.\" redeploy it"
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes explicit canister methods for signup and login using username/password (no Internet Identity required).",
-        "Passwords are not stored in plaintext (store a derived/hashed representation).",
-        "Usernames are unique and attempts to re-register an existing username return a clear error.",
-        "The authentication flow does not depend on caller being an authenticated principal (works for anonymous visitors)."
+        "Calling getOrCreateCallerSettings() from the frontend no longer results in an authorization trap for typical usage (including first-time users).",
+        "If the caller has no stored settings, default settings are created and persisted, and a non-null UserSettings is returned.",
+        "Settings page no longer shows the generic load-failure alert due to backend trapping in getOrCreateCallerSettings()."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add backend session management so authenticated users can remain logged in across page reloads using an on-platform session token, and enforce authorization for write actions based on a valid session.",
+      "text": "Ensure backend settings mutation methods (updateDisplayName, updateDisplayNameAndAvatar, updateVisibility, deleteAvatar) cannot fail solely because settings were not previously initialized; each method must reuse the same “get or initialize defaults” flow before applying updates.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-5"
         ],
         "quotes": [
-          "add on-platform authentication"
+          "no, the settings page doesn't behave any better, it says the same error \"Failed to load settings. Please try again later.\" redeploy it"
         ]
       },
       "acceptanceCriteria": [
-        "Backend issues a session token on successful login and can validate it on subsequent calls.",
-        "Backend provides a logout method that invalidates the active session token.",
-        "Write actions that currently require #user permission (e.g., createExperience, saveCallerUserProfile, social/messaging mutations) are gated by a valid session token instead of Internet Identity-based caller permissions.",
-        "Read-only queries (e.g., browsing experiences and viewing profiles) continue to work for guests without trapping with Unauthorized errors."
+        "A first-time user can successfully call updateDisplayName, updateDisplayNameAndAvatar, updateVisibility, and deleteAvatar without encountering a \"settings not found\"-style trap.",
+        "After each mutation, subsequent calls to getOrCreateCallerSettings() reflect the updated values."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Update the frontend authentication UI to provide on-platform Login and Sign Up experiences (forms within the app) and remove the current 'Login Disabled'/'Sign Up Disabled' experience for normal usage.",
+      "text": "Improve Settings page error reporting so that when fetching settings fails, the UI includes the actual error message (in English) in addition to the existing generic text, to make deployment regressions diagnosable.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-5"
         ],
         "quotes": [
-          "add on-platform authentication"
+          "it says the same error \"Failed to load settings. Please try again later.\""
         ]
       },
       "acceptanceCriteria": [
-        "/login renders an on-platform login form (username + password) and submits to the backend authentication API.",
-        "/signup renders an on-platform signup form (at minimum: username, display name, password) and submits to the backend authentication API.",
-        "After successful login/signup, the user is treated as authenticated in the UI and can access account-gated areas without seeing 'Accounts disabled' notices.",
-        "User-facing validation and error messages are in English."
+        "When settings fetch fails, the Settings page still shows the existing text \"Failed to load settings. Please try again later.\" but also renders the underlying error message (e.g., from the thrown Error) in the same alert.",
+        "The settings fetch hook continues to avoid infinite retries (retry remains disabled unless explicitly changed for a clear reason)."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Refactor the frontend auth state management to use the new on-platform session auth (instead of Internet Identity) while avoiding edits to immutable provider/hook files.",
-      "target": "frontend",
+      "text": "Redeploy a new production build that includes the backend settings fix and the improved frontend error reporting.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-5"
         ],
         "quotes": [
-          "add on-platform authentication"
+          "redeploy it"
         ]
       },
       "acceptanceCriteria": [
-        "Frontend session state persists across reloads (e.g., via localStorage) using the backend session token.",
-        "AuthButtons shows appropriate actions when signed out (e.g., Login / Sign Up) and Logout when signed in.",
-        "RequireProfile no longer shows AccountsDisabledNotice for signed-out users; instead it should prompt users to log in (or redirect to /login) based on the new on-platform auth state.",
-        "No changes are made to immutable paths (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*)."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Update the existing change-control/auth banner messaging to remain accurate after enabling on-platform authentication (i.e., reflect that authentication is on-platform and still avoids external redirects).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "add on-platform authentication"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The banner continues to clearly state that external login redirects are disabled.",
-        "The banner text no longer implies that authentication is disabled if on-platform authentication is now enabled.",
-        "All banner/user-facing text is in English."
+        "A new deployed version is produced that includes the changes from REQ-1 through REQ-3.",
+        "After deployment, an authenticated user can open /settings and see settings data instead of the load-failure alert."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce multiple backend services.",
-    "Do not add or depend on third-party authentication providers (including Internet Identity) or any off-platform authentication redirects.",
-    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and anything under frontend/src/components/ui."
+    "Backend must remain a single Motoko actor in backend/main.mo; only introduce migration.mo if existing stable state schema changes require it.",
+    "Do not edit files under frontend/src/components/ui or any frontend immutablePaths listed in SYSTEM_CONTEXT."
   ],
   "nonGoals": [
-    "Implementing OAuth/social login (Google, GitHub, etc.).",
-    "Adding external databases or non-IC storage services for authentication data.",
-    "Adding real-time auth synchronization (e.g., websockets) across tabs/devices."
+    "Implementing real username/password authentication or session validation (current useSessionAuth flow may remain placeholder).",
+    "Adding new settings fields or redesigning the Settings page UI beyond error-message visibility needed for debugging."
   ],
   "imageRequirements": {
     "required": [],

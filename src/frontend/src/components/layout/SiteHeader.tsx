@@ -9,111 +9,103 @@ export default function SiteHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-header backdrop-blur supports-[backdrop-filter]:bg-header/90">
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center space-x-2">
-            <img
-              src="/assets/generated/diniverse-logo.dim_1024x256.png"
-              alt="Dini.Verse"
-              className="h-8 w-auto"
+            <img 
+              src="/assets/generated/screenshot_2026_logo.dim_512x128.png" 
+              alt="Dini.Verse Logo" 
+              className="h-12 w-auto object-contain"
+              srcSet="/assets/generated/screenshot_2026_logo.dim_512x128.png 2x"
             />
           </Link>
-
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
-              to="/"
-              className="text-sm font-medium transition-colors hover:text-primary"
-              activeProps={{ className: 'text-primary' }}
-            >
+          <nav className="hidden md:flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: '/' })} className="text-header-foreground hover:bg-header-accent">
               Home
-            </Link>
-            <Link
-              to="/discover"
-              className="text-sm font-medium transition-colors hover:text-primary"
-              activeProps={{ className: 'text-primary' }}
-            >
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: '/discover' })} className="text-header-foreground hover:bg-header-accent">
               Discover
-            </Link>
-            <Link
-              to="/avatar-shop"
-              className="text-sm font-medium transition-colors hover:text-primary"
-              activeProps={{ className: 'text-primary' }}
-            >
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: '/avatar-shop' })} className="text-header-foreground hover:bg-header-accent">
               Avatar Shop
-            </Link>
-            <Link
-              to="/create"
-              className="text-sm font-medium transition-colors hover:text-primary"
-              activeProps={{ className: 'text-primary' }}
-            >
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: '/create' })} className="text-header-foreground hover:bg-header-accent">
               Create
-            </Link>
-            <Link
-              to="/dini-bucks"
-              className="text-sm font-medium transition-colors hover:text-primary"
-              activeProps={{ className: 'text-primary' }}
-            >
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: '/dini-bucks' })} className="text-header-foreground hover:bg-header-accent">
               Dini Bucks
-            </Link>
+            </Button>
           </nav>
         </div>
-
         <div className="flex items-center gap-4">
-          <div className="hidden md:block">
+          <div className="hidden md:flex">
             <AuthButtons />
           </div>
-
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden text-header-foreground hover:bg-header-accent"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
       </div>
-
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur">
-          <nav className="container py-4 flex flex-col gap-4">
-            <Link
-              to="/"
-              className="text-sm font-medium transition-colors hover:text-primary"
-              onClick={() => setMobileMenuOpen(false)}
+        <div className="md:hidden border-t border-border/40 bg-header backdrop-blur">
+          <nav className="container py-4 flex flex-col gap-2">
+            <Button
+              variant="ghost"
+              className="justify-start text-header-foreground hover:bg-header-accent"
+              onClick={() => {
+                navigate({ to: '/' });
+                setMobileMenuOpen(false);
+              }}
             >
               Home
-            </Link>
-            <Link
-              to="/discover"
-              className="text-sm font-medium transition-colors hover:text-primary"
-              onClick={() => setMobileMenuOpen(false)}
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start text-header-foreground hover:bg-header-accent"
+              onClick={() => {
+                navigate({ to: '/discover' });
+                setMobileMenuOpen(false);
+              }}
             >
               Discover
-            </Link>
-            <Link
-              to="/avatar-shop"
-              className="text-sm font-medium transition-colors hover:text-primary"
-              onClick={() => setMobileMenuOpen(false)}
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start text-header-foreground hover:bg-header-accent"
+              onClick={() => {
+                navigate({ to: '/avatar-shop' });
+                setMobileMenuOpen(false);
+              }}
             >
               Avatar Shop
-            </Link>
-            <Link
-              to="/create"
-              className="text-sm font-medium transition-colors hover:text-primary"
-              onClick={() => setMobileMenuOpen(false)}
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start text-header-foreground hover:bg-header-accent"
+              onClick={() => {
+                navigate({ to: '/create' });
+                setMobileMenuOpen(false);
+              }}
             >
               Create
-            </Link>
-            <Link
-              to="/dini-bucks"
-              className="text-sm font-medium transition-colors hover:text-primary"
-              onClick={() => setMobileMenuOpen(false)}
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start text-header-foreground hover:bg-header-accent"
+              onClick={() => {
+                navigate({ to: '/dini-bucks' });
+                setMobileMenuOpen(false);
+              }}
             >
               Dini Bucks
-            </Link>
-            <div className="pt-2 border-t border-border/40">
+            </Button>
+            <div className="pt-2 border-t border-border/40 mt-2">
               <AuthButtons />
             </div>
           </nav>
