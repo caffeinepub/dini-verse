@@ -1,7 +1,7 @@
 {
   "frontend/src/App.tsx": "Main application component with TanStack Router setup including all routes (home, discover, create, games builder, UGC accessories, etc.), wrapped with ThemeProvider forced to light mode and Toaster.",
   "frontend/src/components/layout/AppLayout.tsx": "Root layout component with header, left sidebar, main content area via Outlet, and footer (AuthChangeBanner removed).",
-  "frontend/src/components/layout/SiteHeader.tsx": "Global navigation header with light green background, new logo asset with retina support, five navigation links with readable contrast styling, authentication buttons, and responsive mobile menu.",
+  "frontend/src/components/layout/SiteHeader.tsx": "Global navigation header with light green background, uploaded logo image (image.png), five navigation links with readable contrast styling, authentication buttons, and responsive mobile menu.",
   "frontend/src/components/layout/SiteFooter.tsx": "Site footer displaying copyright, year, and attribution link to caffeine.ai with proper UTM tracking parameters.",
   "frontend/src/components/auth/AuthButtons.tsx": "Authentication control buttons showing Login/Sign Up buttons when logged out and single Logout button when authenticated with proper loading state handling.",
   "frontend/src/components/auth/RequireProfile.tsx": "Authentication guard component that shows login prompt with navigation buttons for unauthenticated users instead of disabled accounts notice.",
@@ -57,6 +57,6 @@
   "frontend/src/components/create/builder2d/DecalUploader.tsx": "Image upload component for adding decals to the canvas with file input and validation.",
   "frontend/src/components/create/builder2d/PropertiesPanel.tsx": "Properties editor panel with sliders for position (X/Y), opacity, rotation, width, height, and color picker for shapes, updating selected element live.",
   "frontend/src/components/create/builder2d/PropsPanel.tsx": "Props management panel with save, load, export, import, and delete functionality using dialogs for user input and JSON sharing.",
-  "frontend/src/hooks/useAccountSettings.ts": "React Query hooks for account settings operations with error normalization wrapping all backend calls to ensure stable, meaningful error messages while keeping retry disabled.",
+  "frontend/src/hooks/useAccountSettings.ts": "React Query hooks for account settings operations calling the correct backend method getSettings() instead of the non-existent getOrCreateCallerSettings(), with error normalization wrapping all backend calls.",
   "frontend/src/utils/formatError.ts": "Utility function that normalizes unknown thrown values (including backend trap/authorization failures) into user-displayable English error messages for diagnostic UI."
 }

@@ -2,12 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-improve-settings-page-error-reporting-so-that-when-fetching-settings-fails-the-ui-includes-the-actual-error-message-in-english-in-addition-to-the-existing-generic-text-to-make-deployment-regressions-diagnosable",
-      "featureTitle": "Improve Settings page error reporting so that when fetching settings fails, the UI includes the actual error message (in English) in addition to the existing generic text, to make deployment regressions diagnosable.",
+      "featureId": "feature-replace-the-img-element-xpath-html-1-body-1-div-1-div-1-header-1-div-1-div-1-a-1-img-1-source-with-the-uploaded-image-image-png-storing-it-as-a-static-asset-in-frontend-public-assets",
+      "featureTitle": "Replace the img element (XPath: /html[1]/body[1]/div[1]/div[1]/header[1]/div[1]/div[1]/a[1]/img[1]) source with the uploaded image (image.png), storing it as a static asset in frontend/public/assets/",
       "files": [
-        "frontend/src/hooks/useAccountSettings.ts",
-        "frontend/src/pages/Settings.tsx",
-        "frontend/src/utils/formatError.ts"
+        "frontend/src/components/layout/SiteHeader.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -19,28 +17,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-redeploy-a-new-production-build-that-includes-the-backend-settings-fix-and-the-improved-frontend-error-reporting",
-      "featureTitle": "Redeploy a new production build that includes the backend settings fix and the improved frontend error reporting.",
-      "files": [
-        "frontend/src/hooks/useAccountSettings.ts",
-        "frontend/src/pages/Settings.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
+        "REQ-2"
       ],
       "confidence": "high"
     }

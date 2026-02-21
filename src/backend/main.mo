@@ -11,9 +11,7 @@ import Storage "blob-storage/Storage";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 import MixinStorage "blob-storage/Mixin";
-import Migration "migration";
 
-(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -150,10 +148,7 @@ actor {
     };
   };
 
-  public shared ({ caller }) func getOrCreateCallerSettings() : async UserSettings {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can get settings");
-    };
+  public query ({ caller }) func getSettings() : async UserSettings {
     getOrInitializeSettings(caller);
   };
 

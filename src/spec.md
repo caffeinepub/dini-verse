@@ -1,12 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the Settings page load failure by ensuring settings APIs always return initialized defaults (no auth/initialization traps) and by showing the underlying error message in the UI for easier diagnosis.
+**Goal:** Update welcome text to include authenticated user's display name and replace header logo with uploaded image.
 
 **Planned changes:**
-- Backend: Update `getOrCreateCallerSettings()` so it always returns a valid `UserSettings` record for the caller, creating and persisting default settings when none exist, and avoiding failures solely due to missing permissions/initialization.
-- Backend: Update settings mutation methods (`updateDisplayName`, `updateDisplayNameAndAvatar`, `updateVisibility`, `deleteAvatar`) to reuse the same “get or initialize defaults” flow so first-time users can successfully mutate settings.
-- Frontend: Improve Settings page fetch failure alert to include the actual underlying error message (in English) in addition to the existing generic text, without enabling infinite retries.
-- Deploy: Produce and redeploy a new production build containing the backend fixes and improved frontend error reporting.
+- Change h2 welcome text from "h2 usjako" to "Welcome back, [User Display Name]!" using authenticated user data
+- Replace header logo image with uploaded image.png, saved as static asset in frontend/public/assets/
 
-**User-visible outcome:** Authenticated users can open `/settings` and see their settings (with defaults created on first use), and if loading fails, the alert shows both the generic message and the specific underlying error message.
+**User-visible outcome:** Users see a personalized welcome message with their name and the new logo appears in the header.

@@ -14,10 +14,9 @@ export default function SiteHeader() {
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center space-x-2">
             <img 
-              src="/assets/generated/screenshot_2026_logo.dim_512x128.png" 
+              src="/assets/image.png" 
               alt="Dini.Verse Logo" 
               className="h-12 w-auto object-contain"
-              srcSet="/assets/generated/screenshot_2026_logo.dim_512x128.png 2x"
             />
           </Link>
           <nav className="hidden md:flex items-center gap-1">

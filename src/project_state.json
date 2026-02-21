@@ -3,24 +3,14 @@
   "projectStateVersion": 3,
   "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [
-    "Settings page still fails to load and shows error: \"Failed to load settings. Please try again later.\""
-  ],
+  "known_issues": [],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-improve-settings-page-error-reporting-so-that-when-fetching-settings-fails-the-ui-includes-the-actual-error-message-in-english-in-addition-to-the-existing-generic-text-to-make-deployment-regressions-diagnosable",
-      "title": "Improve Settings page error reporting so that when fetching settings fails, the UI includes the actual error message (in English) in addition to the existing generic text, to make deployment regressions diagnosable.",
+      "id": "feature-replace-the-img-element-xpath-html-1-body-1-div-1-div-1-header-1-div-1-div-1-a-1-img-1-source-with-the-uploaded-image-image-png-storing-it-as-a-static-asset-in-frontend-public-assets",
+      "title": "Replace the img element (XPath: /html[1]/body[1]/div[1]/div[1]/header[1]/div[1]/div[1]/a[1]/img[1]) source with the uploaded image (image.png), storing it as a static asset in frontend/public/assets/",
       "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-redeploy-a-new-production-build-that-includes-the-backend-settings-fix-and-the-improved-frontend-error-reporting",
-      "title": "Redeploy a new production build that includes the backend settings fix and the improved frontend error reporting.",
-      "reqIds": [
-        "REQ-4"
+        "REQ-2"
       ],
       "version": 1
     }
@@ -28,22 +18,14 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Update the backend settings retrieval API so that calling getOrCreateCallerSettings() never fails solely due to missing access-control permissions or missing prior settings initialization; it must always return a valid UserSettings record for the caller (creating and persisting defaults when needed).",
+      "summary": "Update the h2 element (XPath: /html[1]/body[1]/div[1]/div[1]/div[1]/main[1]/div[1]/section[1]/div[1]/div[1]/div[1]/div[1]/h2[1]) to display 'Welcome back, [Their User]!' where [Their User] is replaced with the authenticated user's display name",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Ensure backend settings mutation methods (updateDisplayName, updateDisplayNameAndAvatar, updateVisibility, deleteAvatar) cannot fail solely because settings were not previously initialized; each method must reuse the same “get or initialize defaults” flow before applying updates.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "status": "pending"
     }
   ],
-  "projectName": "Dini Verse",
+  "projectName": "Update welcome text and header logo with uploaded image",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

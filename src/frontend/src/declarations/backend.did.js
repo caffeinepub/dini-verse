@@ -42,9 +42,28 @@ export const Experience = IDL.Record({
   'category' : Category,
   'gameplayControls' : IDL.Text,
 });
-export const DiniVerseUser = IDL.Record({
+export const PublicUserProfile = IDL.Record({
   'displayName' : IDL.Text,
+  'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
   'avatar' : IDL.Opt(ExternalBlob),
+});
+export const Time = IDL.Int;
+export const UserSettings = IDL.Record({
+  'username' : IDL.Text,
+  'displayName' : IDL.Text,
+  'createdAt' : Time,
+  'lastDisplayNameChange' : Time,
+  'passwordResetAttempts' : IDL.Nat,
+  'updatedAt' : Time,
+  'lastPasswordChange' : Time,
+  'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
+  'lastUsernameChange' : Time,
+  'lastPasswordResetAttempt' : Time,
+  'avatar' : IDL.Opt(ExternalBlob),
+});
+export const Visibility = IDL.Variant({
+  'offline' : IDL.Null,
+  'online' : IDL.Null,
 });
 
 export const idlService = IDL.Service({
@@ -76,8 +95,13 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'deleteAvatar' : IDL.Func([], [], []),
   'getAllExperiences' : IDL.Func([], [IDL.Vec(Experience)], ['query']),
-  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(DiniVerseUser)], ['query']),
+  'getCallerUserProfile' : IDL.Func(
+      [],
+      [IDL.Opt(PublicUserProfile)],
+      ['query'],
+    ),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getExperiencesByAuthor' : IDL.Func(
       [IDL.Principal],
@@ -89,6 +113,7 @@ export const idlService = IDL.Service({
       [IDL.Vec(Experience)],
       ['query'],
     ),
+  'getSettings' : IDL.Func([], [UserSettings], ['query']),
   'getTrendingExperiences' : IDL.Func(
       [Category],
       [IDL.Vec(Experience)],
@@ -96,11 +121,19 @@ export const idlService = IDL.Service({
     ),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
-      [IDL.Opt(DiniVerseUser)],
+      [IDL.Opt(PublicUserProfile)],
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'saveCallerUserProfile' : IDL.Func([PublicUserProfile], [], []),
   'searchExperiences' : IDL.Func([IDL.Text], [IDL.Vec(Experience)], ['query']),
+  'updateDisplayName' : IDL.Func([IDL.Text], [], []),
+  'updateDisplayNameAndAvatar' : IDL.Func(
+      [IDL.Text, IDL.Opt(ExternalBlob)],
+      [],
+      [],
+    ),
+  'updateVisibility' : IDL.Func([Visibility], [], []),
 });
 
 export const idlInitArgs = [];
@@ -140,10 +173,26 @@ export const idlFactory = ({ IDL }) => {
     'category' : Category,
     'gameplayControls' : IDL.Text,
   });
-  const DiniVerseUser = IDL.Record({
+  const PublicUserProfile = IDL.Record({
     'displayName' : IDL.Text,
+    'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
     'avatar' : IDL.Opt(ExternalBlob),
   });
+  const Time = IDL.Int;
+  const UserSettings = IDL.Record({
+    'username' : IDL.Text,
+    'displayName' : IDL.Text,
+    'createdAt' : Time,
+    'lastDisplayNameChange' : Time,
+    'passwordResetAttempts' : IDL.Nat,
+    'updatedAt' : Time,
+    'lastPasswordChange' : Time,
+    'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
+    'lastUsernameChange' : Time,
+    'lastPasswordResetAttempt' : Time,
+    'avatar' : IDL.Opt(ExternalBlob),
+  });
+  const Visibility = IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null });
   
   return IDL.Service({
     '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -174,8 +223,13 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'deleteAvatar' : IDL.Func([], [], []),
     'getAllExperiences' : IDL.Func([], [IDL.Vec(Experience)], ['query']),
-    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(DiniVerseUser)], ['query']),
+    'getCallerUserProfile' : IDL.Func(
+        [],
+        [IDL.Opt(PublicUserProfile)],
+        ['query'],
+      ),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getExperiencesByAuthor' : IDL.Func(
         [IDL.Principal],
@@ -187,6 +241,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(Experience)],
         ['query'],
       ),
+    'getSettings' : IDL.Func([], [UserSettings], ['query']),
     'getTrendingExperiences' : IDL.Func(
         [Category],
         [IDL.Vec(Experience)],
@@ -194,15 +249,23 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
-        [IDL.Opt(DiniVerseUser)],
+        [IDL.Opt(PublicUserProfile)],
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'saveCallerUserProfile' : IDL.Func([PublicUserProfile], [], []),
     'searchExperiences' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(Experience)],
         ['query'],
       ),
+    'updateDisplayName' : IDL.Func([IDL.Text], [], []),
+    'updateDisplayNameAndAvatar' : IDL.Func(
+        [IDL.Text, IDL.Opt(ExternalBlob)],
+        [],
+        [],
+      ),
+    'updateVisibility' : IDL.Func([Visibility], [], []),
   });
 };
 

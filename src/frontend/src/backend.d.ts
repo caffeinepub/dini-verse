@@ -67,7 +67,7 @@ export interface backendInterface {
     getCallerUserRole(): Promise<UserRole>;
     getExperiencesByAuthor(author: Principal): Promise<Array<Experience>>;
     getExperiencesByCategory(category: Category): Promise<Array<Experience>>;
-    getOrCreateCallerSettings(): Promise<UserSettings>;
+    getSettings(): Promise<UserSettings>;
     getTrendingExperiences(category: Category): Promise<Array<Experience>>;
     getUserProfile(user: Principal): Promise<PublicUserProfile | null>;
     isCallerAdmin(): Promise<boolean>;

@@ -1,69 +1,44 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T14:13:29.867Z",
+  "generatedAt": "2026-02-21T16:25:04.527Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 2,
+    "total": 2,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update the backend settings retrieval API so that calling getOrCreateCallerSettings() never fails solely due to missing access-control permissions or missing prior settings initialization; it must always return a valid UserSettings record for the caller (creating and persisting defaults when needed).",
-        "status": "unknown",
-        "plannedFiles": [],
+        "summary": "Update the h2 element (XPath: /html[1]/body[1]/div[1]/div[1]/div[1]/main[1]/div[1]/section[1]/div[1]/div[1]/div[1]/div[1]/h2[1]) to display 'Welcome back, [Their User]!' where [Their User] is replaced with the authenticated user's display name",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/pages/Home.tsx"
+        ],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Ensure backend settings mutation methods (updateDisplayName, updateDisplayNameAndAvatar, updateVisibility, deleteAvatar) cannot fail solely because settings were not previously initialized; each method must reuse the same “get or initialize defaults” flow before applying updates.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Improve Settings page error reporting so that when fetching settings fails, the UI includes the actual error message (in English) in addition to the existing generic text, to make deployment regressions diagnosable.",
+        "summary": "Replace the img element (XPath: /html[1]/body[1]/div[1]/div[1]/header[1]/div[1]/div[1]/a[1]/img[1]) source with the uploaded image (image.png), storing it as a static asset in frontend/public/assets/",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/formatError.ts",
-          "frontend/src/hooks/useAccountSettings.ts",
-          "frontend/src/pages/Settings.tsx"
+          "frontend/public/assets/image.png",
+          "frontend/src/components/layout/SiteHeader.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/utils/formatError.ts",
-          "frontend/src/hooks/useAccountSettings.ts",
-          "frontend/src/pages/Settings.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Redeploy a new production build that includes the backend settings fix and the improved frontend error reporting.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/Settings.tsx",
-          "frontend/src/hooks/useAccountSettings.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/Settings.tsx",
-          "frontend/src/hooks/useAccountSettings.ts"
+          "frontend/src/components/layout/SiteHeader.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/hooks/useAccountSettings.ts",
-    "frontend/src/pages/Settings.tsx",
-    "frontend/src/utils/formatError.ts",
+    "frontend/src/components/layout/SiteHeader.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

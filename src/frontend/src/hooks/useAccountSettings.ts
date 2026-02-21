@@ -13,7 +13,7 @@ export function useGetCallerSettings() {
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
       try {
-        return await actor.getOrCreateCallerSettings();
+        return await actor.getSettings();
       } catch (err) {
         // Normalize the error to ensure we have a proper Error object with a message
         const message = formatError(err);

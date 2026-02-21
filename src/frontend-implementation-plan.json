@@ -1,120 +1,43 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Dini Verse: On-platform session authentication UI and state refactor",
+  "title": "Update welcome text and header logo with uploaded image",
   "requirements": [
     {
-      "id": "REQ-3",
-      "summary": "Replace disabled login/signup pages with in-app username/password forms wired to backend auth capabilities.",
+      "id": "REQ-1",
+      "summary": "Update the h2 element to display 'Welcome back, [Their User]!' with the authenticated user's display name",
       "acceptanceCriteria": [
-        "/login renders an on-platform login form (username + password) and submits to the backend authentication API.",
-        "/signup renders an on-platform signup form (at minimum: username, display name, password) and submits to the backend authentication API.",
-        "After successful login/signup, the user is treated as authenticated in the UI and can access account-gated areas without seeing 'Accounts disabled' notices.",
-        "User-facing validation and error messages are in English."
+        "The h2 element displays 'Welcome back, ' followed by the user's display name and an exclamation mark",
+        "The display name is dynamically retrieved from the authenticated user's profile",
+        "If no user is authenticated, an appropriate fallback is shown"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/Login.tsx",
+          "path": "frontend/src/pages/Home.tsx",
           "operation": "modify",
-          "description": "Replace the \"Login Disabled\" notice with a login form (username/password), client-side validation, English error messaging, and submit handling that calls the new on-platform backend login capability via the session auth hook."
-        },
-        {
-          "path": "frontend/src/pages/SignUp.tsx",
-          "operation": "modify",
-          "description": "Replace the \"Sign Up Disabled\" notice with a signup form (username/display name/password), client-side validation, English error messaging, and submit handling that calls the new on-platform backend signup capability via the session auth hook."
-        },
-        {
-          "path": "frontend/src/hooks/useSessionAuth.ts",
-          "operation": "modify",
-          "description": "Update the hook API to support form-driven login/signup (username/password) flows, returning clear success/error states that the /login and /signup pages can render."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Verify /login and /signup routes remain registered and accessible, and ensure any navigation assumptions still hold after replacing the disabled auth pages."
+          "description": "Update the h2 element in the welcome card section to display 'Welcome back, {displayName}!' using the authenticated user's display name from the profile data. Retrieve the display name via the existing useGetCallerUserProfile hook and apply appropriate fallback text when the user is not authenticated or profile data is not yet loaded."
         }
       ]
     },
     {
-      "id": "REQ-4",
-      "summary": "Refactor frontend auth state to use an on-platform session token persisted across reloads, without modifying immutable auth/actor/provider files.",
+      "id": "REQ-2",
+      "summary": "Replace the header logo image with the uploaded image.png as a static asset",
       "acceptanceCriteria": [
-        "Frontend session state persists across reloads (e.g., via localStorage) using the backend session token.",
-        "AuthButtons shows appropriate actions when signed out (e.g., Login / Sign Up) and Logout when signed in.",
-        "RequireProfile no longer shows AccountsDisabledNotice for signed-out users; instead it should prompt users to log in (or redirect to /login) based on the new on-platform auth state.",
-        "No changes are made to immutable paths (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*)."
+        "The header logo img element displays the uploaded image.png",
+        "The image is saved as a static asset in frontend/public/assets/image.png",
+        "The img src attribute points to the correct asset path",
+        "The image maintains appropriate dimensions for the header logo"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/utils/sessionToken.ts",
+          "path": "frontend/public/assets/image.png",
           "operation": "create",
-          "description": "Add a small utility for getting/setting/clearing the on-platform session token in localStorage (single source of truth for persistence across reloads)."
+          "description": "Save the uploaded image.png file as a static asset at frontend/public/assets/image.png to be used as the new header logo."
         },
         {
-          "path": "frontend/src/hooks/useSessionAuth.ts",
+          "path": "frontend/src/components/layout/SiteHeader.tsx",
           "operation": "modify",
-          "description": "Refactor session auth to stop relying on Internet Identity and instead: (1) call backend signup/login/logout capabilities, (2) store/restore the session token via localStorage, (3) provide isAuthenticated based on token presence/validation, and (4) clear cached queries on logout. Do not modify any immutable hook/provider files."
-        },
-        {
-          "path": "frontend/src/hooks/useCurrentUser.ts",
-          "operation": "modify",
-          "description": "Ensure current user derivation reflects on-platform session state (token-based) and continues to provide isAuthenticated/isLoading/currentUser consistently to the UI."
-        },
-        {
-          "path": "frontend/src/backend.d.ts",
-          "operation": "modify",
-          "description": "Update the frontend backend interface typings to include the new on-platform auth/session methods (e.g., signup/login/logout/session validation and any token-based profile access used by the refactor) so the frontend can compile against the updated canister API."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Update user/profile-related React Query hooks to work with the new session auth model (token-based), ensuring guest browsing queries remain usable while profile/write actions use the session token where required."
-        },
-        {
-          "path": "frontend/src/hooks/useExperiences.ts",
-          "operation": "modify",
-          "description": "Adjust experience mutations that require authentication (e.g., create/rate) to use the on-platform session token flow (via the session auth hook) and surface Unauthorized errors as English user-facing messages rather than showing \"accounts disabled\" UI."
-        },
-        {
-          "path": "frontend/src/components/auth/AuthButtons.tsx",
-          "operation": "modify",
-          "description": "When signed out, replace the \"Accounts disabled\" text with Login and Sign Up actions that navigate to /login and /signup; when signed in, keep Logout and ensure it clears token/session state via the session auth hook."
-        },
-        {
-          "path": "frontend/src/components/auth/RequireProfile.tsx",
-          "operation": "modify",
-          "description": "Replace AccountsDisabledNotice behavior for signed-out users with a login prompt/redirect approach driven by the new session auth state (e.g., render a login-required card with a button to /login)."
-        },
-        {
-          "path": "frontend/src/components/auth/AccountsDisabledNotice.tsx",
-          "operation": "modify",
-          "description": "Refactor this component into a login-required prompt (English copy) that no longer claims accounts are disabled, and provide clear navigation affordances to /login and /signup where appropriate."
-        },
-        {
-          "path": "frontend/src/pages/Profile.tsx",
-          "operation": "modify",
-          "description": "Ensure the profile page gating aligns with the new session auth behavior (token-based) and does not show disabled-account messaging for guests; instead guide to login when needed."
-        },
-        {
-          "path": "frontend/src/pages/Social.tsx",
-          "operation": "modify",
-          "description": "Update any signed-out rendering that currently shows a disabled-accounts notice so it instead prompts the user to log in (or uses RequireProfile), consistent with on-platform session auth."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Update auth change-control banner copy to reflect on-platform authentication while still stating external redirects are disabled.",
-      "acceptanceCriteria": [
-        "The banner continues to clearly state that external login redirects are disabled.",
-        "The banner text no longer implies that authentication is disabled if on-platform authentication is now enabled.",
-        "All banner/user-facing text is in English."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/layout/AuthChangeBanner.tsx",
-          "operation": "modify",
-          "description": "Update banner messaging to state that authentication is available on-platform (in-app) while clearly noting that external login redirects are disabled; keep all text in English."
+          "description": "Update the img element's src attribute within the header logo link to point to '/assets/image.png'. Ensure the image dimensions are appropriate for the header logo display and maintain existing alt text and styling attributes."
         }
       ]
     }

@@ -87,7 +87,7 @@ export interface _SERVICE {
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getExperiencesByAuthor' : ActorMethod<[Principal], Array<Experience>>,
   'getExperiencesByCategory' : ActorMethod<[Category], Array<Experience>>,
-  'getOrCreateCallerSettings' : ActorMethod<[], UserSettings>,
+  'getSettings' : ActorMethod<[], UserSettings>,
   'getTrendingExperiences' : ActorMethod<[Category], Array<Experience>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,

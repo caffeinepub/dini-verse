@@ -160,7 +160,7 @@ export interface backendInterface {
     getCallerUserRole(): Promise<UserRole>;
     getExperiencesByAuthor(author: Principal): Promise<Array<Experience>>;
     getExperiencesByCategory(category: Category): Promise<Array<Experience>>;
-    getOrCreateCallerSettings(): Promise<UserSettings>;
+    getSettings(): Promise<UserSettings>;
     getTrendingExperiences(category: Category): Promise<Array<Experience>>;
     getUserProfile(user: Principal): Promise<PublicUserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
@@ -369,17 +369,17 @@ export class Backend implements backendInterface {
             return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getOrCreateCallerSettings(): Promise<UserSettings> {
+    async getSettings(): Promise<UserSettings> {
         if (this.processError) {
             try {
-                const result = await this.actor.getOrCreateCallerSettings();
+                const result = await this.actor.getSettings();
                 return from_candid_UserSettings_n25(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getOrCreateCallerSettings();
+            const result = await this.actor.getSettings();
             return from_candid_UserSettings_n25(this._uploadFile, this._downloadFile, result);
         }
     }
