@@ -1,13 +1,22 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
+  "projectStateVersion": 5,
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
     "Website displays error: 'useTranslationContext must be used within TranslationProvider' - translation context not properly initialized"
   ],
   "isFixRequest": true,
-  "existing_features": [],
+  "existing_features": [
+    {
+      "id": "feature-wrap-the-application-root-in-frontend-src-app-tsx-with-translationprovider-from-frontend-src-contexts-translationcontext-tsx-so-that-all-components-using-usetranslationcontext-via-usetranslation-hook-can-access-the-translation-context-without-throwing-errors",
+      "title": "Wrap the application root in frontend/src/App.tsx with TranslationProvider (from frontend/src/contexts/TranslationContext.tsx) so that all components using useTranslationContext (via useTranslation hook) can access the translation context without throwing errors.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    }
+  ],
   "new_feature_requests": [
     {
       "id": "AR-1",

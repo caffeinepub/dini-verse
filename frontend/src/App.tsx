@@ -17,6 +17,7 @@ import Settings from './pages/Settings';
 import Social from './pages/Social';
 import CreateGamesBuilder2D from './pages/CreateGamesBuilder2D';
 import CreateUGCAccessories from './pages/CreateUGCAccessories';
+import { TranslationProvider } from './contexts/TranslationContext';
 
 const rootRoute = createRootRoute({
   component: AppLayout,
@@ -141,8 +142,10 @@ declare module '@tanstack/react-router' {
 export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <RouterProvider router={router} />
-      <Toaster />
+      <TranslationProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+      </TranslationProvider>
     </ThemeProvider>
   );
 }

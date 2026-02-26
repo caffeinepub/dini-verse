@@ -1,38 +1,35 @@
 {
   "kind": "build_request",
-  "title": "Fix TranslationProvider context initialization error",
+  "title": "Fix TranslationProvider missing from app root",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Wrap the entire application root with TranslationProvider in frontend/src/main.tsx so that useTranslation hook can access the translation context throughout the component tree",
+      "id": "REQ-2",
+      "text": "Wrap the application root in frontend/src/App.tsx with TranslationProvider (from frontend/src/contexts/TranslationContext.tsx) so that all components using useTranslationContext (via useTranslation hook) can access the translation context without throwing errors.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-latest"
+          "msg-1"
         ],
         "quotes": [
-          "the whole website says \"Something went wrong! Hide Error useTranslationContext must be used within TranslationProvider\""
+          "useTranslationContext must be used within TranslationProvider"
         ]
       },
       "acceptanceCriteria": [
-        "TranslationProvider wraps the App component in main.tsx",
-        "The application loads without the TranslationProvider error",
-        "All pages and components can access translation functions without errors"
+        "The app loads without displaying 'useTranslationContext must be used within TranslationProvider' error",
+        "TranslationProvider wraps the component tree at a level that covers all routes and pages",
+        "All pages that use useTranslation continue to function correctly with translated strings"
       ]
     }
   ],
   "constraints": [
-    "Do not modify frontend/src/hooks/useInternetIdentity.ts",
-    "Do not modify frontend/src/hooks/useActor.ts",
-    "Do not modify frontend/src/main.tsx structure beyond adding the TranslationProvider wrapper",
-    "Preserve existing QueryClientProvider and InternetIdentityProvider wrappers"
+    "Do not modify frontend/src/main.tsx as it is an immutable path",
+    "TranslationProvider must be added in App.tsx or another mutable wrapper component, not in main.tsx"
   ],
   "nonGoals": [
-    "Adding new translation strings",
-    "Modifying translation functionality",
-    "Changing language switching behavior",
-    "Altering existing component implementations"
+    "Adding new translation strings or languages",
+    "Changing the TranslationContext implementation",
+    "Any backend changes"
   ],
   "imageRequirements": {
     "required": [],

@@ -1,21 +1,21 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix TranslationProvider context initialization error",
+  "title": "Fix TranslationProvider missing from app root",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Wrap the entire application root with TranslationProvider in frontend/src/main.tsx so that useTranslation hook can access the translation context throughout the component tree",
+      "id": "REQ-2",
+      "summary": "Wrap the application root in App.tsx with TranslationProvider to resolve useTranslationContext errors",
       "acceptanceCriteria": [
-        "TranslationProvider wraps the App component in main.tsx",
-        "The application loads without the TranslationProvider error",
-        "All pages and components can access translation functions without errors"
+        "The app loads without displaying 'useTranslationContext must be used within TranslationProvider' error",
+        "TranslationProvider wraps the component tree at a level that covers all routes and pages",
+        "All pages that use useTranslation continue to function correctly with translated strings"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/main.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Import TranslationProvider from contexts/TranslationContext and wrap the App component with TranslationProvider, placing it inside InternetIdentityProvider but outside or wrapping the RouterProvider. Preserve the existing QueryClientProvider and InternetIdentityProvider wrappers. Ensure the provider hierarchy allows all routed components to access the translation context."
+          "description": "Import TranslationProvider from frontend/src/contexts/TranslationContext.tsx and wrap the existing RouterProvider and its surrounding providers (ThemeProvider, Toaster) with TranslationProvider. Ensure TranslationProvider is placed at a level that covers all child components and routes so that any component using useTranslation can access the translation context without errors."
         }
       ]
     }

@@ -1,5 +1,5 @@
 {
-  "frontend/src/App.tsx": "Main application component with TanStack Router setup including all routes, wrapped with ThemeProvider (no forced theme) and Toaster for dynamic theme switching.",
+  "frontend/src/App.tsx": "Main application component with TanStack Router setup including all routes, wrapped with ThemeProvider, TranslationProvider, and Toaster to ensure translation context is available throughout the entire component tree.",
   "frontend/src/components/layout/AppLayout.tsx": "Root layout component with header, left sidebar, main content area via Outlet, and footer (AuthChangeBanner removed).",
   "frontend/src/components/layout/SiteHeader.tsx": "Global navigation header with light green background, logo, five navigation links using translation hook, authentication buttons, and responsive mobile menu.",
   "frontend/src/components/layout/SiteFooter.tsx": "Site footer displaying copyright, year, and attribution link to caffeine.ai with proper UTM tracking parameters.",

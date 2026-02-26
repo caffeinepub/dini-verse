@@ -1,30 +1,36 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-23T17:41:55.982Z",
+  "generatedAt": "2026-02-26T00:42:32.895Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 1,
-    "implemented": 0,
+    "implemented": 1,
     "items": [
       {
-        "id": "REQ-1",
-        "summary": "Wrap the entire application root with TranslationProvider in frontend/src/main.tsx so that useTranslation hook can access the translation context throughout the component tree",
-        "status": "missing",
+        "id": "REQ-2",
+        "summary": "Wrap the application root in frontend/src/App.tsx with TranslationProvider (from frontend/src/contexts/TranslationContext.tsx) so that all components using useTranslationContext (via useTranslation hook) can access the translation context without throwing errors.",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/main.tsx"
+          "frontend/src/App.tsx"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/App.tsx"
+        ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
+    "build-template/README.md",
+    "caffeine.lock.json",
     "feature_evidence.json",
+    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",
