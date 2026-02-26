@@ -1,0 +1,41 @@
+{
+  "kind": "build_request",
+  "title": "Fix TranslationProvider context initialization error",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Wrap the entire application root with TranslationProvider in frontend/src/main.tsx so that useTranslation hook can access the translation context throughout the component tree",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-latest"
+        ],
+        "quotes": [
+          "the whole website says \"Something went wrong! Hide Error useTranslationContext must be used within TranslationProvider\""
+        ]
+      },
+      "acceptanceCriteria": [
+        "TranslationProvider wraps the App component in main.tsx",
+        "The application loads without the TranslationProvider error",
+        "All pages and components can access translation functions without errors"
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not modify frontend/src/hooks/useInternetIdentity.ts",
+    "Do not modify frontend/src/hooks/useActor.ts",
+    "Do not modify frontend/src/main.tsx structure beyond adding the TranslationProvider wrapper",
+    "Preserve existing QueryClientProvider and InternetIdentityProvider wrappers"
+  ],
+  "nonGoals": [
+    "Adding new translation strings",
+    "Modifying translation functionality",
+    "Changing language switching behavior",
+    "Altering existing component implementations"
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}
