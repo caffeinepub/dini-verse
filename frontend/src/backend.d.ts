@@ -68,8 +68,16 @@ export enum Gender {
     male = "male"
 }
 export enum Language {
-    german = "german",
-    english = "english"
+    de = "de",
+    en = "en",
+    es = "es",
+    fr = "fr",
+    ko = "ko",
+    nl = "nl",
+    pt = "pt",
+    ru = "ru",
+    tr = "tr",
+    vi = "vi"
 }
 export enum TextDirection {
     leftToRight = "leftToRight",

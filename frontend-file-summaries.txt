@@ -26,7 +26,7 @@
   "frontend/src/components/layout/LeftSidebar.tsx": "Left sidebar navigation component with translated links to Profile, Social, Inventory, Groups, and Settings using icons and active state styling.",
   "frontend/src/pages/Inventory.tsx": "Inventory page displaying a placeholder for user items, accessories, and collectibles with an empty state message.",
   "frontend/src/pages/Groups.tsx": "Groups page displaying a placeholder for user groups and communities with an empty state message.",
-  "frontend/src/pages/Settings.tsx": "Comprehensive account settings page with profile picture upload/removal, username/display name editing with cooldowns, gender selection, language selection, theme toggle (light/dark mode), password change, visibility toggle (Offline Mode), and account deletion with confirmation dialog, all using translation hooks and proper error handling.",
+  "frontend/src/pages/Settings.tsx": "Comprehensive account settings page with all 10 languages listed in the language dropdown using native names (English, Español, Français, Português, Deutsch, Türkçe, Русский, Tiếng Việt, 한국어, Nederlands), wired to the setLanguage mutation with proper language metadata.",
   "frontend/src/components/experiences/ExperienceRatingControls.tsx": "Reusable rating controls component with thumbs up/down buttons and counts that calls the rating mutation and updates UI without page refresh.",
   "frontend/src/components/experiences/InGameMenu.tsx": "In-game menu component for play mode with Leave, Reset Character, and Settings actions, using dialogs and alert dialogs for confirmations.",
   "frontend/src/pages/Social.tsx": "Social hub page with tabs for Friends, Messages, Parties, and Following, all using translation hook for localized text.",
@@ -59,8 +59,8 @@
   "frontend/src/components/create/builder2d/PropsPanel.tsx": "Props management panel with save, load, export, import, and delete functionality using dialogs for user input and JSON sharing.",
   "frontend/src/hooks/useAccountSettings.ts": "React Query hooks for all account settings operations including get settings, update display name, update avatar, delete avatar, delete account, set gender, and set language with proper cache invalidation and error handling.",
   "frontend/src/utils/formatError.ts": "Utility function that normalizes unknown thrown values (including backend trap/authorization failures) into user-displayable English error messages for diagnostic UI.",
-  "frontend/src/contexts/TranslationContext.tsx": "React context provider for translation functionality that fetches user's language preference from settings and provides a translate function for localized text throughout the app.",
+  "frontend/src/contexts/TranslationContext.tsx": "React context provider for translation functionality that maps all 10 Language enum values to locale keys, fetches user's language preference from settings, and provides a translate function with English fallback for missing keys.",
   "frontend/src/hooks/useTranslation.ts": "Custom hook that consumes the TranslationContext and returns the translate function for use in components.",
-  "frontend/src/i18n/translations.ts": "Translation dictionaries for English and German covering all user-facing text including navigation, authentication, home page, discover page, profile, social, and comprehensive settings page translations.",
+  "frontend/src/i18n/translations.ts": "Translation dictionaries for all 10 supported languages (en, es, fr, pt, de, tr, ru, vi, ko, nl) covering all user-facing text including navigation, authentication, home page, discover page, profile, social, and comprehensive settings page translations.",
   "frontend/src/main.tsx": "Application entry point wrapping the app with QueryClientProvider, InternetIdentityProvider, and TranslationProvider to enable React Query, authentication, and translations throughout the application."
 }

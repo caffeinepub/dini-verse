@@ -46,6 +46,32 @@ import { toast } from 'sonner';
 import { useTheme } from 'next-themes';
 import { useTranslation } from '../hooks/useTranslation';
 
+const SUPPORTED_LANGUAGES: { value: Language; label: string }[] = [
+  { value: Language.en, label: 'English' },
+  { value: Language.es, label: 'Español' },
+  { value: Language.fr, label: 'Français' },
+  { value: Language.pt, label: 'Português' },
+  { value: Language.de, label: 'Deutsch' },
+  { value: Language.tr, label: 'Türkçe' },
+  { value: Language.ru, label: 'Русский' },
+  { value: Language.vi, label: 'Tiếng Việt' },
+  { value: Language.ko, label: '한국어' },
+  { value: Language.nl, label: 'Nederlands' },
+];
+
+const LANGUAGE_META: Record<Language, { code: string; prefix: string; direction: TextDirection }> = {
+  [Language.en]: { code: 'en', prefix: 'en', direction: TextDirection.leftToRight },
+  [Language.es]: { code: 'es', prefix: 'es', direction: TextDirection.leftToRight },
+  [Language.fr]: { code: 'fr', prefix: 'fr', direction: TextDirection.leftToRight },
+  [Language.pt]: { code: 'pt', prefix: 'pt', direction: TextDirection.leftToRight },
+  [Language.de]: { code: 'de', prefix: 'de', direction: TextDirection.leftToRight },
+  [Language.tr]: { code: 'tr', prefix: 'tr', direction: TextDirection.leftToRight },
+  [Language.ru]: { code: 'ru', prefix: 'ru', direction: TextDirection.leftToRight },
+  [Language.vi]: { code: 'vi', prefix: 'vi', direction: TextDirection.leftToRight },
+  [Language.ko]: { code: 'ko', prefix: 'ko', direction: TextDirection.leftToRight },
+  [Language.nl]: { code: 'nl', prefix: 'nl', direction: TextDirection.leftToRight },
+};
+
 export default function Settings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -72,158 +98,50 @@ export default function Settings() {
   // Sync displayName from fetched settings
   useEffect(() => {
     if (settings && !isEditingRef.current) {
-      setDisplayName(settings.displayName);
+      setDisplayName(settings.displayName || '');
     }
   }, [settings]);
 
-  // Track when user is actively editing
-  const handleDisplayNameChange = (value: string) => {
-    isEditingRef.current = true;
-    setDisplayName(value);
-  };
+  const handleDisplayNameFocus = () => { isEditingRef.current = true; };
+  const handleDisplayNameBlur = () => { isEditingRef.current = false; };
 
-  // Reset editing flag after successful mutation
-  useEffect(() => {
-    if (updateDisplayNameMutation.isSuccess) {
-      isEditingRef.current = false;
+  const getAvatarUrl = () => {
+    if (settings?.avatar) {
+      return settings.avatar.getDirectURL();
     }
-  }, [updateDisplayNameMutation.isSuccess]);
-
-  if (isLoading) {
-    return (
-      <RequireProfile>
-        <div className="container py-8">
-          <div className="flex items-center justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          </div>
-        </div>
-      </RequireProfile>
-    );
-  }
-
-  if (error) {
-    return (
-      <RequireProfile>
-        <div className="container py-8">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>{t('settings.error.title')}</AlertTitle>
-            <AlertDescription className="space-y-2">
-              <p>{t('settings.error.description')}</p>
-              {error.message && (
-                <p className="text-sm font-mono bg-destructive/10 p-2 rounded border border-destructive/20 mt-2">
-                  {t('settings.error.details')}: {error.message}
-                </p>
-              )}
-            </AlertDescription>
-          </Alert>
-        </div>
-      </RequireProfile>
-    );
-  }
-
-  // Settings should always be non-null after successful fetch
-  if (!settings) {
-    return (
-      <RequireProfile>
-        <div className="container py-8">
-          <div className="flex items-center justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          </div>
-        </div>
-      </RequireProfile>
-    );
-  }
-
-  const avatarUrl = settings.avatar?.getDirectURL();
-  const getInitials = (name: string) => {
-    return name.charAt(0).toUpperCase();
-  };
-
-  // Calculate cooldown status
-  const now = Date.now() * 1000000; // Convert to nanoseconds
-  const ONE_DAY_NS = BigInt(86400000000000);
-  const SEVEN_DAYS_NS = BigInt(7 * 86400000000000);
-
-  const canChangeDisplayName = now >= Number(settings.lastDisplayNameChange) + Number(ONE_DAY_NS);
-  const canChangePassword = now >= Number(settings.lastPasswordChange) + Number(ONE_DAY_NS);
-  const canChangeUsername = now >= Number(settings.lastUsernameChange) + Number(SEVEN_DAYS_NS);
-
-  const getTimeRemaining = (lastChange: bigint, cooldownNs: bigint): string => {
-    const nextAvailable = Number(lastChange) + Number(cooldownNs);
-    const remaining = nextAvailable - now;
-    if (remaining <= 0) return '';
-    
-    const hours = Math.floor(remaining / 3600000000000);
-    const days = Math.floor(hours / 24);
-    
-    if (days > 0) {
-      return `${days} ${t('settings.time.days')}`;
-    }
-    return `${hours} ${t('settings.time.hours')}`;
-  };
-
-  const handleUpdateDisplayName = async () => {
-    if (!displayName.trim() || displayName === settings.displayName) {
-      return;
-    }
-
-    try {
-      await updateDisplayNameMutation.mutateAsync(displayName.trim());
-      toast.success(t('settings.displayName.success'));
-    } catch (err: any) {
-      const message = err.message || t('settings.displayName.error');
-      toast.error(message);
-    }
-  };
-
-  const handleUpdatePassword = async () => {
-    if (!password.trim()) {
-      toast.error(t('settings.password.emptyError'));
-      return;
-    }
-
-    // Note: Backend doesn't have password update yet, this is a placeholder
-    toast.error(t('settings.password.notImplemented'));
-    setPassword('');
+    return null;
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error(t('settings.avatar.invalidType'));
       return;
     }
-
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error(t('settings.avatar.tooLarge'));
       return;
     }
 
-    try {
-      setIsUploading(true);
-      setUploadProgress(0);
+    setIsUploading(true);
+    setUploadProgress(0);
 
+    try {
       const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      
-      const blob = ExternalBlob.fromBytes(uint8Array).withUploadProgress((percentage) => {
-        setUploadProgress(percentage);
+      const bytes = new Uint8Array(arrayBuffer);
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) => {
+        setUploadProgress(pct);
       });
 
       await updateDisplayNameAndAvatarMutation.mutateAsync({
-        displayName: settings.displayName,
+        displayName: settings?.displayName || displayName,
         avatar: blob,
       });
-
       toast.success(t('settings.avatar.success'));
     } catch (err: any) {
-      const message = err.message || t('settings.avatar.error');
-      toast.error(message);
+      toast.error(err?.message || t('settings.avatar.error'));
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -235,23 +153,63 @@ export default function Settings() {
       await deleteAvatarMutation.mutateAsync();
       toast.success(t('settings.avatar.removed'));
     } catch (err: any) {
-      const message = err.message || t('settings.avatar.removeError');
-      toast.error(message);
+      toast.error(err?.message || t('settings.avatar.removeError'));
+    }
+  };
+
+  const handleUpdateDisplayName = async () => {
+    if (!displayName.trim()) return;
+    try {
+      await updateDisplayNameMutation.mutateAsync(displayName.trim());
+      toast.success(t('settings.displayName.success'));
+    } catch (err: any) {
+      toast.error(err?.message || t('settings.displayName.error'));
+    }
+  };
+
+  const handleGenderChange = async (value: string) => {
+    try {
+      await setGenderMutation.mutateAsync(value as Gender);
+      toast.success(t('settings.gender.success'));
+    } catch (err: any) {
+      toast.error(err?.message || t('settings.gender.error'));
+    }
+  };
+
+  const handleLanguageChange = async (value: string) => {
+    const lang = value as Language;
+    const meta = LANGUAGE_META[lang];
+    if (!meta) return;
+    try {
+      await setLanguageMutation.mutateAsync({
+        language: lang,
+        languageCode: meta.code,
+        languagePrefix: meta.prefix,
+        textDirection: meta.direction,
+        nativeLanguage: lang,
+      });
+      toast.success(t('settings.language.success'));
+    } catch (err: any) {
+      toast.error(err?.message || t('settings.language.error'));
     }
   };
 
   const handleVisibilityToggle = async (checked: boolean) => {
-    const newVisibility: Variant_offline_online = checked 
-      ? Variant_offline_online.offline 
-      : Variant_offline_online.online;
-
+    const visibility = checked ? Variant_offline_online.offline : Variant_offline_online.online;
     try {
-      await updateVisibilityMutation.mutateAsync(newVisibility);
-      toast.success(t(checked ? 'settings.visibility.offline' : 'settings.visibility.online'));
+      await updateVisibilityMutation.mutateAsync(visibility);
+      toast.success(checked ? t('settings.visibility.offline') : t('settings.visibility.online'));
     } catch (err: any) {
-      const message = err.message || t('settings.visibility.error');
-      toast.error(message);
+      toast.error(err?.message || t('settings.visibility.error'));
     }
+  };
+
+  const handlePasswordUpdate = () => {
+    if (!password.trim()) {
+      toast.error(t('settings.password.emptyError'));
+      return;
+    }
+    toast.info(t('settings.password.notImplemented'));
   };
 
   const handleDeleteAccount = async () => {
@@ -259,453 +217,348 @@ export default function Settings() {
       toast.error(t('settings.deleteAccount.confirmError'));
       return;
     }
-
     try {
       await deleteAccountMutation.mutateAsync();
       toast.success(t('settings.deleteAccount.success'));
-      
-      // Clear all queries and logout
-      queryClient.clear();
       await logout();
+      queryClient.clear();
       navigate({ to: '/' });
     } catch (err: any) {
-      const message = err.message || t('settings.deleteAccount.error');
-      toast.error(message);
+      toast.error(err?.message || t('settings.deleteAccount.error'));
     }
   };
 
-  const handleGenderChange = async (value: string) => {
-    const gender = value === 'male' ? Gender.male : Gender.female;
-    try {
-      await setGenderMutation.mutateAsync(gender);
-      toast.success(t('settings.gender.success'));
-    } catch (err: any) {
-      const message = err.message || t('settings.gender.error');
-      toast.error(message);
+  const getDisplayNameCooldownText = () => {
+    if (!settings) return null;
+    const now = BigInt(Date.now()) * 1_000_000n;
+    const cooldownEnd = settings.lastDisplayNameChange + 86_400_000_000_000n;
+    if (now < cooldownEnd) {
+      const remaining = cooldownEnd - now;
+      const hours = Number(remaining / 3_600_000_000_000n);
+      const days = Math.floor(hours / 24);
+      if (days > 0) return `${days} ${t('settings.time.days')}`;
+      return `${hours} ${t('settings.time.hours')}`;
     }
+    return null;
   };
 
-  const handleLanguageChange = async (value: string) => {
-    const languageMap: Record<string, { 
-      language: Language; 
-      code: string; 
-      prefix: string; 
-      direction: TextDirection;
-      native: Language;
-    }> = {
-      'english': { 
-        language: Language.english, 
-        code: 'en', 
-        prefix: 'en', 
-        direction: TextDirection.leftToRight,
-        native: Language.english
-      },
-      'german': { 
-        language: Language.german, 
-        code: 'de', 
-        prefix: 'de', 
-        direction: TextDirection.leftToRight,
-        native: Language.german
-      },
-    };
-
-    const langConfig = languageMap[value];
-    if (!langConfig) return;
-
-    try {
-      await setLanguageMutation.mutateAsync({
-        language: langConfig.language,
-        languageCode: langConfig.code,
-        languagePrefix: langConfig.prefix,
-        textDirection: langConfig.direction,
-        nativeLanguage: langConfig.native,
-      });
-      toast.success(t('settings.language.success'));
-    } catch (err: any) {
-      const message = err.message || t('settings.language.error');
-      toast.error(message);
-    }
-  };
-
-  const handleThemeToggle = (checked: boolean) => {
-    setTheme(checked ? 'dark' : 'light');
-  };
+  const displayNameCooldown = getDisplayNameCooldownText();
+  const avatarUrl = getAvatarUrl();
+  const isOffline = settings?.visibility === Variant_offline_online.offline;
 
   return (
     <RequireProfile>
-      <div className="container py-8 max-w-4xl">
-        <div className="space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        <div className="flex items-center gap-3 mb-6">
+          <SettingsIcon className="w-7 h-7 text-primary" />
           <div>
-            <h1 className="text-4xl font-bold tracking-tight">{t('settings.title')}</h1>
-            <p className="text-muted-foreground mt-1">
-              {t('settings.subtitle')}
-            </p>
+            <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
+            <p className="text-muted-foreground text-sm">{t('settings.subtitle')}</p>
           </div>
+        </div>
 
-          {/* Profile Picture Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                {t('settings.avatar.title')}
-              </CardTitle>
-              <CardDescription>
-                {t('settings.avatar.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-6">
-                <Avatar className="h-24 w-24">
-                  {avatarUrl && <AvatarImage src={avatarUrl} alt={settings.displayName} />}
-                  <AvatarFallback className="text-3xl">
-                    {getInitials(settings.displayName)}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1 space-y-3">
-                  <div className="flex gap-2">
+        {error && isFetched && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>{t('settings.error.title')}</AlertTitle>
+            <AlertDescription>
+              {t('settings.error.description')}
+              {error instanceof Error && (
+                <details className="mt-2 text-xs">
+                  <summary>{t('settings.error.details')}</summary>
+                  <pre className="mt-1 whitespace-pre-wrap">{error.message}</pre>
+                </details>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Profile Picture */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              {t('settings.avatar.title')}
+            </CardTitle>
+            <CardDescription>{t('settings.avatar.description')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="w-20 h-20">
+                {avatarUrl && <AvatarImage src={avatarUrl} alt="Avatar" />}
+                <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                  {(settings?.displayName || 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Label htmlFor="avatar-upload" className="cursor-pointer">
                     <Button
                       variant="outline"
-                      className="gap-2"
-                      onClick={() => document.getElementById('avatar-upload')?.click()}
+                      size="sm"
+                      asChild
                       disabled={isUploading || updateDisplayNameAndAvatarMutation.isPending}
                     >
-                      <Upload className="h-4 w-4" />
-                      {t('settings.avatar.upload')}
+                      <span>
+                        <Upload className="w-4 h-4 mr-2" />
+                        {isUploading ? t('settings.avatar.uploading') : t('settings.avatar.upload')}
+                      </span>
                     </Button>
-                    
-                    {settings.avatar && (
-                      <Button
-                        variant="outline"
-                        className="gap-2"
-                        onClick={handleRemoveAvatar}
-                        disabled={deleteAvatarMutation.isPending}
-                      >
-                        <X className="h-4 w-4" />
-                        {t('settings.avatar.remove')}
-                      </Button>
-                    )}
-                  </div>
-                  
-                  {isUploading && (
-                    <div className="space-y-2">
-                      <Progress value={uploadProgress} />
-                      <p className="text-sm text-muted-foreground">
-                        {t('settings.avatar.uploading')} {uploadProgress}%
-                      </p>
-                    </div>
-                  )}
-                  
-                  <p className="text-sm text-muted-foreground">
-                    {t('settings.avatar.recommendation')}
-                  </p>
-                </div>
-              </div>
-              
-              <input
-                id="avatar-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarUpload}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Username Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('settings.username.title')}</CardTitle>
-              <CardDescription>
-                {t('settings.username.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">{t('settings.username.label')}</Label>
-                <Input
-                  id="username"
-                  value={settings.username}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-              
-              {!canChangeUsername && (
-                <Alert>
-                  <AlertDescription>
-                    {t('settings.username.cooldown')} {getTimeRemaining(settings.lastUsernameChange, SEVEN_DAYS_NS)}
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              <p className="text-sm text-muted-foreground">
-                {t('settings.username.limit')}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Display Name Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('settings.displayName.title')}</CardTitle>
-              <CardDescription>
-                {t('settings.displayName.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="displayName">{t('settings.displayName.label')}</Label>
-                <Input
-                  id="displayName"
-                  value={displayName}
-                  onChange={(e) => handleDisplayNameChange(e.target.value)}
-                  disabled={!canChangeDisplayName || updateDisplayNameMutation.isPending}
-                  placeholder={settings.displayName}
-                />
-              </div>
-              
-              {!canChangeDisplayName && (
-                <Alert>
-                  <AlertDescription>
-                    {t('settings.displayName.cooldown')} {getTimeRemaining(settings.lastDisplayNameChange, ONE_DAY_NS)}
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              <Button
-                onClick={handleUpdateDisplayName}
-                disabled={!canChangeDisplayName || updateDisplayNameMutation.isPending || displayName === settings.displayName}
-              >
-                {updateDisplayNameMutation.isPending ? t('settings.displayName.updating') : t('settings.displayName.update')}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Gender Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('settings.gender.title')}</CardTitle>
-              <CardDescription>
-                {t('settings.gender.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="gender">{t('settings.gender.label')}</Label>
-                <Select 
-                  value={settings.gender === Gender.male ? 'male' : 'female'}
-                  onValueChange={handleGenderChange}
-                  disabled={setGenderMutation.isPending}
-                >
-                  <SelectTrigger id="gender">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">{t('settings.gender.male')}</SelectItem>
-                    <SelectItem value="female">{t('settings.gender.female')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Language Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('settings.language.title')}</CardTitle>
-              <CardDescription>
-                {t('settings.language.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="language">{t('settings.language.label')}</Label>
-                <Select 
-                  value={settings.language === Language.english ? 'english' : 'german'}
-                  onValueChange={handleLanguageChange}
-                  disabled={setLanguageMutation.isPending}
-                >
-                  <SelectTrigger id="language">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="english">English</SelectItem>
-                    <SelectItem value="german">Deutsch</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Theme Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {theme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                {t('settings.theme.title')}
-              </CardTitle>
-              <CardDescription>
-                {t('settings.theme.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="dark-mode">{t('settings.theme.darkMode')}</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t('settings.theme.darkModeDescription')}
-                  </p>
-                </div>
-                <Switch
-                  id="dark-mode"
-                  checked={theme === 'dark'}
-                  onCheckedChange={handleThemeToggle}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Password Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('settings.password.title')}</CardTitle>
-              <CardDescription>
-                {t('settings.password.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>{t('settings.password.warning.title')}</strong> {t('settings.password.warning.message')}
-                </AlertDescription>
-              </Alert>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">{t('settings.password.label')}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={!canChangePassword}
-                  placeholder={t('settings.password.placeholder')}
-                />
-              </div>
-              
-              {!canChangePassword && (
-                <Alert>
-                  <AlertDescription>
-                    {t('settings.password.cooldown')} {getTimeRemaining(settings.lastPasswordChange, ONE_DAY_NS)}
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              <Button
-                onClick={handleUpdatePassword}
-                disabled={!canChangePassword || !password.trim()}
-                variant="outline"
-              >
-                {t('settings.password.update')}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Visibility Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {settings.visibility === Variant_offline_online.offline ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-                {t('settings.visibility.title')}
-              </CardTitle>
-              <CardDescription>
-                {t('settings.visibility.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="appear-offline">{t('settings.visibility.offlineMode')}</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t('settings.visibility.offlineModeDescription')}
-                  </p>
-                </div>
-                <Switch
-                  id="appear-offline"
-                  checked={settings.visibility === Variant_offline_online.offline}
-                  onCheckedChange={handleVisibilityToggle}
-                  disabled={updateVisibilityMutation.isPending}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Separator />
-
-          {/* Danger Zone */}
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive flex items-center gap-2">
-                <Trash2 className="h-5 w-5" />
-                {t('settings.deleteAccount.dangerZone')}
-              </CardTitle>
-              <CardDescription>
-                {t('settings.deleteAccount.dangerZoneDescription')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>{t('settings.deleteAccount.warning.title')}</strong> {t('settings.deleteAccount.warning.message')}
-                </AlertDescription>
-              </Alert>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="gap-2">
-                    <Trash2 className="h-4 w-4" />
-                    {t('settings.deleteAccount.button')}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t('settings.deleteAccount.confirmTitle')}</AlertDialogTitle>
-                    <AlertDialogDescription className="space-y-4">
-                      <p>{t('settings.deleteAccount.confirmMessage')}</p>
-                      <div className="space-y-2">
-                        <Label htmlFor="delete-confirm">{t('settings.deleteAccount.typeDelete')}</Label>
-                        <Input
-                          id="delete-confirm"
-                          value={deleteConfirmText}
-                          onChange={(e) => setDeleteConfirmText(e.target.value)}
-                          placeholder="DELETE"
-                        />
-                      </div>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>
-                      {t('settings.deleteAccount.cancel')}
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDeleteAccount}
-                      disabled={deleteConfirmText !== 'DELETE' || deleteAccountMutation.isPending}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarUpload}
+                      disabled={isUploading}
+                    />
+                  </Label>
+                  {avatarUrl && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemoveAvatar}
+                      disabled={deleteAvatarMutation.isPending}
                     >
-                      {deleteAccountMutation.isPending ? t('settings.deleteAccount.deleting') : t('settings.deleteAccount.confirm')}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardContent>
-          </Card>
-        </div>
+                      <X className="w-4 h-4 mr-2" />
+                      {t('settings.avatar.remove')}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">{t('settings.avatar.recommendation')}</p>
+              </div>
+            </div>
+            {isUploading && (
+              <div className="space-y-1">
+                <Progress value={uploadProgress} className="h-2" />
+                <p className="text-xs text-muted-foreground">{uploadProgress}%</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Display Name */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.displayName.title')}</CardTitle>
+            <CardDescription>{t('settings.displayName.description')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="display-name">{t('settings.displayName.label')}</Label>
+              <Input
+                id="display-name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                onFocus={handleDisplayNameFocus}
+                onBlur={handleDisplayNameBlur}
+                disabled={!!displayNameCooldown || updateDisplayNameMutation.isPending}
+              />
+              {displayNameCooldown && (
+                <p className="text-xs text-muted-foreground">
+                  {t('settings.displayName.cooldown')} {displayNameCooldown}
+                </p>
+              )}
+            </div>
+            <Button
+              onClick={handleUpdateDisplayName}
+              disabled={!!displayNameCooldown || updateDisplayNameMutation.isPending || !displayName.trim()}
+            >
+              {updateDisplayNameMutation.isPending
+                ? t('settings.displayName.updating')
+                : t('settings.displayName.update')}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Gender */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.gender.title')}</CardTitle>
+            <CardDescription>{t('settings.gender.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label>{t('settings.gender.label')}</Label>
+              <Select
+                value={settings?.gender || Gender.female}
+                onValueChange={handleGenderChange}
+                disabled={setGenderMutation.isPending}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={Gender.male}>{t('settings.gender.male')}</SelectItem>
+                  <SelectItem value={Gender.female}>{t('settings.gender.female')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Language */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.language.title')}</CardTitle>
+            <CardDescription>{t('settings.language.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label>{t('settings.language.label')}</Label>
+              <Select
+                value={settings?.language || Language.en}
+                onValueChange={handleLanguageChange}
+                disabled={setLanguageMutation.isPending}
+              >
+                <SelectTrigger className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.value} value={lang.value}>
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Theme */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.theme.title')}</CardTitle>
+            <CardDescription>{t('settings.theme.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="flex items-center gap-2">
+                  {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                  {t('settings.theme.darkMode')}
+                </Label>
+                <p className="text-xs text-muted-foreground">{t('settings.theme.darkModeDescription')}</p>
+              </div>
+              <Switch
+                checked={theme === 'dark'}
+                onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Password */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.password.title')}</CardTitle>
+            <CardDescription>{t('settings.password.description')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>{t('settings.password.warning.title')}</AlertTitle>
+              <AlertDescription>{t('settings.password.warning.message')}</AlertDescription>
+            </Alert>
+            <div className="space-y-2">
+              <Label htmlFor="password">{t('settings.password.label')}</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={t('settings.password.placeholder')}
+              />
+            </div>
+            <Button onClick={handlePasswordUpdate} variant="outline">
+              {t('settings.password.update')}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Visibility */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {isOffline ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              {t('settings.visibility.title')}
+            </CardTitle>
+            <CardDescription>{t('settings.visibility.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>{t('settings.visibility.offlineMode')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.visibility.offlineModeDescription')}</p>
+              </div>
+              <Switch
+                checked={isOffline}
+                onCheckedChange={handleVisibilityToggle}
+                disabled={updateVisibilityMutation.isPending}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        {/* Danger Zone */}
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              {t('settings.deleteAccount.dangerZone')}
+            </CardTitle>
+            <CardDescription>{t('settings.deleteAccount.dangerZoneDescription')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>{t('settings.deleteAccount.warning.title')}</AlertTitle>
+              <AlertDescription>{t('settings.deleteAccount.warning.message')}</AlertDescription>
+            </Alert>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {t('settings.deleteAccount.button')}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t('settings.deleteAccount.confirmTitle')}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t('settings.deleteAccount.confirmMessage')}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="space-y-2 py-2">
+                  <Label htmlFor="delete-confirm">{t('settings.deleteAccount.typeDelete')}</Label>
+                  <Input
+                    id="delete-confirm"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="DELETE"
+                  />
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>
+                    {t('settings.deleteAccount.cancel')}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAccount}
+                    disabled={deleteAccountMutation.isPending || deleteConfirmText !== 'DELETE'}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteAccountMutation.isPending
+                      ? t('settings.deleteAccount.deleting')
+                      : t('settings.deleteAccount.confirm')}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardContent>
+        </Card>
       </div>
     </RequireProfile>
   );

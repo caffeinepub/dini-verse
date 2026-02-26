@@ -44,8 +44,16 @@ export const Experience = IDL.Record({
 });
 export const Time = IDL.Int;
 export const Language = IDL.Variant({
-  'german' : IDL.Null,
-  'english' : IDL.Null,
+  'de' : IDL.Null,
+  'en' : IDL.Null,
+  'es' : IDL.Null,
+  'fr' : IDL.Null,
+  'ko' : IDL.Null,
+  'nl' : IDL.Null,
+  'pt' : IDL.Null,
+  'ru' : IDL.Null,
+  'tr' : IDL.Null,
+  'vi' : IDL.Null,
 });
 export const Gender = IDL.Variant({ 'female' : IDL.Null, 'male' : IDL.Null });
 export const TextDirection = IDL.Variant({
@@ -137,11 +145,11 @@ export const idlService = IDL.Service({
       [IDL.Vec(Experience)],
       ['query'],
     ),
-  'getGender' : IDL.Func([], [Gender], []),
+  'getGender' : IDL.Func([], [Gender], ['query']),
   'getLanguageSettings' : IDL.Func(
       [],
       [Language, IDL.Text, IDL.Text, TextDirection, Language],
-      [],
+      ['query'],
     ),
   'getSettings' : IDL.Func([], [UserSettings], ['query']),
   'getTrendingExperiences' : IDL.Func(
@@ -224,7 +232,18 @@ export const idlFactory = ({ IDL }) => {
     'gameplayControls' : IDL.Text,
   });
   const Time = IDL.Int;
-  const Language = IDL.Variant({ 'german' : IDL.Null, 'english' : IDL.Null });
+  const Language = IDL.Variant({
+    'de' : IDL.Null,
+    'en' : IDL.Null,
+    'es' : IDL.Null,
+    'fr' : IDL.Null,
+    'ko' : IDL.Null,
+    'nl' : IDL.Null,
+    'pt' : IDL.Null,
+    'ru' : IDL.Null,
+    'tr' : IDL.Null,
+    'vi' : IDL.Null,
+  });
   const Gender = IDL.Variant({ 'female' : IDL.Null, 'male' : IDL.Null });
   const TextDirection = IDL.Variant({
     'leftToRight' : IDL.Null,
@@ -312,11 +331,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(Experience)],
         ['query'],
       ),
-    'getGender' : IDL.Func([], [Gender], []),
+    'getGender' : IDL.Func([], [Gender], ['query']),
     'getLanguageSettings' : IDL.Func(
         [],
         [Language, IDL.Text, IDL.Text, TextDirection, Language],
-        [],
+        ['query'],
       ),
     'getSettings' : IDL.Func([], [UserSettings], ['query']),
     'getTrendingExperiences' : IDL.Func(

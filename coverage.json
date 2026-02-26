@@ -1,36 +1,71 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-26T00:42:32.895Z",
+  "generatedAt": "2026-02-26T01:04:59.278Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 4,
+    "implemented": 3,
     "items": [
       {
-        "id": "REQ-2",
-        "summary": "Wrap the application root in frontend/src/App.tsx with TranslationProvider (from frontend/src/contexts/TranslationContext.tsx) so that all components using useTranslationContext (via useTranslation hook) can access the translation context without throwing errors.",
+        "id": "REQ-3",
+        "summary": "Add translations for Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch to frontend/src/i18n/translations.ts alongside the existing English strings, covering all existing translation keys (nav, auth, home, discover, profile, social, settings, etc.).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/App.tsx"
+          "frontend/src/i18n/translations.ts"
         ],
         "matchedFiles": [
-          "frontend/src/App.tsx"
+          "frontend/src/i18n/translations.ts"
         ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Update frontend/src/contexts/TranslationContext.tsx to support all ten locales (en, es, fr, pt, de, tr, ru, vi, ko, nl), ensuring the translation function `t` resolves strings from the correct locale based on the user's language setting and falls back to English for missing keys.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/contexts/TranslationContext.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/contexts/TranslationContext.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Update the language selector in frontend/src/pages/Settings.tsx to list all ten supported languages — English, Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch — and persist the selected language via the existing useAccountSettings language mutation so it is reflected app-wide.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/Settings.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/Settings.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Update the backend language setting in backend/main.mo to accept and store all ten locale codes (en, es, fr, pt, de, tr, ru, vi, ko, nl) in UserSettings, replacing or extending any previous single-language field.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
-    "build-template/README.md",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/contexts/TranslationContext.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/i18n/translations.ts",
+    "frontend/src/pages/Settings.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -4,21 +4,32 @@ import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import Map "mo:core/Map";
 import Order "mo:core/Order";
-import List "mo:core/List";
 import Time "mo:core/Time";
 import Storage "blob-storage/Storage";
+import Migration "migration";
 
-
-import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
+import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 
-
+// Apply migration on upgrade
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
   type Gender = { #male; #female };
-  type Language = { #german; #english };
+  type Language = {
+    #en;
+    #es;
+    #fr;
+    #pt;
+    #de;
+    #tr;
+    #ru;
+    #vi;
+    #ko;
+    #nl;
+  };
   type TextDirection = { #leftToRight; #rightToLeft };
 
   type UserProfile = {
@@ -26,10 +37,10 @@ actor {
     avatar : ?Storage.ExternalBlob;
     visibility : { #online; #offline };
     gender : Gender;
-    language : Language; // External representation
+    language : Language;
     nativeLanguage : Language;
-    languageCode : Text; // ISO 639-1 code
-    languagePrefix : Text; // e.g., "de", "en"
+    languageCode : Text;
+    languagePrefix : Text;
     textDirection : TextDirection;
   };
 
@@ -134,6 +145,9 @@ actor {
   };
 
   public query ({ caller }) func getAllLanguageSettings() : async [(Principal, UserSettings)] {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can access all language settings");
+    };
     userSettings.toArray();
   };
 
@@ -153,12 +167,12 @@ actor {
       passwordResetAttempts = 0;
       lastPasswordResetAttempt = now;
       gender = #female;
-      language = #german;
+      language = #de; // Default to German
       languageCode = "de";
       languagePrefix = "de";
       textDirection = #leftToRight;
-      nativeLanguage = #german;
-      pronunciationLanguage = #german;
+      nativeLanguage = #de; // Default to German
+      pronunciationLanguage = #de; // Default to German
     };
 
     userSettings.add(caller, defaultSettings);
@@ -168,11 +182,11 @@ actor {
       avatar = null;
       visibility = #online;
       gender = #female;
-      language = #german;
-      languageCode = "de"; // Default to German
+      language = #de; // Default to German
+      languageCode = "de";
       languagePrefix = "de";
       textDirection = #leftToRight;
-      nativeLanguage = #german;
+      nativeLanguage = #de; // Default to German
     };
     userProfiles.add(caller, defaultProfile);
 
@@ -187,10 +201,16 @@ actor {
   };
 
   public query ({ caller }) func getSettings() : async UserSettings {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access settings");
+    };
     getOrInitializeSettings(caller);
   };
 
   public shared ({ caller }) func updateDisplayName(newDisplayName : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update display name");
+    };
     let currentTime = Time.now();
     let settings = getOrInitializeSettings(caller);
 
@@ -232,6 +252,9 @@ actor {
   };
 
   public shared ({ caller }) func updateDisplayNameAndAvatar(newDisplayName : Text, avatar : ?Storage.ExternalBlob) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update display name and avatar");
+    };
     let currentTime = Time.now();
     let settings = getOrInitializeSettings(caller);
 
@@ -274,6 +297,9 @@ actor {
   };
 
   public shared ({ caller }) func updateVisibility(visibility : Visibility) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update visibility");
+    };
     let currentTime = Time.now();
     let settings = getOrInitializeSettings(caller);
 
@@ -309,6 +335,9 @@ actor {
   };
 
   public shared ({ caller }) func deleteAvatar() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete their avatar");
+    };
     let settings = getOrInitializeSettings(caller);
 
     let updatedSettings = { settings with avatar = null };
@@ -324,6 +353,9 @@ actor {
   };
 
   public shared ({ caller }) func deleteAccount() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete their account");
+    };
     // Remove user profile
     userProfiles.remove(caller);
     // Remove user settings
@@ -331,6 +363,9 @@ actor {
   };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access their profile");
+    };
     userProfiles.get(caller);
   };
 
@@ -345,6 +380,9 @@ actor {
     textDirection : TextDirection,
     nativeLanguage : Language,
   ) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save their profile");
+    };
     let profile : UserProfile = {
       displayName;
       avatar;
@@ -399,11 +437,17 @@ actor {
     };
   };
 
-  public shared ({ caller }) func getGender() : async Gender {
+  public query ({ caller }) func getGender() : async Gender {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access their gender setting");
+    };
     getOrInitializeSettings(caller).gender;
   };
 
   public shared ({ caller }) func setGender(gender : Gender) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can set their gender");
+    };
     let settings = getOrInitializeSettings(caller);
     let updatedSettings = { settings with gender; updatedAt = Time.now() };
     userSettings.add(caller, updatedSettings);
@@ -419,12 +463,18 @@ actor {
   };
 
   // Retrieve full language settings, including code and prefix
-  public shared ({ caller }) func getLanguageSettings() : async (Language, Text, Text, TextDirection, Language) {
+  public query ({ caller }) func getLanguageSettings() : async (Language, Text, Text, TextDirection, Language) {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access their language settings");
+    };
     let settings = getOrInitializeSettings(caller);
     (settings.language, settings.languageCode, settings.languagePrefix, settings.textDirection, settings.nativeLanguage);
   };
 
   public shared ({ caller }) func setLanguage(language : Language, languageCode : Text, languagePrefix : Text, textDirection : TextDirection, nativeLanguage : Language) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can set their language");
+    };
     let settings = getOrInitializeSettings(caller);
     let updatedSettings = {
       settings with
@@ -454,3 +504,4 @@ actor {
     };
   };
 };
+

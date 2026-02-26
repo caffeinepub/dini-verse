@@ -1,35 +1,92 @@
 {
   "kind": "build_request",
-  "title": "Fix TranslationProvider missing from app root",
-  "priority": "high",
+  "title": "Add multi-language support (EN/ES/FR/PT/DE/TR/RU/VI/KO/NL)",
+  "projectName": "Dini.Verse",
+  "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-2",
-      "text": "Wrap the application root in frontend/src/App.tsx with TranslationProvider (from frontend/src/contexts/TranslationContext.tsx) so that all components using useTranslationContext (via useTranslation hook) can access the translation context without throwing errors.",
+      "id": "REQ-3",
+      "text": "Add translations for Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch to frontend/src/i18n/translations.ts alongside the existing English strings, covering all existing translation keys (nav, auth, home, discover, profile, social, settings, etc.).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "useTranslationContext must be used within TranslationProvider"
+          "the whole original website's language is English but you can change it to Spanish, French, portuguese, German, Turkish, russian, Vietnamese, Korean, dutch"
         ]
       },
       "acceptanceCriteria": [
-        "The app loads without displaying 'useTranslationContext must be used within TranslationProvider' error",
-        "TranslationProvider wraps the component tree at a level that covers all routes and pages",
-        "All pages that use useTranslation continue to function correctly with translated strings"
+        "translations.ts exports locale entries for: en, es, fr, pt, de, tr, ru, vi, ko, nl",
+        "All existing English translation keys are present in each new locale",
+        "Missing keys fall back to English as defined in TranslationContext"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Update frontend/src/contexts/TranslationContext.tsx to support all ten locales (en, es, fr, pt, de, tr, ru, vi, ko, nl), ensuring the translation function `t` resolves strings from the correct locale based on the user's language setting and falls back to English for missing keys.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "you can change it to Spanish, French, portuguese, German, Turkish, russian, Vietnamese, Korean, dutch"
+        ]
+      },
+      "acceptanceCriteria": [
+        "TranslationContext accepts and resolves all ten supported locale codes",
+        "Switching language updates all translated strings in the UI",
+        "Any missing key in a non-English locale falls back to the English value"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Update the language selector in frontend/src/pages/Settings.tsx to list all ten supported languages — English, Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch — and persist the selected language via the existing useAccountSettings language mutation so it is reflected app-wide.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "you can change it to Spanish, French, portuguese, German, Turkish, russian, Vietnamese, Korean, dutch"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Settings page language dropdown lists all 10 languages with their native names",
+        "Selecting a language saves the preference and the entire UI re-renders in the chosen language",
+        "Default language remains English"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Update the backend language setting in backend/main.mo to accept and store all ten locale codes (en, es, fr, pt, de, tr, ru, vi, ko, nl) in UserSettings, replacing or extending any previous single-language field.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "you can change it to Spanish, French, portuguese, German, Turkish, russian, Vietnamese, Korean, dutch"
+        ]
+      },
+      "acceptanceCriteria": [
+        "UserSettings.language field accepts any of the ten locale codes",
+        "Existing records without a language field default to 'en' on read",
+        "setLanguage and getLanguage (or equivalent) backend methods handle all ten locales without error"
       ]
     }
   ],
   "constraints": [
-    "Do not modify frontend/src/main.tsx as it is an immutable path",
-    "TranslationProvider must be added in App.tsx or another mutable wrapper component, not in main.tsx"
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
+    "English must remain the default language",
+    "All locale additions must be purely additive — no existing English strings may be removed or renamed"
   ],
   "nonGoals": [
-    "Adding new translation strings or languages",
-    "Changing the TranslationContext implementation",
-    "Any backend changes"
+    "Adding any language beyond the ten specified (en, es, fr, pt, de, tr, ru, vi, ko, nl)",
+    "Automatic browser-locale detection",
+    "Right-to-left (RTL) layout support",
+    "Backend migration file unless the UserSettings schema change requires one"
   ],
   "imageRequirements": {
     "required": [],

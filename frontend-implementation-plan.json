@@ -1,21 +1,53 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix TranslationProvider missing from app root",
+  "title": "Add multi-language support (EN/ES/FR/PT/DE/TR/RU/VI/KO/NL)",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Wrap the application root in App.tsx with TranslationProvider to resolve useTranslationContext errors",
+      "id": "REQ-3",
+      "summary": "Add translations for Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch to frontend/src/i18n/translations.ts alongside the existing English strings",
       "acceptanceCriteria": [
-        "The app loads without displaying 'useTranslationContext must be used within TranslationProvider' error",
-        "TranslationProvider wraps the component tree at a level that covers all routes and pages",
-        "All pages that use useTranslation continue to function correctly with translated strings"
+        "translations.ts exports locale entries for: en, es, fr, pt, de, tr, ru, vi, ko, nl",
+        "All existing English translation keys are present in each new locale",
+        "Missing keys fall back to English as defined in TranslationContext"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/i18n/translations.ts",
           "operation": "modify",
-          "description": "Import TranslationProvider from frontend/src/contexts/TranslationContext.tsx and wrap the existing RouterProvider and its surrounding providers (ThemeProvider, Toaster) with TranslationProvider. Ensure TranslationProvider is placed at a level that covers all child components and routes so that any component using useTranslation can access the translation context without errors."
+          "description": "Add nine new locale objects (es, fr, pt, de, tr, ru, vi, ko, nl) to the exported translations object, each containing all existing translation keys from the English locale with translated values. Preserve the existing 'en' locale unchanged. Ensure all nested sections (nav, auth, home, discover, profile, social, settings, etc.) are fully translated for each new language."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Update frontend/src/contexts/TranslationContext.tsx to support all ten locales and ensure the translation function resolves strings correctly with English fallback",
+      "acceptanceCriteria": [
+        "TranslationContext accepts and resolves all ten supported locale codes",
+        "Switching language updates all translated strings in the UI",
+        "Any missing key in a non-English locale falls back to the English value"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/contexts/TranslationContext.tsx",
+          "operation": "modify",
+          "description": "Update the TranslationContext to recognize and support all ten locale codes (en, es, fr, pt, de, tr, ru, vi, ko, nl). Ensure the translation function 't' resolves keys from the user's selected language and falls back to English when a key is missing in the selected locale. Verify that language switching triggers a re-render of all translated strings throughout the app."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Update the language selector in frontend/src/pages/Settings.tsx to list all ten supported languages and persist the selected language via the existing useAccountSettings language mutation",
+      "acceptanceCriteria": [
+        "Settings page language dropdown lists all 10 languages with their native names",
+        "Selecting a language saves the preference and the entire UI re-renders in the chosen language",
+        "Default language remains English"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/Settings.tsx",
+          "operation": "modify",
+          "description": "Update the language selector dropdown in the Settings page to display all ten supported languages using their native names (e.g., 'English', 'Español', 'Français', 'Português', 'Deutsch', 'Türkçe', 'Русский', 'Tiếng Việt', '한국어', 'Nederlands'). Wire the dropdown to the existing setLanguage mutation from useAccountSettings to persist the user's choice. Ensure selecting a new language updates the TranslationContext and re-renders the entire UI in the chosen language. Keep English as the default."
         }
       ]
     }

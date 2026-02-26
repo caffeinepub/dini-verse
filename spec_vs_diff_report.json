@@ -1,14 +1,35 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-26T00:42:32.890Z",
-  "summary": "The diff implements REQ-2 by wrapping the application root in frontend/src/App.tsx with TranslationProvider imported from frontend/src/contexts/TranslationContext.tsx. The TranslationProvider wraps the RouterProvider (and thus all routes/pages), satisfying all acceptance criteria. No hallucinated features were detected.",
-  "missing_requirements": [],
-  "hallucinated_features": [],
-  "confidence": 0.97,
+  "generatedAt": "2026-02-26T01:04:59.274Z",
+  "summary": "The diff implements multi-language support across all four required areas: translations.ts (REQ-3), TranslationContext.tsx (REQ-4), Settings.tsx (REQ-5), and backend/main.mo (REQ-6). All ten locales are represented in the Language type in main.mo, the languageToLocale mapping in TranslationContext.tsx, and the SUPPORTED_LANGUAGES array in Settings.tsx. A migration module is also added. However, translations.ts is truncated so it is impossible to fully verify all locale entries and all translation keys are present.",
+  "missing_requirements": [
+    {
+      "id": "REQ-3",
+      "requirement": "translations.ts exports locale entries for es, fr, pt, de, tr, ru, vi, ko, nl with all existing English translation keys present in each new locale.",
+      "reason": "The translations.ts file is truncated at 4000 chars and only shows the English ('en') locale entry. There is no visible evidence that the nine additional locales (es, fr, pt, de, tr, ru, vi, ko, nl) are exported with all required translation keys. Cannot confirm AC: 'translations.ts exports locale entries for: en, es, fr, pt, de, tr, ru, vi, ko, nl' or 'All existing English translation keys are present in each new locale'.",
+      "evidence": [
+        "frontend/src/i18n/translations.ts"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "LANGUAGE_META constant mapping each Language enum to languageCode, languagePrefix, and TextDirection in Settings.tsx",
+      "reason": "The build request only asks for a language selector that persists the language preference app-wide. The LANGUAGE_META record with code/prefix/direction metadata was not requested.",
+      "evidence": [
+        "frontend/src/pages/Settings.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.72,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
+    "frontend/src/contexts/TranslationContext.tsx",
+    "frontend/src/i18n/translations.ts",
+    "frontend/src/pages/Settings.tsx",
     "project_state.json"
   ]
 }

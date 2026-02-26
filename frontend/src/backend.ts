@@ -154,8 +154,16 @@ export enum Gender {
     male = "male"
 }
 export enum Language {
-    german = "german",
-    english = "english"
+    de = "de",
+    en = "en",
+    es = "es",
+    fr = "fr",
+    ko = "ko",
+    nl = "nl",
+    pt = "pt",
+    ru = "ru",
+    tr = "tr",
+    vi = "vi"
 }
 export enum TextDirection {
     leftToRight = "leftToRight",
@@ -830,11 +838,27 @@ function from_candid_variant_n16(_uploadFile: (file: ExternalBlob) => Promise<Ui
     return "roleplay" in value ? Category.roleplay : "simulator" in value ? Category.simulator : "adventure" in value ? Category.adventure : value;
 }
 function from_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    german: null;
+    de: null;
 } | {
-    english: null;
+    en: null;
+} | {
+    es: null;
+} | {
+    fr: null;
+} | {
+    ko: null;
+} | {
+    nl: null;
+} | {
+    pt: null;
+} | {
+    ru: null;
+} | {
+    tr: null;
+} | {
+    vi: null;
 }): Language {
-    return "german" in value ? Language.german : "english" in value ? Language.english : value;
+    return "de" in value ? Language.de : "en" in value ? Language.en : "es" in value ? Language.es : "fr" in value ? Language.fr : "ko" in value ? Language.ko : "nl" in value ? Language.nl : "pt" in value ? Language.pt : "ru" in value ? Language.ru : "tr" in value ? Language.tr : "vi" in value ? Language.vi : value;
 }
 function from_candid_variant_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     female: null;
@@ -949,14 +973,46 @@ function to_candid_variant_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint
     } : value;
 }
 function to_candid_variant_n41(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Language): {
-    german: null;
+    de: null;
 } | {
-    english: null;
+    en: null;
+} | {
+    es: null;
+} | {
+    fr: null;
+} | {
+    ko: null;
+} | {
+    nl: null;
+} | {
+    pt: null;
+} | {
+    ru: null;
+} | {
+    tr: null;
+} | {
+    vi: null;
 } {
-    return value == Language.german ? {
-        german: null
-    } : value == Language.english ? {
-        english: null
+    return value == Language.de ? {
+        de: null
+    } : value == Language.en ? {
+        en: null
+    } : value == Language.es ? {
+        es: null
+    } : value == Language.fr ? {
+        fr: null
+    } : value == Language.ko ? {
+        ko: null
+    } : value == Language.nl ? {
+        nl: null
+    } : value == Language.pt ? {
+        pt: null
+    } : value == Language.ru ? {
+        ru: null
+    } : value == Language.tr ? {
+        tr: null
+    } : value == Language.vi ? {
+        vi: null
     } : value;
 }
 function to_candid_variant_n43(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TextDirection): {

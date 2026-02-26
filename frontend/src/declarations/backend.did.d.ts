@@ -28,8 +28,16 @@ export interface Experience {
 export type ExternalBlob = Uint8Array;
 export type Gender = { 'female' : null } |
   { 'male' : null };
-export type Language = { 'german' : null } |
-  { 'english' : null };
+export type Language = { 'de' : null } |
+  { 'en' : null } |
+  { 'es' : null } |
+  { 'fr' : null } |
+  { 'ko' : null } |
+  { 'nl' : null } |
+  { 'pt' : null } |
+  { 'ru' : null } |
+  { 'tr' : null } |
+  { 'vi' : null };
 export type TextDirection = { 'leftToRight' : null } |
   { 'rightToLeft' : null };
 export type Time = bigint;
