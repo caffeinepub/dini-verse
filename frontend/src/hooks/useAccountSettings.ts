@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
+import { useInternetIdentity } from './useInternetIdentity';
 import { ExternalBlob } from '../backend';
 import type { UserSettings, Variant_offline_online, Gender, Language, TextDirection } from '../backend';
 import { formatError } from '../utils/formatError';
@@ -7,11 +8,14 @@ import { formatError } from '../utils/formatError';
 // Get caller's account settings (always returns non-null)
 export function useGetCallerSettings() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const isAuthenticated = !!identity;
 
   const query = useQuery<UserSettings, Error>({
     queryKey: ['callerSettings'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
+      if (!isAuthenticated) throw new Error('Not authenticated');
       try {
         return await actor.getSettings();
       } catch (err) {
@@ -20,7 +24,7 @@ export function useGetCallerSettings() {
         throw new Error(message);
       }
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !actorFetching && isAuthenticated,
     retry: false,
   });
 
@@ -34,11 +38,13 @@ export function useGetCallerSettings() {
 // Update display name
 export function useUpdateDisplayName() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (newDisplayName: string) => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       try {
         await actor.updateDisplayName(newDisplayName);
       } catch (err) {
@@ -56,11 +62,13 @@ export function useUpdateDisplayName() {
 // Update display name and avatar together
 export function useUpdateDisplayNameAndAvatar() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: { displayName: string; avatar: ExternalBlob | null }) => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       try {
         await actor.updateDisplayNameAndAvatar(data.displayName, data.avatar);
       } catch (err) {
@@ -78,11 +86,13 @@ export function useUpdateDisplayNameAndAvatar() {
 // Update visibility preference
 export function useUpdateVisibility() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (visibility: Variant_offline_online) => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       try {
         await actor.updateVisibility(visibility);
       } catch (err) {
@@ -100,11 +110,13 @@ export function useUpdateVisibility() {
 // Delete avatar
 export function useDeleteAvatar() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       try {
         await actor.deleteAvatar();
       } catch (err) {
@@ -122,11 +134,13 @@ export function useDeleteAvatar() {
 // Delete account
 export function useDeleteAccount() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       try {
         await actor.deleteAccount();
       } catch (err) {
@@ -143,11 +157,13 @@ export function useDeleteAccount() {
 // Set gender
 export function useSetGender() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (gender: Gender) => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       try {
         await actor.setGender(gender);
       } catch (err) {
@@ -165,6 +181,7 @@ export function useSetGender() {
 // Set language
 export function useSetLanguage() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -176,6 +193,7 @@ export function useSetLanguage() {
       nativeLanguage: Language;
     }) => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       try {
         await actor.setLanguage(
           data.language,

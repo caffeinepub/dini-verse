@@ -2,48 +2,8 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-translations-for-spanish-french-portuguese-german-turkish-russian-vietnamese-korean-and-dutch-to-frontend-src-i18n-translations-ts-alongside-the-existing-english-strings-covering-all-existing-translation-keys-nav-auth-home-discover-profile-social-settings-etc",
-      "featureTitle": "Add translations for Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch to frontend/src/i18n/translations.ts alongside the existing English strings, covering all existing translation keys (nav, auth, home, discover, profile, social, settings, etc.).",
-      "files": [
-        "frontend/src/i18n/translations.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-frontend-src-contexts-translationcontext-tsx-to-support-all-ten-locales-en-es-fr-pt-de-tr-ru-vi-ko-nl-ensuring-the-translation-function-t-resolves-strings-from-the-correct-locale-based-on-the-user-s-language-setting-and-falls-back-to-english-for-missing-keys",
-      "featureTitle": "Update frontend/src/contexts/TranslationContext.tsx to support all ten locales (en, es, fr, pt, de, tr, ru, vi, ko, nl), ensuring the translation function `t` resolves strings from the correct locale based on the user's language setting and falls back to English for missing keys.",
-      "files": [
-        "frontend/src/contexts/TranslationContext.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-the-language-selector-in-frontend-src-pages-settings-tsx-to-list-all-ten-supported-languages-english-spanish-french-portuguese-german-turkish-russian-vietnamese-korean-and-dutch-and-persist-the-selected-language-via-the-existing-useaccountsettings-language-mutation-so-it-is-reflected-app-wide",
-      "featureTitle": "Update the language selector in frontend/src/pages/Settings.tsx to list all ten supported languages — English, Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch — and persist the selected language via the existing useAccountSettings language mutation so it is reflected app-wide.",
+      "featureId": "feature-fix-the-settings-page-so-that-it-does-not-attempt-to-load-settings-when-the-user-is-not-authenticated-if-the-user-is-not-logged-in-show-a-prompt-to-log-in-rather-than-calling-the-backend-settings-endpoint-which-currently-throws-unauthorized-only-users-can-access-settings",
+      "featureTitle": "Fix the Settings page so that it does not attempt to load settings when the user is not authenticated. If the user is not logged in, show a prompt to log in rather than calling the backend settings endpoint, which currently throws 'Unauthorized: Only users can access settings'.",
       "files": [
         "frontend/src/pages/Settings.tsx"
       ],
@@ -57,7 +17,27 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-5"
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-fix-the-useaccountsettings-hook-to-guard-all-backend-calls-with-an-authentication-check-only-invoke-backend-settings-queries-and-mutations-when-a-valid-session-actor-is-available-return-appropriate-idle-unauthenticated-state-otherwise",
+      "featureTitle": "Fix the useAccountSettings hook to guard all backend calls with an authentication check. Only invoke backend settings queries and mutations when a valid session/actor is available; return appropriate idle/unauthenticated state otherwise.",
+      "files": [
+        "frontend/src/hooks/useAccountSettings.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
       ],
       "confidence": "high"
     }

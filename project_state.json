@@ -1,71 +1,32 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 7,
-  "summary": "Multi-language website with English as default, supporting Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch",
+  "projectStateVersion": 3,
+  "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Website displays error: 'useTranslationContext must be used within TranslationProvider' - translation context not properly initialized"
+    "Settings page throws 'Unauthorized: Only users can access settings' error when loading — likely a missing or incorrect auth context when fetching settings"
   ],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-wrap-the-application-root-in-frontend-src-app-tsx-with-translationprovider-from-frontend-src-contexts-translationcontext-tsx-so-that-all-components-using-usetranslationcontext-via-usetranslation-hook-can-access-the-translation-context-without-throwing-errors",
-      "title": "Wrap the application root in frontend/src/App.tsx with TranslationProvider (from frontend/src/contexts/TranslationContext.tsx) so that all components using useTranslationContext (via useTranslation hook) can access the translation context without throwing errors.",
+      "id": "feature-fix-the-settings-page-so-that-it-does-not-attempt-to-load-settings-when-the-user-is-not-authenticated-if-the-user-is-not-logged-in-show-a-prompt-to-log-in-rather-than-calling-the-backend-settings-endpoint-which-currently-throws-unauthorized-only-users-can-access-settings",
+      "title": "Fix the Settings page so that it does not attempt to load settings when the user is not authenticated. If the user is not logged in, show a prompt to log in rather than calling the backend settings endpoint, which currently throws 'Unauthorized: Only users can access settings'.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-useaccountsettings-hook-to-guard-all-backend-calls-with-an-authentication-check-only-invoke-backend-settings-queries-and-mutations-when-a-valid-session-actor-is-available-return-appropriate-idle-unauthenticated-state-otherwise",
+      "title": "Fix the useAccountSettings hook to guard all backend calls with an authentication check. Only invoke backend settings queries and mutations when a valid session/actor is available; return appropriate idle/unauthenticated state otherwise.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
-    },
-    {
-      "id": "feature-add-translations-for-spanish-french-portuguese-german-turkish-russian-vietnamese-korean-and-dutch-to-frontend-src-i18n-translations-ts-alongside-the-existing-english-strings-covering-all-existing-translation-keys-nav-auth-home-discover-profile-social-settings-etc",
-      "title": "Add translations for Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch to frontend/src/i18n/translations.ts alongside the existing English strings, covering all existing translation keys (nav, auth, home, discover, profile, social, settings, etc.).",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-frontend-src-contexts-translationcontext-tsx-to-support-all-ten-locales-en-es-fr-pt-de-tr-ru-vi-ko-nl-ensuring-the-translation-function-t-resolves-strings-from-the-correct-locale-based-on-the-user-s-language-setting-and-falls-back-to-english-for-missing-keys",
-      "title": "Update frontend/src/contexts/TranslationContext.tsx to support all ten locales (en, es, fr, pt, de, tr, ru, vi, ko, nl), ensuring the translation function `t` resolves strings from the correct locale based on the user's language setting and falls back to English for missing keys.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-language-selector-in-frontend-src-pages-settings-tsx-to-list-all-ten-supported-languages-english-spanish-french-portuguese-german-turkish-russian-vietnamese-korean-and-dutch-and-persist-the-selected-language-via-the-existing-useaccountsettings-language-mutation-so-it-is-reflected-app-wide",
-      "title": "Update the language selector in frontend/src/pages/Settings.tsx to list all ten supported languages — English, Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch — and persist the selected language via the existing useAccountSettings language mutation so it is reflected app-wide.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Wrap the entire application root with TranslationProvider in frontend/src/main.tsx so that useTranslation hook can access the translation context throughout the component tree",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Add multi-language support allowing users to switch the website language between English (default), Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "Update the backend language setting in backend/main.mo to accept and store all ten locale codes (en, es, fr, pt, de, tr, ru, vi, ko, nl) in UserSettings, replacing or extending any previous single-language field.",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "status": "pending"
-    }
-  ],
-  "projectName": "Fix TranslationProvider context initialization error",
+  "new_feature_requests": [],
+  "projectName": "Fix 'Unauthorized: Only users can access settings' error on Settings page",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

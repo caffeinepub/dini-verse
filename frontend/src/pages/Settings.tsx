@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Settings as SettingsIcon, User, Eye, EyeOff, Trash2, Upload, X, AlertTriangle, Moon, Sun } from 'lucide-react';
+import { Settings as SettingsIcon, User, Eye, EyeOff, Trash2, Upload, X, AlertTriangle, Moon, Sun, LogIn, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +28,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import RequireProfile from '../components/auth/RequireProfile';
 import { 
   useGetCallerSettings, 
   useUpdateDisplayName, 
@@ -72,10 +71,62 @@ const LANGUAGE_META: Record<Language, { code: string; prefix: string; direction:
   [Language.nl]: { code: 'nl', prefix: 'nl', direction: TextDirection.leftToRight },
 };
 
+function SettingsLoginPrompt() {
+  const navigate = useNavigate();
+  const { login, loginStatus } = useInternetIdentity();
+  const { t } = useTranslation();
+  const isLoggingIn = loginStatus === 'logging-in';
+
+  const handleLogin = async () => {
+    try {
+      await login();
+    } catch (error: any) {
+      console.error('Login error:', error);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="flex items-center gap-3 mb-6">
+        <SettingsIcon className="w-7 h-7 text-primary" />
+        <div>
+          <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
+          <p className="text-muted-foreground text-sm">{t('settings.subtitle')}</p>
+        </div>
+      </div>
+      <Card className="max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle>Authentication Required</CardTitle>
+          <CardDescription>
+            You need to be logged in to access your settings
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Please log in to your account to view and manage your account settings.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleLogin}
+              disabled={isLoggingIn}
+              className="flex-1 gap-2"
+            >
+              <LogIn className="h-4 w-4" />
+              {isLoggingIn ? 'Logging in...' : 'Log In'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function Settings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { clear: logout } = useInternetIdentity();
+  const { identity, clear: logout, isInitializing } = useInternetIdentity();
+  const isAuthenticated = !!identity;
+
   const { data: settings, isLoading, error, isFetched } = useGetCallerSettings();
   const { theme, setTheme } = useTheme();
   const { t } = useTranslation();
@@ -242,324 +293,335 @@ export default function Settings() {
     return null;
   };
 
+  // Show loading while Internet Identity is initializing
+  if (isInitializing) {
+    return (
+      <div className="container py-16">
+        <div className="flex items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated via Internet Identity
+  if (!isAuthenticated) {
+    return <SettingsLoginPrompt />;
+  }
+
   const displayNameCooldown = getDisplayNameCooldownText();
   const avatarUrl = getAvatarUrl();
   const isOffline = settings?.visibility === Variant_offline_online.offline;
 
   return (
-    <RequireProfile>
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center gap-3 mb-6">
-          <SettingsIcon className="w-7 h-7 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
-            <p className="text-muted-foreground text-sm">{t('settings.subtitle')}</p>
-          </div>
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <SettingsIcon className="w-7 h-7 text-primary" />
+        <div>
+          <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
+          <p className="text-muted-foreground text-sm">{t('settings.subtitle')}</p>
         </div>
-
-        {error && isFetched && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>{t('settings.error.title')}</AlertTitle>
-            <AlertDescription>
-              {t('settings.error.description')}
-              {error instanceof Error && (
-                <details className="mt-2 text-xs">
-                  <summary>{t('settings.error.details')}</summary>
-                  <pre className="mt-1 whitespace-pre-wrap">{error.message}</pre>
-                </details>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Profile Picture */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              {t('settings.avatar.title')}
-            </CardTitle>
-            <CardDescription>{t('settings.avatar.description')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="w-20 h-20">
-                {avatarUrl && <AvatarImage src={avatarUrl} alt="Avatar" />}
-                <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                  {(settings?.displayName || 'U').charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Label htmlFor="avatar-upload" className="cursor-pointer">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
-                      disabled={isUploading || updateDisplayNameAndAvatarMutation.isPending}
-                    >
-                      <span>
-                        <Upload className="w-4 h-4 mr-2" />
-                        {isUploading ? t('settings.avatar.uploading') : t('settings.avatar.upload')}
-                      </span>
-                    </Button>
-                    <input
-                      id="avatar-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleAvatarUpload}
-                      disabled={isUploading}
-                    />
-                  </Label>
-                  {avatarUrl && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRemoveAvatar}
-                      disabled={deleteAvatarMutation.isPending}
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      {t('settings.avatar.remove')}
-                    </Button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">{t('settings.avatar.recommendation')}</p>
-              </div>
-            </div>
-            {isUploading && (
-              <div className="space-y-1">
-                <Progress value={uploadProgress} className="h-2" />
-                <p className="text-xs text-muted-foreground">{uploadProgress}%</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Display Name */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('settings.displayName.title')}</CardTitle>
-            <CardDescription>{t('settings.displayName.description')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="display-name">{t('settings.displayName.label')}</Label>
-              <Input
-                id="display-name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                onFocus={handleDisplayNameFocus}
-                onBlur={handleDisplayNameBlur}
-                disabled={!!displayNameCooldown || updateDisplayNameMutation.isPending}
-              />
-              {displayNameCooldown && (
-                <p className="text-xs text-muted-foreground">
-                  {t('settings.displayName.cooldown')} {displayNameCooldown}
-                </p>
-              )}
-            </div>
-            <Button
-              onClick={handleUpdateDisplayName}
-              disabled={!!displayNameCooldown || updateDisplayNameMutation.isPending || !displayName.trim()}
-            >
-              {updateDisplayNameMutation.isPending
-                ? t('settings.displayName.updating')
-                : t('settings.displayName.update')}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Gender */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('settings.gender.title')}</CardTitle>
-            <CardDescription>{t('settings.gender.description')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label>{t('settings.gender.label')}</Label>
-              <Select
-                value={settings?.gender || Gender.female}
-                onValueChange={handleGenderChange}
-                disabled={setGenderMutation.isPending}
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={Gender.male}>{t('settings.gender.male')}</SelectItem>
-                  <SelectItem value={Gender.female}>{t('settings.gender.female')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Language */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('settings.language.title')}</CardTitle>
-            <CardDescription>{t('settings.language.description')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label>{t('settings.language.label')}</Label>
-              <Select
-                value={settings?.language || Language.en}
-                onValueChange={handleLanguageChange}
-                disabled={setLanguageMutation.isPending}
-              >
-                <SelectTrigger className="w-56">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUPPORTED_LANGUAGES.map((lang) => (
-                    <SelectItem key={lang.value} value={lang.value}>
-                      {lang.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Theme */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('settings.theme.title')}</CardTitle>
-            <CardDescription>{t('settings.theme.description')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="flex items-center gap-2">
-                  {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                  {t('settings.theme.darkMode')}
-                </Label>
-                <p className="text-xs text-muted-foreground">{t('settings.theme.darkModeDescription')}</p>
-              </div>
-              <Switch
-                checked={theme === 'dark'}
-                onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Password */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('settings.password.title')}</CardTitle>
-            <CardDescription>{t('settings.password.description')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>{t('settings.password.warning.title')}</AlertTitle>
-              <AlertDescription>{t('settings.password.warning.message')}</AlertDescription>
-            </Alert>
-            <div className="space-y-2">
-              <Label htmlFor="password">{t('settings.password.label')}</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t('settings.password.placeholder')}
-              />
-            </div>
-            <Button onClick={handlePasswordUpdate} variant="outline">
-              {t('settings.password.update')}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Visibility */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {isOffline ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              {t('settings.visibility.title')}
-            </CardTitle>
-            <CardDescription>{t('settings.visibility.description')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>{t('settings.visibility.offlineMode')}</Label>
-                <p className="text-xs text-muted-foreground">{t('settings.visibility.offlineModeDescription')}</p>
-              </div>
-              <Switch
-                checked={isOffline}
-                onCheckedChange={handleVisibilityToggle}
-                disabled={updateVisibilityMutation.isPending}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Separator />
-
-        {/* Danger Zone */}
-        <Card className="border-destructive/50">
-          <CardHeader>
-            <CardTitle className="text-destructive flex items-center gap-2">
-              <Trash2 className="w-5 h-5" />
-              {t('settings.deleteAccount.dangerZone')}
-            </CardTitle>
-            <CardDescription>{t('settings.deleteAccount.dangerZoneDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>{t('settings.deleteAccount.warning.title')}</AlertTitle>
-              <AlertDescription>{t('settings.deleteAccount.warning.message')}</AlertDescription>
-            </Alert>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  {t('settings.deleteAccount.button')}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t('settings.deleteAccount.confirmTitle')}</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t('settings.deleteAccount.confirmMessage')}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="space-y-2 py-2">
-                  <Label htmlFor="delete-confirm">{t('settings.deleteAccount.typeDelete')}</Label>
-                  <Input
-                    id="delete-confirm"
-                    value={deleteConfirmText}
-                    onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    placeholder="DELETE"
-                  />
-                </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>
-                    {t('settings.deleteAccount.cancel')}
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    disabled={deleteAccountMutation.isPending || deleteConfirmText !== 'DELETE'}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {deleteAccountMutation.isPending
-                      ? t('settings.deleteAccount.deleting')
-                      : t('settings.deleteAccount.confirm')}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </CardContent>
-        </Card>
       </div>
-    </RequireProfile>
+
+      {error && isFetched && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>{t('settings.error.title')}</AlertTitle>
+          <AlertDescription>
+            {t('settings.error.description')}
+            {error instanceof Error && (
+              <details className="mt-2 text-xs">
+                <summary>{t('settings.error.details')}</summary>
+                <pre className="mt-1 whitespace-pre-wrap">{error.message}</pre>
+              </details>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Profile Picture */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            {t('settings.avatar.title')}
+          </CardTitle>
+          <CardDescription>{t('settings.avatar.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Avatar className="w-20 h-20">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt="Avatar" />}
+              <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                {(settings?.displayName || 'U').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Label htmlFor="avatar-upload" className="cursor-pointer">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    disabled={isUploading || updateDisplayNameAndAvatarMutation.isPending}
+                  >
+                    <span>
+                      <Upload className="w-4 h-4 mr-2" />
+                      {isUploading ? t('settings.avatar.uploading') : t('settings.avatar.upload')}
+                    </span>
+                  </Button>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                    disabled={isUploading}
+                  />
+                </Label>
+                {avatarUrl && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRemoveAvatar}
+                    disabled={deleteAvatarMutation.isPending}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    {t('settings.avatar.remove')}
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{t('settings.avatar.recommendation')}</p>
+            </div>
+          </div>
+          {isUploading && (
+            <div className="space-y-1">
+              <Progress value={uploadProgress} className="h-2" />
+              <p className="text-xs text-muted-foreground">{uploadProgress}%</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Display Name */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.displayName.title')}</CardTitle>
+          <CardDescription>{t('settings.displayName.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="display-name">{t('settings.displayName.label')}</Label>
+            <Input
+              id="display-name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              onFocus={handleDisplayNameFocus}
+              onBlur={handleDisplayNameBlur}
+              disabled={!!displayNameCooldown || updateDisplayNameMutation.isPending}
+            />
+            {displayNameCooldown && (
+              <p className="text-xs text-muted-foreground">
+                {t('settings.displayName.cooldown')} {displayNameCooldown}
+              </p>
+            )}
+          </div>
+          <Button
+            onClick={handleUpdateDisplayName}
+            disabled={!!displayNameCooldown || updateDisplayNameMutation.isPending || !displayName.trim()}
+          >
+            {updateDisplayNameMutation.isPending
+              ? t('settings.displayName.updating')
+              : t('settings.displayName.update')}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Gender */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.gender.title')}</CardTitle>
+          <CardDescription>{t('settings.gender.description')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label>{t('settings.gender.label')}</Label>
+            <Select
+              value={settings?.gender || Gender.female}
+              onValueChange={handleGenderChange}
+              disabled={setGenderMutation.isPending}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={Gender.male}>{t('settings.gender.male')}</SelectItem>
+                <SelectItem value={Gender.female}>{t('settings.gender.female')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Language */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.language.title')}</CardTitle>
+          <CardDescription>{t('settings.language.description')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label>{t('settings.language.label')}</Label>
+            <Select
+              value={settings?.language || Language.en}
+              onValueChange={handleLanguageChange}
+              disabled={setLanguageMutation.isPending}
+            >
+              <SelectTrigger className="w-56">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.value} value={lang.value}>
+                    {lang.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Theme */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.theme.title')}</CardTitle>
+          <CardDescription>{t('settings.theme.description')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="flex items-center gap-2">
+                {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                {t('settings.theme.darkMode')}
+              </Label>
+              <p className="text-xs text-muted-foreground">{t('settings.theme.darkModeDescription')}</p>
+            </div>
+            <Switch
+              checked={theme === 'dark'}
+              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Password */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.password.title')}</CardTitle>
+          <CardDescription>{t('settings.password.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>{t('settings.password.warning.title')}</AlertTitle>
+            <AlertDescription>{t('settings.password.warning.message')}</AlertDescription>
+          </Alert>
+          <div className="space-y-2">
+            <Label htmlFor="password">{t('settings.password.label')}</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={t('settings.password.placeholder')}
+            />
+          </div>
+          <Button onClick={handlePasswordUpdate} variant="outline">
+            {t('settings.password.update')}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Visibility */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.visibility.title')}</CardTitle>
+          <CardDescription>{t('settings.visibility.description')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="flex items-center gap-2">
+                {isOffline ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {isOffline ? t('settings.visibility.appearOffline') : t('settings.visibility.appearOnline')}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {isOffline ? t('settings.visibility.offlineDescription') : t('settings.visibility.onlineDescription')}
+              </p>
+            </div>
+            <Switch
+              checked={isOffline}
+              onCheckedChange={handleVisibilityToggle}
+              disabled={updateVisibilityMutation.isPending}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Danger Zone */}
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <Trash2 className="w-5 h-5" />
+            {t('settings.deleteAccount.title')}
+          </CardTitle>
+          <CardDescription>{t('settings.deleteAccount.description')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="w-4 h-4 mr-2" />
+                {t('settings.deleteAccount.button')}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('settings.deleteAccount.confirmTitle')}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t('settings.deleteAccount.confirmDescription')}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-2 py-2">
+                <Label htmlFor="delete-confirm">{t('settings.deleteAccount.typeDelete')}</Label>
+                <Input
+                  id="delete-confirm"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>
+                  {t('settings.deleteAccount.cancel')}
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || deleteAccountMutation.isPending}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {deleteAccountMutation.isPending
+                    ? t('settings.deleteAccount.deleting')
+                    : t('settings.deleteAccount.confirm')}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -1,12 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Add multi-language support to the Dini.Verse app, enabling users to switch the UI between English, Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch.
+**Goal:** Fix the "Unauthorized: Only users can access settings" error on the Settings page by guarding backend calls with authentication checks.
 
 **Planned changes:**
-- Add translations for all 9 new locales (es, fr, pt, de, tr, ru, vi, ko, nl) to `frontend/src/i18n/translations.ts`, covering all existing translation keys with English as fallback for missing keys
-- Update `frontend/src/contexts/TranslationContext.tsx` to support all 10 locale codes and resolve strings from the correct locale based on the user's language setting
-- Update the language selector in `frontend/src/pages/Settings.tsx` to list all 10 languages by their native names, persist the selection app-wide, and default to English
-- Update `backend/main.mo` to accept and store all 10 locale codes in the `UserSettings.language` field, defaulting to `en` for existing records
+- Update the Settings page to skip calling the backend settings endpoint when the user is not authenticated, and instead show a login prompt.
+- Update the `useAccountSettings` hook to guard all backend queries and mutations behind an authentication check, returning an unauthenticated/idle state when no valid session is present.
 
-**User-visible outcome:** Users can open Settings, select from 10 languages, and the entire UI immediately re-renders in the chosen language, with the preference saved persistently.
+**User-visible outcome:** Unauthenticated users see a prompt to log in on the Settings page instead of an error message. Authenticated users load their settings successfully without any "Unauthorized" or "Failed to load settings" errors.

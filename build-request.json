@@ -1,92 +1,58 @@
 {
   "kind": "build_request",
-  "title": "Add multi-language support (EN/ES/FR/PT/DE/TR/RU/VI/KO/NL)",
-  "projectName": "Dini.Verse",
-  "priority": "normal",
+  "title": "Fix 'Unauthorized: Only users can access settings' error on Settings page",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-3",
-      "text": "Add translations for Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch to frontend/src/i18n/translations.ts alongside the existing English strings, covering all existing translation keys (nav, auth, home, discover, profile, social, settings, etc.).",
+      "id": "REQ-1",
+      "text": "Fix the Settings page so that it does not attempt to load settings when the user is not authenticated. If the user is not logged in, show a prompt to log in rather than calling the backend settings endpoint, which currently throws 'Unauthorized: Only users can access settings'.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-6",
+          "msg-10",
+          "msg-14"
         ],
         "quotes": [
-          "the whole original website's language is English but you can change it to Spanish, French, portuguese, German, Turkish, russian, Vietnamese, Korean, dutch"
+          "Failed to load settings. Please try again later.",
+          "Unauthorized: Only users can access settings"
         ]
       },
       "acceptanceCriteria": [
-        "translations.ts exports locale entries for: en, es, fr, pt, de, tr, ru, vi, ko, nl",
-        "All existing English translation keys are present in each new locale",
-        "Missing keys fall back to English as defined in TranslationContext"
+        "When a user is not authenticated, the Settings page does not call the backend settings endpoint.",
+        "When a user is not authenticated, the Settings page displays a message prompting the user to log in rather than an error.",
+        "When a user is authenticated, the Settings page loads settings successfully without any 'Unauthorized' error.",
+        "No 'Failed to load settings' error message appears for authenticated users."
       ]
     },
     {
-      "id": "REQ-4",
-      "text": "Update frontend/src/contexts/TranslationContext.tsx to support all ten locales (en, es, fr, pt, de, tr, ru, vi, ko, nl), ensuring the translation function `t` resolves strings from the correct locale based on the user's language setting and falls back to English for missing keys.",
+      "id": "REQ-2",
+      "text": "Fix the useAccountSettings hook to guard all backend calls with an authentication check. Only invoke backend settings queries and mutations when a valid session/actor is available; return appropriate idle/unauthenticated state otherwise.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-6",
+          "msg-10",
+          "msg-14"
         ],
         "quotes": [
-          "you can change it to Spanish, French, portuguese, German, Turkish, russian, Vietnamese, Korean, dutch"
+          "Unauthorized: Only users can access settings"
         ]
       },
       "acceptanceCriteria": [
-        "TranslationContext accepts and resolves all ten supported locale codes",
-        "Switching language updates all translated strings in the UI",
-        "Any missing key in a non-English locale falls back to the English value"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Update the language selector in frontend/src/pages/Settings.tsx to list all ten supported languages — English, Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, and Dutch — and persist the selected language via the existing useAccountSettings language mutation so it is reflected app-wide.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "you can change it to Spanish, French, portuguese, German, Turkish, russian, Vietnamese, Korean, dutch"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Settings page language dropdown lists all 10 languages with their native names",
-        "Selecting a language saves the preference and the entire UI re-renders in the chosen language",
-        "Default language remains English"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Update the backend language setting in backend/main.mo to accept and store all ten locale codes (en, es, fr, pt, de, tr, ru, vi, ko, nl) in UserSettings, replacing or extending any previous single-language field.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "you can change it to Spanish, French, portuguese, German, Turkish, russian, Vietnamese, Korean, dutch"
-        ]
-      },
-      "acceptanceCriteria": [
-        "UserSettings.language field accepts any of the ten locale codes",
-        "Existing records without a language field default to 'en' on read",
-        "setLanguage and getLanguage (or equivalent) backend methods handle all ten locales without error"
+        "The useAccountSettings hook does not issue a backend request when no authenticated session is present.",
+        "The hook returns a clear unauthenticated state (e.g., disabled query, null data) when the user is not logged in.",
+        "The hook fetches and mutates settings correctly when the user is authenticated."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "English must remain the default language",
-    "All locale additions must be purely additive — no existing English strings may be removed or renamed"
+    "Do not modify files listed in frontend.immutablePaths.",
+    "All Motoko logic must remain in the single main actor file."
   ],
   "nonGoals": [
-    "Adding any language beyond the ten specified (en, es, fr, pt, de, tr, ru, vi, ko, nl)",
-    "Automatic browser-locale detection",
-    "Right-to-left (RTL) layout support",
-    "Backend migration file unless the UserSettings schema change requires one"
+    "Adding new settings fields or changing the settings UI layout.",
+    "Changing the backend authorization logic or removing authentication requirements from the backend."
   ],
   "imageRequirements": {
     "required": [],

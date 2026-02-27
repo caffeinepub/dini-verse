@@ -6,14 +6,14 @@ import Map "mo:core/Map";
 import Order "mo:core/Order";
 import Time "mo:core/Time";
 import Storage "blob-storage/Storage";
-import Migration "migration";
+
 
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 
 // Apply migration on upgrade
-(with migration = Migration.run)
+
 actor {
   include MixinStorage();
 
