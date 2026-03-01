@@ -5,11 +5,11 @@ import LeftSidebar from './LeftSidebar';
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <SiteHeader />
-      <div className="flex-1 flex">
+      <div className="flex flex-1">
         <LeftSidebar />
-        <main className="flex-1">
+        <main className="flex-1 min-w-0">
           <Outlet />
         </main>
       </div>

@@ -1,41 +1,41 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from '@tanstack/react-router';
+import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus } from 'lucide-react';
 
-export default function AccountsDisabledNotice() {
+interface AccountsDisabledNoticeProps {
+  message?: string;
+}
+
+export default function AccountsDisabledNotice({ message }: AccountsDisabledNoticeProps) {
   const navigate = useNavigate();
 
   return (
-    <Card className="max-w-md mx-auto border-muted">
-      <CardHeader>
-        <CardTitle>Login Required</CardTitle>
-        <CardDescription>
-          Please log in to access this feature
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          You need to be logged in to access this feature. Create an account or log in to continue.
+    <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
+      <div className="space-y-2">
+        <h3 className="text-lg font-semibold">Login Required</h3>
+        <p className="text-muted-foreground text-sm max-w-xs">
+          {message || 'Please log in or create an account to continue.'}
         </p>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => navigate({ to: '/login' })}
-            className="flex-1 gap-2"
-          >
-            <LogIn className="h-4 w-4" />
-            Log In
-          </Button>
-          <Button
-            onClick={() => navigate({ to: '/signup' })}
-            variant="outline"
-            className="flex-1 gap-2"
-          >
-            <UserPlus className="h-4 w-4" />
-            Sign Up
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate({ to: '/login' })}
+          className="flex items-center gap-1.5"
+        >
+          <LogIn className="w-4 h-4" />
+          Log In
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => navigate({ to: '/signup' })}
+          className="flex items-center gap-1.5"
+        >
+          <UserPlus className="w-4 h-4" />
+          Sign Up
+        </Button>
+      </div>
+    </div>
   );
 }

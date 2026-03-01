@@ -1,38 +1,124 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix Settings Page Unauthorized Error for Unauthenticated Users",
+  "title": "Remove external redirects and implement in-website authentication",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Fix the Settings page to not attempt backend calls when user is not authenticated and show a login prompt instead",
+      "summary": "Audit and remove all external navigation links, ensuring all navigation stays within the single-page application using TanStack Router",
       "acceptanceCriteria": [
-        "When a user is not authenticated, the Settings page does not call the backend settings endpoint.",
-        "When a user is not authenticated, the Settings page displays a message prompting the user to log in rather than an error.",
-        "When a user is authenticated, the Settings page loads settings successfully without any 'Unauthorized' error.",
-        "No 'Failed to load settings' error message appears for authenticated users."
+        "No link or button in the app causes the browser to navigate to an external domain",
+        "The SiteFooter 'Built with caffeine.ai' attribution link (if present) either opens in a new tab without leaving the app or is removed",
+        "All internal navigation uses TanStack Router <Link> or navigate() rather than raw <a href='https://...'> tags that replace the current page"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/Settings.tsx",
+          "path": "frontend/src/components/layout/SiteFooter.tsx",
           "operation": "modify",
-          "description": "Add authentication check before rendering settings content. If the user is not authenticated (no identity from useInternetIdentity), display the AccountsDisabledNotice component to prompt login instead of attempting to load settings. Only render the settings form and call useAccountSettings hooks when the user is authenticated. Ensure proper loading states are shown while checking authentication status."
+          "description": "Update the 'Built with caffeine.ai' attribution link to open in a new tab (target='_blank' rel='noopener noreferrer') rather than replacing the current page, or remove the link entirely if it redirects users away from the app"
+        },
+        {
+          "path": "frontend/src/components/layout/SiteHeader.tsx",
+          "operation": "modify",
+          "description": "Audit all navigation links and buttons in the site header to ensure they use TanStack Router <Link> components or navigate() calls instead of raw anchor tags with external hrefs"
+        },
+        {
+          "path": "frontend/src/components/profile/ProfileHeaderCard.tsx",
+          "operation": "modify",
+          "description": "Review the Discover and Publish Experience buttons to ensure they navigate using TanStack Router rather than external redirects"
+        },
+        {
+          "path": "frontend/src/pages/Home.tsx",
+          "operation": "modify",
+          "description": "Audit all navigation elements, including the recommended experiences grid and friend activity sidebar, to ensure they use internal TanStack Router navigation"
+        },
+        {
+          "path": "frontend/src/pages/Discover.tsx",
+          "operation": "modify",
+          "description": "Review all category tabs, search results, and publish buttons to ensure they navigate internally via TanStack Router"
+        },
+        {
+          "path": "frontend/src/pages/ExperienceDetails.tsx",
+          "operation": "modify",
+          "description": "Ensure the play button and any creator profile links navigate using TanStack Router rather than window.location or external hrefs"
+        },
+        {
+          "path": "frontend/src/components/experiences/ExperienceCard.tsx",
+          "operation": "modify",
+          "description": "Verify that clicking an experience card navigates to the detail page using TanStack Router <Link> or navigate() instead of raw anchor tags"
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Fix the useAccountSettings hook to guard all backend calls with authentication checks",
+      "summary": "Replace Internet Identity authentication with in-website modal-based login/signup using the existing session-auth system",
       "acceptanceCriteria": [
-        "The useAccountSettings hook does not issue a backend request when no authenticated session is present.",
-        "The hook returns a clear unauthenticated state (e.g., disabled query, null data) when the user is not logged in.",
-        "The hook fetches and mutates settings correctly when the user is authenticated."
+        "Clicking 'Login' or 'Sign Up' in the SiteHeader or any AuthButtons component opens an in-app login dialog/modal or navigates to an internal route — never redirecting to an external identity provider",
+        "The useSessionAuth hook's login and signup methods are wired up as the primary auth mechanism",
+        "Internet Identity (AuthClient) is not invoked in a way that redirects the user away from the app",
+        "After successful login or signup, the user stays on the same domain and is shown their authenticated state without a full page reload to an external URL",
+        "Logout clears the session and returns the user to the home page within the app"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useAccountSettings.ts",
+          "path": "frontend/src/components/auth/AuthButtons.tsx",
           "operation": "modify",
-          "description": "Guard all React Query hooks in useAccountSettings with authentication checks. For useGetSettings, add an 'enabled' condition that checks both actor availability and authentication status (from useInternetIdentity) to prevent the query from running when unauthenticated. For all mutation hooks (updateDisplayName, updateAvatar, updateVisibility, updateLanguage, deleteAccount), add early validation to throw a descriptive error or return early if actor is not available or user is not authenticated. Ensure the query returns a disabled/idle state with null data when authentication requirements are not met."
+          "description": "Update Login and Sign Up buttons to navigate to internal /login and /signup routes (or open modal dialogs) instead of triggering Internet Identity authentication that redirects users to identity.ic0.app. Wire these buttons to use TanStack Router navigation or open inline modal components using the session auth system from useSessionAuth"
+        },
+        {
+          "path": "frontend/src/pages/Login.tsx",
+          "operation": "modify",
+          "description": "Ensure the Login page uses the session auth hook (useSessionAuth) for authentication and does not invoke Internet Identity or cause any external redirects. After successful login, redirect the user to the home page using TanStack Router navigate()"
+        },
+        {
+          "path": "frontend/src/pages/SignUp.tsx",
+          "operation": "modify",
+          "description": "Ensure the SignUp page uses the session auth hook (useSessionAuth) for registration and does not invoke Internet Identity or cause any external redirects. After successful signup, redirect the user to the home page using TanStack Router navigate()"
+        },
+        {
+          "path": "frontend/src/components/auth/RequireProfile.tsx",
+          "operation": "modify",
+          "description": "Update the login/sign-up prompt to navigate to internal /login and /signup routes using TanStack Router <Link> components instead of any external authentication flow"
+        },
+        {
+          "path": "frontend/src/components/auth/AccountsDisabledNotice.tsx",
+          "operation": "modify",
+          "description": "Update the Log In and Sign Up navigation buttons to use TanStack Router <Link> or navigate() to internal routes (/login, /signup) instead of triggering any external authentication redirects"
+        },
+        {
+          "path": "frontend/src/hooks/useSessionAuth.ts",
+          "operation": "modify",
+          "description": "Review and update the session auth hook to ensure login, signup, and logout methods are fully implemented without any Internet Identity or external redirect dependencies. Logout should clear the session token and navigate the user to the home page using TanStack Router"
+        },
+        {
+          "path": "frontend/src/hooks/useCurrentUser.ts",
+          "operation": "modify",
+          "description": "Ensure the useCurrentUser hook relies solely on useSessionAuth for authentication state and does not depend on Internet Identity or any external auth providers"
+        },
+        {
+          "path": "frontend/src/main.tsx",
+          "operation": "modify",
+          "description": "Remove or comment out the InternetIdentityProvider wrapper if it triggers external redirects, ensuring the app bootstraps with only the session-based authentication system"
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Update the AuthChangeBanner component to reflect that in-website authentication is now active and remove references to external login redirects being disabled",
+      "acceptanceCriteria": [
+        "AuthChangeBanner no longer references external login redirects as a known limitation",
+        "If the banner is no longer needed, it is removed from AppLayout"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/layout/AuthChangeBanner.tsx",
+          "operation": "modify",
+          "description": "Update the banner message to reflect that in-website authentication is now the default behavior and remove any messaging about external login redirects being disabled. If the banner is no longer relevant, replace its content with a simple informational message or remove the component entirely"
+        },
+        {
+          "path": "frontend/src/components/layout/AppLayout.tsx",
+          "operation": "modify",
+          "description": "Review the inclusion of AuthChangeBanner and consider removing it from the layout if it is no longer needed after in-website authentication is implemented"
         }
       ]
     }

@@ -1,36 +1,38 @@
-import { useSessionAuth } from '../../hooks/useSessionAuth';
 import { useNavigate } from '@tanstack/react-router';
+import { useSessionAuth } from '../../hooks/useSessionAuth';
 import { Button } from '@/components/ui/button';
-import { LogOut, LogIn, UserPlus } from 'lucide-react';
+import { Loader2, LogIn, UserPlus, LogOut } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function AuthButtons() {
   const { isAuthenticated, logout, isLoading } = useSessionAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleLogout = async () => {
     await logout();
+    queryClient.clear();
     navigate({ to: '/' });
   };
 
   if (isLoading) {
     return (
-      <Button variant="outline" size="sm" disabled className="gap-2">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        Loading...
-      </Button>
+      <div className="flex items-center gap-2">
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
   if (isAuthenticated) {
     return (
       <Button
-        onClick={handleLogout}
         variant="outline"
         size="sm"
-        className="gap-2"
+        onClick={handleLogout}
+        className="flex items-center gap-1.5"
       >
-        <LogOut className="h-4 w-4" />
-        Log out
+        <LogOut className="w-4 h-4" />
+        Logout
       </Button>
     );
   }
@@ -38,21 +40,20 @@ export default function AuthButtons() {
   return (
     <div className="flex items-center gap-2">
       <Button
-        onClick={() => navigate({ to: '/login' })}
         variant="ghost"
         size="sm"
-        className="gap-2"
+        onClick={() => navigate({ to: '/login' })}
+        className="flex items-center gap-1.5"
       >
-        <LogIn className="h-4 w-4" />
-        Log In
+        <LogIn className="w-4 h-4" />
+        Login
       </Button>
       <Button
-        onClick={() => navigate({ to: '/signup' })}
-        variant="default"
         size="sm"
-        className="gap-2"
+        onClick={() => navigate({ to: '/signup' })}
+        className="flex items-center gap-1.5"
       >
-        <UserPlus className="h-4 w-4" />
+        <UserPlus className="w-4 h-4" />
         Sign Up
       </Button>
     </div>

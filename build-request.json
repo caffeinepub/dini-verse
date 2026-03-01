@@ -1,58 +1,75 @@
 {
   "kind": "build_request",
-  "title": "Fix 'Unauthorized: Only users can access settings' error on Settings page",
+  "title": "Remove external redirects and implement in-website authentication",
+  "projectName": "Dini.Verse",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the Settings page so that it does not attempt to load settings when the user is not authenticated. If the user is not logged in, show a prompt to log in rather than calling the backend settings endpoint, which currently throws 'Unauthorized: Only users can access settings'.",
+      "text": "Audit all navigation links, buttons, and anchor tags across the entire frontend and remove or replace any href, window.location, or navigate calls that point to external URLs (outside the app). All navigation must stay within the single-page application using the internal TanStack Router.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6",
-          "msg-10",
-          "msg-14"
+          "msg-recent"
         ],
         "quotes": [
-          "Failed to load settings. Please try again later.",
-          "Unauthorized: Only users can access settings"
+          "the whole website should not redirect you to other websites"
         ]
       },
       "acceptanceCriteria": [
-        "When a user is not authenticated, the Settings page does not call the backend settings endpoint.",
-        "When a user is not authenticated, the Settings page displays a message prompting the user to log in rather than an error.",
-        "When a user is authenticated, the Settings page loads settings successfully without any 'Unauthorized' error.",
-        "No 'Failed to load settings' error message appears for authenticated users."
+        "No link or button in the app causes the browser to navigate to an external domain",
+        "The SiteFooter 'Built with caffeine.ai' attribution link (if present) either opens in a new tab without leaving the app or is removed",
+        "All internal navigation uses TanStack Router <Link> or navigate() rather than raw <a href='https://...'> tags that replace the current page"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix the useAccountSettings hook to guard all backend calls with an authentication check. Only invoke backend settings queries and mutations when a valid session/actor is available; return appropriate idle/unauthenticated state otherwise.",
+      "text": "Replace the current Internet Identity authentication flow (which redirects users to identity.ic0.app) with an in-website, modal-based login/signup experience using the existing session-auth system (useSessionAuth). The Login and SignUp pages should be rendered as in-app modal dialogs or inline page sections, never causing a full redirect away from the site. The existing Login.tsx and SignUp.tsx pages can remain but must not trigger external redirects; the Internet Identity login button must not perform an off-site redirect.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6",
-          "msg-10",
-          "msg-14"
+          "msg-recent"
         ],
         "quotes": [
-          "Unauthorized: Only users can access settings"
+          "use in website authentication"
         ]
       },
       "acceptanceCriteria": [
-        "The useAccountSettings hook does not issue a backend request when no authenticated session is present.",
-        "The hook returns a clear unauthenticated state (e.g., disabled query, null data) when the user is not logged in.",
-        "The hook fetches and mutates settings correctly when the user is authenticated."
+        "Clicking 'Login' or 'Sign Up' in the SiteHeader or any AuthButtons component opens an in-app login dialog/modal or navigates to an internal route — never redirecting to an external identity provider",
+        "The useSessionAuth hook's login and signup methods are wired up as the primary auth mechanism",
+        "Internet Identity (AuthClient) is not invoked in a way that redirects the user away from the app",
+        "After successful login or signup, the user stays on the same domain and is shown their authenticated state without a full page reload to an external URL",
+        "Logout clears the session and returns the user to the home page within the app"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Update the AuthChangeBanner component in frontend/src/components/layout/AuthChangeBanner.tsx to reflect that in-website authentication is now active and no external redirects occur. Remove or update any messaging that refers to external login redirects being disabled, since that is now the normal expected behavior.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-recent"
+        ],
+        "quotes": [
+          "the whole website should not redirect you to other websites",
+          "use in website authentication"
+        ]
+      },
+      "acceptanceCriteria": [
+        "AuthChangeBanner no longer references external login redirects as a known limitation",
+        "If the banner is no longer needed, it is removed from AppLayout"
       ]
     }
   ],
   "constraints": [
-    "Do not modify files listed in frontend.immutablePaths.",
-    "All Motoko logic must remain in the single main actor file."
+    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
+    "All backend logic must remain in the single actor in backend/main.mo",
+    "Do not introduce any external third-party authentication providers"
   ],
   "nonGoals": [
-    "Adding new settings fields or changing the settings UI layout.",
-    "Changing the backend authorization logic or removing authentication requirements from the backend."
+    "Adding new backend authentication methods beyond what already exists in the session auth system",
+    "Redesigning the visual theme or layout of the application",
+    "Implementing real-time features or new social features"
   ],
   "imageRequirements": {
     "required": [],

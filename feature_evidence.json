@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-settings-page-so-that-it-does-not-attempt-to-load-settings-when-the-user-is-not-authenticated-if-the-user-is-not-logged-in-show-a-prompt-to-log-in-rather-than-calling-the-backend-settings-endpoint-which-currently-throws-unauthorized-only-users-can-access-settings",
-      "featureTitle": "Fix the Settings page so that it does not attempt to load settings when the user is not authenticated. If the user is not logged in, show a prompt to log in rather than calling the backend settings endpoint, which currently throws 'Unauthorized: Only users can access settings'.",
+      "featureId": "feature-audit-all-navigation-links-buttons-and-anchor-tags-across-the-entire-frontend-and-remove-or-replace-any-href-window-location-or-navigate-calls-that-point-to-external-urls-outside-the-app-all-navigation-must-stay-within-the-single-page-application-using-the-internal-tanstack-router",
+      "featureTitle": "Audit all navigation links, buttons, and anchor tags across the entire frontend and remove or replace any href, window.location, or navigate calls that point to external URLs (outside the app). All navigation must stay within the single-page application using the internal TanStack Router.",
       "files": [
-        "frontend/src/pages/Settings.tsx"
+        "frontend/src/components/layout/SiteFooter.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -22,10 +22,16 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-the-useaccountsettings-hook-to-guard-all-backend-calls-with-an-authentication-check-only-invoke-backend-settings-queries-and-mutations-when-a-valid-session-actor-is-available-return-appropriate-idle-unauthenticated-state-otherwise",
-      "featureTitle": "Fix the useAccountSettings hook to guard all backend calls with an authentication check. Only invoke backend settings queries and mutations when a valid session/actor is available; return appropriate idle/unauthenticated state otherwise.",
+      "featureId": "feature-replace-the-current-internet-identity-authentication-flow-which-redirects-users-to-identity-ic0-app-with-an-in-website-modal-based-login-signup-experience-using-the-existing-session-auth-system-usesessionauth-the-login-and-signup-pages-should-be-rendered-as-in-app-modal-dialogs-or-inline-page-sections-never-causing-a-full-redirect-away-from-the-site-the-existing-login-tsx-and-signup-tsx-pages-can-remain-but-must-not-trigger-external-redirects-the-internet-identity-login-button-must-not-perform-an-off-site-redirect",
+      "featureTitle": "Replace the current Internet Identity authentication flow (which redirects users to identity.ic0.app) with an in-website, modal-based login/signup experience using the existing session-auth system (useSessionAuth). The Login and SignUp pages should be rendered as in-app modal dialogs or inline page sections, never causing a full redirect away from the site. The existing Login.tsx and SignUp.tsx pages can remain but must not trigger external redirects; the Internet Identity login button must not perform an off-site redirect.",
       "files": [
-        "frontend/src/hooks/useAccountSettings.ts"
+        "frontend/src/components/auth/AccountsDisabledNotice.tsx",
+        "frontend/src/components/auth/AuthButtons.tsx",
+        "frontend/src/components/auth/RequireProfile.tsx",
+        "frontend/src/hooks/useCurrentUser.ts",
+        "frontend/src/hooks/useSessionAuth.ts",
+        "frontend/src/pages/Login.tsx",
+        "frontend/src/pages/SignUp.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -38,6 +44,27 @@
       ],
       "testIds": [
         "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-authchangebanner-component-in-frontend-src-components-layout-authchangebanner-tsx-to-reflect-that-in-website-authentication-is-now-active-and-no-external-redirects-occur-remove-or-update-any-messaging-that-refers-to-external-login-redirects-being-disabled-since-that-is-now-the-normal-expected-behavior",
+      "featureTitle": "Update the AuthChangeBanner component in frontend/src/components/layout/AuthChangeBanner.tsx to reflect that in-website authentication is now active and no external redirects occur. Remove or update any messaging that refers to external login redirects being disabled, since that is now the normal expected behavior.",
+      "files": [
+        "frontend/src/components/layout/AppLayout.tsx",
+        "frontend/src/components/layout/AuthChangeBanner.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

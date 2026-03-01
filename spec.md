@@ -1,10 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the "Unauthorized: Only users can access settings" error on the Settings page by guarding backend calls with authentication checks.
+**Goal:** Remove all external redirects from the app and replace the Internet Identity authentication flow with an in-website, modal-based login/signup experience.
 
 **Planned changes:**
-- Update the Settings page to skip calling the backend settings endpoint when the user is not authenticated, and instead show a login prompt.
-- Update the `useAccountSettings` hook to guard all backend queries and mutations behind an authentication check, returning an unauthenticated/idle state when no valid session is present.
+- Audit and remove or replace all links, buttons, and anchor tags that navigate to external URLs; all navigation must stay within the SPA using TanStack Router
+- Replace the Internet Identity (off-site redirect) auth flow with in-app modal dialogs or internal route-based login/signup screens powered by the existing `useSessionAuth` hook
+- Wire up `useSessionAuth` login, signup, and logout methods as the primary auth mechanism throughout the app (SiteHeader, AuthButtons, Login.tsx, SignUp.tsx)
+- Ensure logout clears the session and returns the user to the home page within the app
+- Update or remove the `AuthChangeBanner` component so it no longer references external login redirects as a known limitation; remove it from `AppLayout` if no longer needed
 
-**User-visible outcome:** Unauthenticated users see a prompt to log in on the Settings page instead of an error message. Authenticated users load their settings successfully without any "Unauthorized" or "Failed to load settings" errors.
+**User-visible outcome:** Users can log in and sign up entirely within the website without ever being redirected to an external domain. All navigation stays inside the app, and the auth banner warning about external redirects is gone.

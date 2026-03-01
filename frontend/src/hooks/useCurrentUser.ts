@@ -1,10 +1,13 @@
 import { useSessionAuth } from './useSessionAuth';
 
 export function useCurrentUser() {
-  const { currentUser, isAuthenticated, isLoading } = useSessionAuth();
+  const { user, isAuthenticated, isLoading } = useSessionAuth();
 
   return {
-    currentUser,
+    currentUser: isAuthenticated && user ? {
+      username: user.username,
+      displayName: user.displayName,
+    } : null,
     isAuthenticated,
     isLoading,
   };

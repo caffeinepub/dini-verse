@@ -8,7 +8,7 @@ import { User, Settings } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
 export default function Profile() {
-  const { currentUser } = useSessionAuth();
+  const { user } = useSessionAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -16,7 +16,7 @@ export default function Profile() {
     <RequireProfile>
       <div className="container py-8">
         <div className="space-y-8">
-          {currentUser && (
+          {user && (
             <>
               <Card>
                 <CardHeader>
@@ -25,15 +25,14 @@ export default function Profile() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-20 w-20">
-                      {currentUser.avatar && <AvatarImage src={currentUser.avatar} alt={currentUser.displayName} />}
                       <AvatarFallback className="text-2xl">
-                        {currentUser.displayName.charAt(0).toUpperCase()}
+                        {user.displayName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h2 className="text-2xl font-bold">{currentUser.displayName}</h2>
+                      <h2 className="text-2xl font-bold">{user.displayName}</h2>
                       <p className="text-sm text-muted-foreground">
-                        @{currentUser.username}
+                        @{user.username}
                       </p>
                     </div>
                   </div>
@@ -43,8 +42,8 @@ export default function Profile() {
                       <User className="h-4 w-4" />
                       {t('profile.editProfile')}
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="gap-2"
                       onClick={() => navigate({ to: '/settings' })}
                     >
@@ -63,11 +62,11 @@ export default function Profile() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">{t('profile.displayName')}</p>
-                      <p className="text-base">{currentUser.displayName}</p>
+                      <p className="text-base">{user.displayName}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">{t('profile.username')}</p>
-                      <p className="text-base">@{currentUser.username}</p>
+                      <p className="text-base">@{user.username}</p>
                     </div>
                   </div>
                 </CardContent>

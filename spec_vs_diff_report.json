@@ -1,15 +1,42 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T00:26:54.317Z",
-  "summary": "Both REQ-1 and REQ-2 appear to be implemented. The useAccountSettings hook now guards all backend calls with authentication checks (isAuthenticated / identity checks, enabled flag), and the Settings page includes a SettingsLoginPrompt component shown when the user is not authenticated. The diff evidence is truncated but sufficiently shows the key changes are present.",
-  "missing_requirements": [],
-  "hallucinated_features": [],
-  "confidence": 0.82,
+  "generatedAt": "2026-03-01T02:18:37.571Z",
+  "summary": "The diff implements the three requirements: REQ-1 (remove external redirects), REQ-2 (in-website session auth), and REQ-3 (update AuthChangeBanner). Most requirements are satisfied, but REQ-1 has a partial gap regarding the comprehensive audit scope. The caffeine.ai link in SiteFooter uses target='_blank' which matches the AC allowance. REQ-2 and REQ-3 appear fully implemented.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Audit all navigation links, buttons, and anchor tags across the entire frontend and remove or replace any href, window.location, or navigate calls that point to external URLs.",
+      "reason": "Only 14 files are modified and the diff shows no evidence of a comprehensive audit across all frontend files. The SiteFooter still retains an external href to caffeine.ai (though with target='_blank' which the AC permits). No evidence of auditing other unmodified components for window.location or raw external anchor tags.",
+      "evidence": [
+        "frontend/src/components/layout/SiteFooter.tsx"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "useSessionAuth implemented with a purely client-side localStorage-based user store using a non-cryptographic hash function, rather than wiring to the existing backend canister session-auth system.",
+      "reason": "The requirement specifies using the 'existing session-auth system' and that all backend logic must remain in the single actor in backend/main.mo. The implementation uses localStorage with simpleHash and in-memory user storage, bypassing the backend entirely.",
+      "evidence": [
+        "frontend/src/hooks/useSessionAuth.ts"
+      ]
+    }
+  ],
+  "confidence": 0.72,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/hooks/useAccountSettings.ts",
+    "frontend/src/components/auth/AccountsDisabledNotice.tsx",
+    "frontend/src/components/auth/AuthButtons.tsx",
+    "frontend/src/components/auth/RequireProfile.tsx",
+    "frontend/src/components/layout/AppLayout.tsx",
+    "frontend/src/components/layout/AuthChangeBanner.tsx",
+    "frontend/src/components/layout/SiteFooter.tsx",
+    "frontend/src/hooks/useCurrentUser.ts",
+    "frontend/src/hooks/useSessionAuth.ts",
+    "frontend/src/pages/Login.tsx",
+    "frontend/src/pages/Profile.tsx",
     "frontend/src/pages/Settings.tsx",
+    "frontend/src/pages/SignUp.tsx",
     "project_state.json"
   ]
 }
