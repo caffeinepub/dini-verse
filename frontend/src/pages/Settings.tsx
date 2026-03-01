@@ -28,12 +28,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Loader2, User, Globe, Eye, Trash2, LogIn } from 'lucide-react';
+import { Loader2, User, Globe, Eye, Trash2, LogIn, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Language, TextDirection, Gender, Variant_offline_online } from '../backend';
 
 export default function Settings() {
-  const { isAuthenticated, logout } = useSessionAuth();
+  const { isAuthenticated, logout, changePassword } = useSessionAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -46,6 +46,13 @@ export default function Settings() {
 
   const [newDisplayName, setNewDisplayName] = useState('');
   const [displayNameError, setDisplayNameError] = useState('');
+
+  // Change password state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   if (!isAuthenticated) {
     return (
@@ -132,6 +139,39 @@ export default function Settings() {
       toast.success('Gender updated');
     } catch (err: any) {
       toast.error(err?.message || 'Update failed');
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError('');
+    if (!currentPassword) {
+      setPasswordError('Current password is required');
+      return;
+    }
+    if (!newPassword) {
+      setPasswordError('New password is required');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      await changePassword(currentPassword, newPassword, confirmPassword);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      toast.success('Password changed successfully');
+    } catch (err: any) {
+      setPasswordError(err?.message || 'Failed to change password');
+      toast.error(err?.message || 'Failed to change password');
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -254,7 +294,7 @@ export default function Settings() {
           <div className="space-y-2">
             <Label>Gender</Label>
             <Select
-              value={settings?.gender || Gender.female}
+              value={settings?.gender || Gender.other}
               onValueChange={handleGenderChange}
               disabled={setGenderMutation.isPending}
             >
@@ -264,9 +304,69 @@ export default function Settings() {
               <SelectContent>
                 <SelectItem value={Gender.female}>Female</SelectItem>
                 <SelectItem value={Gender.male}>Male</SelectItem>
+                <SelectItem value={Gender.other}>Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Change Password */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="w-5 h-5" />
+            Change Password
+          </CardTitle>
+          <CardDescription>Update your account password</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Current Password</Label>
+            <Input
+              id="currentPassword"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              autoComplete="current-password"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="newPassword">New Password</Label>
+            <Input
+              id="newPassword"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+              autoComplete="new-password"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              autoComplete="new-password"
+              onKeyDown={(e) => e.key === 'Enter' && handleChangePassword()}
+            />
+          </div>
+          {passwordError && (
+            <p className="text-sm text-destructive">{passwordError}</p>
+          )}
+          <Button
+            onClick={handleChangePassword}
+            disabled={isChangingPassword}
+            className="w-full"
+          >
+            {isChangingPassword
+              ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Changing Password...</>
+              : 'Change Password'}
+          </Button>
         </CardContent>
       </Card>
 

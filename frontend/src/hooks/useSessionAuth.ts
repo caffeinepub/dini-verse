@@ -160,6 +160,35 @@ export function useSessionAuth() {
     });
   }, []);
 
+  const changePassword = useCallback(async (
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ): Promise<void> => {
+    const token = getSessionToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const username = token.split('_')[0];
+    const users = getStoredUsers();
+    const user = users[username];
+    if (!user) throw new Error('User not found');
+
+    if (newPassword !== confirmPassword) {
+      throw new Error('New passwords do not match');
+    }
+    if (newPassword.length < 6) {
+      throw new Error('New password must be at least 6 characters');
+    }
+
+    const currentHash = simpleHash(currentPassword);
+    if (user.passwordHash !== currentHash) {
+      throw new Error('Current password is incorrect');
+    }
+
+    const newHash = simpleHash(newPassword);
+    storeUser(username, user.displayName, newHash);
+  }, []);
+
   return {
     user: state.user,
     isAuthenticated: state.isAuthenticated,
@@ -168,5 +197,6 @@ export function useSessionAuth() {
     login,
     signup,
     logout,
+    changePassword,
   };
 }

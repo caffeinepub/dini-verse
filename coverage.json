@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-01T02:18:37.575Z",
+  "generatedAt": "2026-03-01T02:42:35.237Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,77 +12,55 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Audit all navigation links, buttons, and anchor tags across the entire frontend and remove or replace any href, window.location, or navigate calls that point to external URLs (outside the app). All navigation must stay within the single-page application using the internal TanStack Router.",
+        "summary": "Fix the Settings page so that authenticated users (logged in via the session auth system) are correctly recognised as authenticated and can use all settings features without seeing an 'not authenticated' or 'login required' error. The Settings page must read auth state from useSessionAuth (not Internet Identity directly) and gate UI only when the session token is genuinely absent.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/layout/SiteFooter.tsx",
-          "frontend/src/components/layout/SiteHeader.tsx",
-          "frontend/src/components/profile/ProfileHeaderCard.tsx",
-          "frontend/src/pages/Home.tsx",
-          "frontend/src/pages/Discover.tsx",
-          "frontend/src/pages/ExperienceDetails.tsx",
-          "frontend/src/components/experiences/ExperienceCard.tsx"
+          "frontend/src/pages/Settings.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/layout/SiteFooter.tsx"
+          "frontend/src/pages/Settings.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Replace the current Internet Identity authentication flow (which redirects users to identity.ic0.app) with an in-website, modal-based login/signup experience using the existing session-auth system (useSessionAuth). The Login and SignUp pages should be rendered as in-app modal dialogs or inline page sections, never causing a full redirect away from the site. The existing Login.tsx and SignUp.tsx pages can remain but must not trigger external redirects; the Internet Identity login button must not perform an off-site redirect.",
+        "summary": "Add an 'Other' option to the gender selection field on the Settings page, alongside any existing gender options (e.g. Male, Female). The value stored for this option should be 'Other'.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/auth/AuthButtons.tsx",
-          "frontend/src/pages/Login.tsx",
-          "frontend/src/pages/SignUp.tsx",
-          "frontend/src/components/auth/RequireProfile.tsx",
-          "frontend/src/components/auth/AccountsDisabledNotice.tsx",
-          "frontend/src/hooks/useSessionAuth.ts",
-          "frontend/src/hooks/useCurrentUser.ts",
-          "frontend/src/main.tsx"
+          "frontend/src/pages/Settings.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/auth/AuthButtons.tsx",
-          "frontend/src/pages/Login.tsx",
-          "frontend/src/pages/SignUp.tsx",
-          "frontend/src/components/auth/RequireProfile.tsx",
-          "frontend/src/components/auth/AccountsDisabledNotice.tsx",
-          "frontend/src/hooks/useSessionAuth.ts",
-          "frontend/src/hooks/useCurrentUser.ts"
+          "frontend/src/pages/Settings.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Update the AuthChangeBanner component in frontend/src/components/layout/AuthChangeBanner.tsx to reflect that in-website authentication is now active and no external redirects occur. Remove or update any messaging that refers to external login redirects being disabled, since that is now the normal expected behavior.",
+        "summary": "Add a 'Change Password' section to the Settings page. Since the app uses its own session-based username/password authentication (useSessionAuth with localStorage), expose a form that lets the authenticated user enter their current password, a new password, and a confirmation, then updates the stored password in the session auth system. Show a success or error toast on completion.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/layout/AuthChangeBanner.tsx",
-          "frontend/src/components/layout/AppLayout.tsx"
+          "frontend/src/hooks/useSessionAuth.ts",
+          "frontend/src/pages/Settings.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/layout/AuthChangeBanner.tsx",
-          "frontend/src/components/layout/AppLayout.tsx"
+          "frontend/src/hooks/useSessionAuth.ts",
+          "frontend/src/pages/Settings.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/auth/AccountsDisabledNotice.tsx",
-    "frontend/src/components/auth/AuthButtons.tsx",
-    "frontend/src/components/auth/RequireProfile.tsx",
-    "frontend/src/components/layout/AppLayout.tsx",
-    "frontend/src/components/layout/AuthChangeBanner.tsx",
-    "frontend/src/components/layout/SiteFooter.tsx",
-    "frontend/src/hooks/useCurrentUser.ts",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useAccountSettings.ts",
     "frontend/src/hooks/useSessionAuth.ts",
-    "frontend/src/pages/Login.tsx",
-    "frontend/src/pages/Profile.tsx",
     "frontend/src/pages/Settings.tsx",
-    "frontend/src/pages/SignUp.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

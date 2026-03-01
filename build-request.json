@@ -1,75 +1,74 @@
 {
   "kind": "build_request",
-  "title": "Remove external redirects and implement in-website authentication",
-  "projectName": "Dini.Verse",
+  "title": "Fix Settings authentication, add 'Other' gender option, and surface change password UI",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Audit all navigation links, buttons, and anchor tags across the entire frontend and remove or replace any href, window.location, or navigate calls that point to external URLs (outside the app). All navigation must stay within the single-page application using the internal TanStack Router.",
+      "text": "Fix the Settings page so that authenticated users (logged in via the session auth system) are correctly recognised as authenticated and can use all settings features without seeing an 'not authenticated' or 'login required' error. The Settings page must read auth state from useSessionAuth (not Internet Identity directly) and gate UI only when the session token is genuinely absent.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-recent"
+          "msg-last"
         ],
         "quotes": [
-          "the whole website should not redirect you to other websites"
+          "when I use something from settings it says I am not authenticated"
         ]
       },
       "acceptanceCriteria": [
-        "No link or button in the app causes the browser to navigate to an external domain",
-        "The SiteFooter 'Built with caffeine.ai' attribution link (if present) either opens in a new tab without leaving the app or is removed",
-        "All internal navigation uses TanStack Router <Link> or navigate() rather than raw <a href='https://...'> tags that replace the current page"
+        "A user who has logged in via the Login page can open Settings and see all settings fields without any authentication error message.",
+        "Unauthenticated users still see the login prompt on the Settings page.",
+        "Changing display name, visibility, language, or gender saves successfully for an authenticated session user."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Replace the current Internet Identity authentication flow (which redirects users to identity.ic0.app) with an in-website, modal-based login/signup experience using the existing session-auth system (useSessionAuth). The Login and SignUp pages should be rendered as in-app modal dialogs or inline page sections, never causing a full redirect away from the site. The existing Login.tsx and SignUp.tsx pages can remain but must not trigger external redirects; the Internet Identity login button must not perform an off-site redirect.",
-      "target": "frontend",
+      "text": "Add an 'Other' option to the gender selection field on the Settings page, alongside any existing gender options (e.g. Male, Female). The value stored for this option should be 'Other'.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-recent"
+          "msg-last"
         ],
         "quotes": [
-          "use in website authentication"
+          "for gender there should be a \"Other\" option"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking 'Login' or 'Sign Up' in the SiteHeader or any AuthButtons component opens an in-app login dialog/modal or navigates to an internal route — never redirecting to an external identity provider",
-        "The useSessionAuth hook's login and signup methods are wired up as the primary auth mechanism",
-        "Internet Identity (AuthClient) is not invoked in a way that redirects the user away from the app",
-        "After successful login or signup, the user stays on the same domain and is shown their authenticated state without a full page reload to an external URL",
-        "Logout clears the session and returns the user to the home page within the app"
+        "The gender dropdown/selector on the Settings page includes 'Other' as a selectable option.",
+        "Selecting 'Other' and saving persists the value correctly.",
+        "The backend UserProfile or UserSettings type accepts and stores 'Other' as a valid gender value."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Update the AuthChangeBanner component in frontend/src/components/layout/AuthChangeBanner.tsx to reflect that in-website authentication is now active and no external redirects occur. Remove or update any messaging that refers to external login redirects being disabled, since that is now the normal expected behavior.",
+      "text": "Add a 'Change Password' section to the Settings page. Since the app uses its own session-based username/password authentication (useSessionAuth with localStorage), expose a form that lets the authenticated user enter their current password, a new password, and a confirmation, then updates the stored password in the session auth system. Show a success or error toast on completion.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-recent"
+          "msg-last"
         ],
         "quotes": [
-          "the whole website should not redirect you to other websites",
-          "use in website authentication"
+          "I don't see the same things as when I asked to add changing passwords"
         ]
       },
       "acceptanceCriteria": [
-        "AuthChangeBanner no longer references external login redirects as a known limitation",
-        "If the banner is no longer needed, it is removed from AppLayout"
+        "A 'Change Password' section is visible on the Settings page for authenticated users.",
+        "The form has three fields: Current Password, New Password, Confirm New Password.",
+        "Submitting with a matching new/confirm password and correct current password updates the password and shows a success toast.",
+        "Submitting with an incorrect current password shows an error toast.",
+        "Submitting with mismatched new/confirm passwords shows a validation error without calling the update function."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "All backend logic must remain in the single actor in backend/main.mo",
-    "Do not introduce any external third-party authentication providers"
+    "Do not switch authentication to Internet Identity — the app must continue using the session-based auth system (useSessionAuth) for login, signup, and all auth checks.",
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "All backend Motoko logic must remain in backend/main.mo (single actor)."
   ],
   "nonGoals": [
-    "Adding new backend authentication methods beyond what already exists in the session auth system",
-    "Redesigning the visual theme or layout of the application",
-    "Implementing real-time features or new social features"
+    "Migrating authentication to Internet Identity or any external auth provider.",
+    "Adding new gender options beyond 'Other'.",
+    "Changing the overall Settings page layout beyond the three fixes above."
   ],
   "imageRequirements": {
     "required": [],

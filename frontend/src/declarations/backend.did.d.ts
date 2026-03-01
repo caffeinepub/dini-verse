@@ -26,7 +26,8 @@ export interface Experience {
   'gameplayControls' : string,
 }
 export type ExternalBlob = Uint8Array;
-export type Gender = { 'female' : null } |
+export type Gender = { 'other' : null } |
+  { 'female' : null } |
   { 'male' : null };
 export type Language = { 'de' : null } |
   { 'en' : null } |

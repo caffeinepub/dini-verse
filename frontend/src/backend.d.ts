@@ -64,6 +64,7 @@ export enum Category {
     adventure = "adventure"
 }
 export enum Gender {
+    other = "other",
     female = "female",
     male = "male"
 }

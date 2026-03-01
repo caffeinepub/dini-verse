@@ -1,39 +1,34 @@
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
-import Time "mo:core/Time";
 import Storage "blob-storage/Storage";
 
 module {
-  type Gender = { #male; #female };
-  type TextDirection = { #leftToRight; #rightToLeft };
-
-  type OldLanguage = { #german; #english };
-  type NewLanguage = {
-    #en; #es; #fr; #pt; #de; #tr; #ru; #vi; #ko; #nl
+  // Old Gender type without #other
+  type OldGender = { #male; #female };
+  type OldLanguage = {
+    #en;
+    #es;
+    #fr;
+    #pt;
+    #de;
+    #tr;
+    #ru;
+    #vi;
+    #ko;
+    #nl;
   };
+  type OldTextDirection = { #leftToRight; #rightToLeft };
 
   type OldUserProfile = {
     displayName : Text;
     avatar : ?Storage.ExternalBlob;
     visibility : { #online; #offline };
-    gender : Gender;
+    gender : OldGender;
     language : OldLanguage;
     nativeLanguage : OldLanguage;
     languageCode : Text;
     languagePrefix : Text;
-    textDirection : TextDirection;
-  };
-
-  type NewUserProfile = {
-    displayName : Text;
-    avatar : ?Storage.ExternalBlob;
-    visibility : { #online; #offline };
-    gender : Gender;
-    language : NewLanguage;
-    nativeLanguage : NewLanguage;
-    languageCode : Text;
-    languagePrefix : Text;
-    textDirection : TextDirection;
+    textDirection : OldTextDirection;
   };
 
   type OldUserSettings = {
@@ -41,20 +36,43 @@ module {
     displayName : Text;
     visibility : { #online; #offline };
     avatar : ?Storage.ExternalBlob;
-    lastUsernameChange : Time.Time;
-    lastDisplayNameChange : Time.Time;
-    lastPasswordChange : Time.Time;
-    createdAt : Time.Time;
-    updatedAt : Time.Time;
+    lastUsernameChange : Int;
+    lastDisplayNameChange : Int;
+    lastPasswordChange : Int;
+    createdAt : Int;
+    updatedAt : Int;
     passwordResetAttempts : Nat;
-    lastPasswordResetAttempt : Time.Time;
-    gender : Gender;
+    lastPasswordResetAttempt : Int;
+    gender : OldGender;
     language : OldLanguage;
     pronunciationLanguage : OldLanguage;
     nativeLanguage : OldLanguage;
     languageCode : Text;
     languagePrefix : Text;
-    textDirection : TextDirection;
+    textDirection : OldTextDirection;
+  };
+
+  type OldActor = {
+    userProfiles : Map.Map<Principal, OldUserProfile>;
+    userSettings : Map.Map<Principal, OldUserSettings>;
+    // Other old state if needed
+  };
+
+  // New Gender type with #other
+  type NewGender = { #male; #female; #other };
+  type NewLanguage = OldLanguage;
+  type NewTextDirection = OldTextDirection;
+
+  type NewUserProfile = {
+    displayName : Text;
+    avatar : ?Storage.ExternalBlob;
+    visibility : { #online; #offline };
+    gender : NewGender;
+    language : NewLanguage;
+    nativeLanguage : NewLanguage;
+    languageCode : Text;
+    languagePrefix : Text;
+    textDirection : NewTextDirection;
   };
 
   type NewUserSettings = {
@@ -62,62 +80,52 @@ module {
     displayName : Text;
     visibility : { #online; #offline };
     avatar : ?Storage.ExternalBlob;
-    lastUsernameChange : Time.Time;
-    lastDisplayNameChange : Time.Time;
-    lastPasswordChange : Time.Time;
-    createdAt : Time.Time;
-    updatedAt : Time.Time;
+    lastUsernameChange : Int;
+    lastDisplayNameChange : Int;
+    lastPasswordChange : Int;
+    createdAt : Int;
+    updatedAt : Int;
     passwordResetAttempts : Nat;
-    lastPasswordResetAttempt : Time.Time;
-    gender : Gender;
+    lastPasswordResetAttempt : Int;
+    gender : NewGender;
     language : NewLanguage;
     pronunciationLanguage : NewLanguage;
     nativeLanguage : NewLanguage;
     languageCode : Text;
     languagePrefix : Text;
-    textDirection : TextDirection;
-  };
-
-  type OldActor = {
-    userProfiles : Map.Map<Principal, OldUserProfile>;
-    userSettings : Map.Map<Principal, OldUserSettings>;
+    textDirection : NewTextDirection;
   };
 
   type NewActor = {
     userProfiles : Map.Map<Principal, NewUserProfile>;
     userSettings : Map.Map<Principal, NewUserSettings>;
+    // Other new state if needed
   };
 
   public func run(old : OldActor) : NewActor {
-    let newUserSettings = old.userSettings.map<Principal, OldUserSettings, NewUserSettings>(
-      func(_principal, settings) {
-        {
-          settings with
-          language = convertLanguage(settings.language);
-          pronunciationLanguage = convertLanguage(settings.pronunciationLanguage);
-          nativeLanguage = convertLanguage(settings.nativeLanguage);
-        };
-      }
-    );
     let newUserProfiles = old.userProfiles.map<Principal, OldUserProfile, NewUserProfile>(
-      func(_principal, profile) {
-        {
-          profile with
-          language = convertLanguage(profile.language);
-          nativeLanguage = convertLanguage(profile.nativeLanguage);
-        };
+      func(_p, oldProfile) {
+        { oldProfile with gender = migrateGender(oldProfile.gender) };
       }
     );
+
+    let newUserSettings = old.userSettings.map<Principal, OldUserSettings, NewUserSettings>(
+      func(_p, oldSettings) {
+        { oldSettings with gender = migrateGender(oldSettings.gender) };
+      }
+    );
+
     {
-      userSettings = newUserSettings;
       userProfiles = newUserProfiles;
+      userSettings = newUserSettings;
     };
   };
 
-  func convertLanguage(oldLanguage : OldLanguage) : NewLanguage {
-    switch (oldLanguage) {
-      case (#german) { #de };
-      case (#english) { #en };
+  // Helper function to convert OldGender to NewGender
+  func migrateGender(oldGender : OldGender) : NewGender {
+    switch (oldGender) {
+      case (#male) { #male };
+      case (#female) { #female };
     };
   };
 };

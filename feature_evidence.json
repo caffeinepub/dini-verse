@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-audit-all-navigation-links-buttons-and-anchor-tags-across-the-entire-frontend-and-remove-or-replace-any-href-window-location-or-navigate-calls-that-point-to-external-urls-outside-the-app-all-navigation-must-stay-within-the-single-page-application-using-the-internal-tanstack-router",
-      "featureTitle": "Audit all navigation links, buttons, and anchor tags across the entire frontend and remove or replace any href, window.location, or navigate calls that point to external URLs (outside the app). All navigation must stay within the single-page application using the internal TanStack Router.",
+      "featureId": "feature-fix-the-settings-page-so-that-authenticated-users-logged-in-via-the-session-auth-system-are-correctly-recognised-as-authenticated-and-can-use-all-settings-features-without-seeing-an-not-authenticated-or-login-required-error-the-settings-page-must-read-auth-state-from-usesessionauth-not-internet-identity-directly-and-gate-ui-only-when-the-session-token-is-genuinely-absent",
+      "featureTitle": "Fix the Settings page so that authenticated users (logged in via the session auth system) are correctly recognised as authenticated and can use all settings features without seeing an 'not authenticated' or 'login required' error. The Settings page must read auth state from useSessionAuth (not Internet Identity directly) and gate UI only when the session token is genuinely absent.",
       "files": [
-        "frontend/src/components/layout/SiteFooter.tsx"
+        "frontend/src/pages/Settings.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -22,16 +22,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-replace-the-current-internet-identity-authentication-flow-which-redirects-users-to-identity-ic0-app-with-an-in-website-modal-based-login-signup-experience-using-the-existing-session-auth-system-usesessionauth-the-login-and-signup-pages-should-be-rendered-as-in-app-modal-dialogs-or-inline-page-sections-never-causing-a-full-redirect-away-from-the-site-the-existing-login-tsx-and-signup-tsx-pages-can-remain-but-must-not-trigger-external-redirects-the-internet-identity-login-button-must-not-perform-an-off-site-redirect",
-      "featureTitle": "Replace the current Internet Identity authentication flow (which redirects users to identity.ic0.app) with an in-website, modal-based login/signup experience using the existing session-auth system (useSessionAuth). The Login and SignUp pages should be rendered as in-app modal dialogs or inline page sections, never causing a full redirect away from the site. The existing Login.tsx and SignUp.tsx pages can remain but must not trigger external redirects; the Internet Identity login button must not perform an off-site redirect.",
+      "featureId": "feature-add-an-other-option-to-the-gender-selection-field-on-the-settings-page-alongside-any-existing-gender-options-e-g-male-female-the-value-stored-for-this-option-should-be-other",
+      "featureTitle": "Add an 'Other' option to the gender selection field on the Settings page, alongside any existing gender options (e.g. Male, Female). The value stored for this option should be 'Other'.",
       "files": [
-        "frontend/src/components/auth/AccountsDisabledNotice.tsx",
-        "frontend/src/components/auth/AuthButtons.tsx",
-        "frontend/src/components/auth/RequireProfile.tsx",
-        "frontend/src/hooks/useCurrentUser.ts",
-        "frontend/src/hooks/useSessionAuth.ts",
-        "frontend/src/pages/Login.tsx",
-        "frontend/src/pages/SignUp.tsx"
+        "frontend/src/pages/Settings.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -48,11 +42,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-authchangebanner-component-in-frontend-src-components-layout-authchangebanner-tsx-to-reflect-that-in-website-authentication-is-now-active-and-no-external-redirects-occur-remove-or-update-any-messaging-that-refers-to-external-login-redirects-being-disabled-since-that-is-now-the-normal-expected-behavior",
-      "featureTitle": "Update the AuthChangeBanner component in frontend/src/components/layout/AuthChangeBanner.tsx to reflect that in-website authentication is now active and no external redirects occur. Remove or update any messaging that refers to external login redirects being disabled, since that is now the normal expected behavior.",
+      "featureId": "feature-add-a-change-password-section-to-the-settings-page-since-the-app-uses-its-own-session-based-username-password-authentication-usesessionauth-with-localstorage-expose-a-form-that-lets-the-authenticated-user-enter-their-current-password-a-new-password-and-a-confirmation-then-updates-the-stored-password-in-the-session-auth-system-show-a-success-or-error-toast-on-completion",
+      "featureTitle": "Add a 'Change Password' section to the Settings page. Since the app uses its own session-based username/password authentication (useSessionAuth with localStorage), expose a form that lets the authenticated user enter their current password, a new password, and a confirmation, then updates the stored password in the session auth system. Show a success or error toast on completion.",
       "files": [
-        "frontend/src/components/layout/AppLayout.tsx",
-        "frontend/src/components/layout/AuthChangeBanner.tsx"
+        "frontend/src/hooks/useSessionAuth.ts",
+        "frontend/src/pages/Settings.tsx"
       ],
       "components": [
         "authorization@4.0.0",

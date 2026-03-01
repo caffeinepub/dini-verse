@@ -150,6 +150,7 @@ export enum Category {
     adventure = "adventure"
 }
 export enum Gender {
+    other = "other",
     female = "female",
     male = "male"
 }
@@ -861,11 +862,13 @@ function from_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Ui
     return "de" in value ? Language.de : "en" in value ? Language.en : "es" in value ? Language.es : "fr" in value ? Language.fr : "ko" in value ? Language.ko : "nl" in value ? Language.nl : "pt" in value ? Language.pt : "ru" in value ? Language.ru : "tr" in value ? Language.tr : "vi" in value ? Language.vi : value;
 }
 function from_candid_variant_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    other: null;
+} | {
     female: null;
 } | {
     male: null;
 }): Gender {
-    return "female" in value ? Gender.female : "male" in value ? Gender.male : value;
+    return "other" in value ? Gender.other : "female" in value ? Gender.female : "male" in value ? Gender.male : value;
 }
 function from_candid_variant_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     leftToRight: null;
@@ -962,11 +965,15 @@ function to_candid_variant_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint
     } : value;
 }
 function to_candid_variant_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Gender): {
+    other: null;
+} | {
     female: null;
 } | {
     male: null;
 } {
-    return value == Gender.female ? {
+    return value == Gender.other ? {
+        other: null
+    } : value == Gender.female ? {
         female: null
     } : value == Gender.male ? {
         male: null

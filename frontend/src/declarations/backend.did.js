@@ -55,7 +55,11 @@ export const Language = IDL.Variant({
   'tr' : IDL.Null,
   'vi' : IDL.Null,
 });
-export const Gender = IDL.Variant({ 'female' : IDL.Null, 'male' : IDL.Null });
+export const Gender = IDL.Variant({
+  'other' : IDL.Null,
+  'female' : IDL.Null,
+  'male' : IDL.Null,
+});
 export const TextDirection = IDL.Variant({
   'leftToRight' : IDL.Null,
   'rightToLeft' : IDL.Null,
@@ -244,7 +248,11 @@ export const idlFactory = ({ IDL }) => {
     'tr' : IDL.Null,
     'vi' : IDL.Null,
   });
-  const Gender = IDL.Variant({ 'female' : IDL.Null, 'male' : IDL.Null });
+  const Gender = IDL.Variant({
+    'other' : IDL.Null,
+    'female' : IDL.Null,
+    'male' : IDL.Null,
+  });
   const TextDirection = IDL.Variant({
     'leftToRight' : IDL.Null,
     'rightToLeft' : IDL.Null,

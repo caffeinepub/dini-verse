@@ -6,18 +6,17 @@ import Map "mo:core/Map";
 import Order "mo:core/Order";
 import Time "mo:core/Time";
 import Storage "blob-storage/Storage";
-
-
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
+import Migration "migration";
 
 // Apply migration on upgrade
-
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
-  type Gender = { #male; #female };
+  type Gender = { #male; #female; #other };
   type Language = {
     #en;
     #es;
@@ -166,7 +165,7 @@ actor {
       updatedAt = now;
       passwordResetAttempts = 0;
       lastPasswordResetAttempt = now;
-      gender = #female;
+      gender = #other;
       language = #de; // Default to German
       languageCode = "de";
       languagePrefix = "de";
@@ -181,7 +180,7 @@ actor {
       displayName = "Anonymous";
       avatar = null;
       visibility = #online;
-      gender = #female;
+      gender = #other;
       language = #de; // Default to German
       languageCode = "de";
       languagePrefix = "de";
@@ -504,4 +503,3 @@ actor {
     };
   };
 };
-
