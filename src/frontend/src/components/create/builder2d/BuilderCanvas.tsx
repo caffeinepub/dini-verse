@@ -1,8 +1,10 @@
-import { useRef, useEffect, useState } from 'react';
-import { BuilderElement } from '../../../hooks/useBuilder2D';
+import { useEffect, useRef, useState } from "react";
+import type { BuilderElement } from "../../../hooks/useBuilder2D";
 
 interface BuilderCanvasProps {
-  builder: ReturnType<typeof import('../../../hooks/useBuilder2D').useBuilder2D>;
+  builder: ReturnType<
+    typeof import("../../../hooks/useBuilder2D").useBuilder2D
+  >;
 }
 
 export default function BuilderCanvas({ builder }: BuilderCanvasProps) {
@@ -17,7 +19,7 @@ export default function BuilderCanvas({ builder }: BuilderCanvasProps) {
 
   const [resizeState, setResizeState] = useState<{
     elementId: string;
-    handle: 'nw' | 'ne' | 'sw' | 'se';
+    handle: "nw" | "ne" | "sw" | "se";
     startX: number;
     startY: number;
     startWidth: number;
@@ -29,9 +31,9 @@ export default function BuilderCanvas({ builder }: BuilderCanvasProps) {
   const handleMouseDown = (e: React.MouseEvent, element: BuilderElement) => {
     if (e.button !== 0) return;
     e.stopPropagation();
-    
+
     builder.selectElement(element.id);
-    
+
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
@@ -47,7 +49,7 @@ export default function BuilderCanvas({ builder }: BuilderCanvasProps) {
   const handleResizeMouseDown = (
     e: React.MouseEvent,
     element: BuilderElement,
-    handle: 'nw' | 'ne' | 'sw' | 'se'
+    handle: "nw" | "ne" | "sw" | "se",
   ) => {
     e.stopPropagation();
     builder.selectElement(element.id);
@@ -85,18 +87,18 @@ export default function BuilderCanvas({ builder }: BuilderCanvasProps) {
         let newX = resizeState.startElX;
         let newY = resizeState.startElY;
 
-        if (resizeState.handle === 'se') {
+        if (resizeState.handle === "se") {
           newWidth = Math.max(20, resizeState.startWidth + deltaX);
           newHeight = Math.max(20, resizeState.startHeight + deltaY);
-        } else if (resizeState.handle === 'sw') {
+        } else if (resizeState.handle === "sw") {
           newWidth = Math.max(20, resizeState.startWidth - deltaX);
           newHeight = Math.max(20, resizeState.startHeight + deltaY);
           newX = resizeState.startElX + (resizeState.startWidth - newWidth);
-        } else if (resizeState.handle === 'ne') {
+        } else if (resizeState.handle === "ne") {
           newWidth = Math.max(20, resizeState.startWidth + deltaX);
           newHeight = Math.max(20, resizeState.startHeight - deltaY);
           newY = resizeState.startElY + (resizeState.startHeight - newHeight);
-        } else if (resizeState.handle === 'nw') {
+        } else if (resizeState.handle === "nw") {
           newWidth = Math.max(20, resizeState.startWidth - deltaX);
           newHeight = Math.max(20, resizeState.startHeight - deltaY);
           newX = resizeState.startElX + (resizeState.startWidth - newWidth);
@@ -118,11 +120,11 @@ export default function BuilderCanvas({ builder }: BuilderCanvasProps) {
     };
 
     if (dragState || resizeState) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
       return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
       };
     }
   }, [dragState, resizeState, builder]);
@@ -135,18 +137,18 @@ export default function BuilderCanvas({ builder }: BuilderCanvasProps) {
 
   const renderShape = (element: BuilderElement) => {
     const style: React.CSSProperties = {
-      position: 'absolute',
+      position: "absolute",
       left: element.x,
       top: element.y,
       width: element.width,
       height: element.height,
       opacity: element.opacity,
       transform: `rotate(${element.rotation}deg)`,
-      cursor: 'move',
+      cursor: "move",
       zIndex: element.zIndex,
     };
 
-    if (element.type === 'decal' && element.imageData) {
+    if (element.type === "decal" && element.imageData) {
       return (
         <div
           key={element.id}
@@ -169,24 +171,32 @@ export default function BuilderCanvas({ builder }: BuilderCanvasProps) {
       backgroundColor: element.color,
     };
 
-    if (element.shapeType === 'circle') {
+    if (element.shapeType === "circle") {
       return (
         <div
           key={element.id}
-          style={{ ...shapeStyle, borderRadius: '50%' }}
+          style={{ ...shapeStyle, borderRadius: "50%" }}
           onMouseDown={(e) => handleMouseDown(e, element)}
         >
           {builder.selectedId === element.id && renderResizeHandles(element)}
         </div>
       );
-    } else if (element.shapeType === 'triangle') {
+    }
+    if (element.shapeType === "triangle") {
       return (
         <div
           key={element.id}
           style={style}
           onMouseDown={(e) => handleMouseDown(e, element)}
         >
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label="Triangle shape"
+          >
             <polygon
               points="50,10 90,90 10,90"
               fill={element.color}
@@ -196,67 +206,96 @@ export default function BuilderCanvas({ builder }: BuilderCanvasProps) {
           {builder.selectedId === element.id && renderResizeHandles(element)}
         </div>
       );
-    } else {
-      return (
-        <div
-          key={element.id}
-          style={shapeStyle}
-          onMouseDown={(e) => handleMouseDown(e, element)}
-        >
-          {builder.selectedId === element.id && renderResizeHandles(element)}
-        </div>
-      );
     }
+    return (
+      <div
+        key={element.id}
+        style={shapeStyle}
+        onMouseDown={(e) => handleMouseDown(e, element)}
+      >
+        {builder.selectedId === element.id && renderResizeHandles(element)}
+      </div>
+    );
   };
 
   const renderResizeHandles = (element: BuilderElement) => {
     const handleSize = 8;
     const handleStyle: React.CSSProperties = {
-      position: 'absolute',
+      position: "absolute",
       width: handleSize,
       height: handleSize,
-      backgroundColor: '#3b82f6',
-      border: '2px solid white',
-      borderRadius: '50%',
-      cursor: 'nwse-resize',
+      backgroundColor: "#3b82f6",
+      border: "2px solid white",
+      borderRadius: "50%",
+      cursor: "nwse-resize",
       zIndex: 1000,
     };
 
     return (
       <>
         <div
-          style={{ ...handleStyle, top: -handleSize / 2, left: -handleSize / 2, cursor: 'nwse-resize' }}
-          onMouseDown={(e) => handleResizeMouseDown(e, element, 'nw')}
+          style={{
+            ...handleStyle,
+            top: -handleSize / 2,
+            left: -handleSize / 2,
+            cursor: "nwse-resize",
+          }}
+          onMouseDown={(e) => handleResizeMouseDown(e, element, "nw")}
         />
         <div
-          style={{ ...handleStyle, top: -handleSize / 2, right: -handleSize / 2, cursor: 'nesw-resize' }}
-          onMouseDown={(e) => handleResizeMouseDown(e, element, 'ne')}
+          style={{
+            ...handleStyle,
+            top: -handleSize / 2,
+            right: -handleSize / 2,
+            cursor: "nesw-resize",
+          }}
+          onMouseDown={(e) => handleResizeMouseDown(e, element, "ne")}
         />
         <div
-          style={{ ...handleStyle, bottom: -handleSize / 2, left: -handleSize / 2, cursor: 'nesw-resize' }}
-          onMouseDown={(e) => handleResizeMouseDown(e, element, 'sw')}
+          style={{
+            ...handleStyle,
+            bottom: -handleSize / 2,
+            left: -handleSize / 2,
+            cursor: "nesw-resize",
+          }}
+          onMouseDown={(e) => handleResizeMouseDown(e, element, "sw")}
         />
         <div
-          style={{ ...handleStyle, bottom: -handleSize / 2, right: -handleSize / 2, cursor: 'nwse-resize' }}
-          onMouseDown={(e) => handleResizeMouseDown(e, element, 'se')}
+          style={{
+            ...handleStyle,
+            bottom: -handleSize / 2,
+            right: -handleSize / 2,
+            cursor: "nwse-resize",
+          }}
+          onMouseDown={(e) => handleResizeMouseDown(e, element, "se")}
         />
       </>
     );
   };
 
-  const sortedElements = [...builder.elements].sort((a, b) => a.zIndex - b.zIndex);
+  const sortedElements = [...builder.elements].sort(
+    (a, b) => a.zIndex - b.zIndex,
+  );
 
   return (
     <div
       ref={canvasRef}
       className="w-full h-full bg-white relative overflow-hidden"
       onClick={handleCanvasClick}
-      style={{ userSelect: 'none' }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") builder.selectElement(null);
+      }}
+      role="presentation"
+      style={{ userSelect: "none" }}
     >
-      <div className="absolute inset-0" style={{ 
-        backgroundImage: 'linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)',
-        backgroundSize: '20px 20px'
-      }} />
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)",
+          backgroundSize: "20px 20px",
+        }}
+      />
       {sortedElements.map(renderShape)}
     </div>
   );

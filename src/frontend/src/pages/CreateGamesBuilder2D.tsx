@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
-import BuilderCanvas from '../components/create/builder2d/BuilderCanvas';
-import ShapePalette from '../components/create/builder2d/ShapePalette';
-import LayerControls from '../components/create/builder2d/LayerControls';
-import PropertiesPanel from '../components/create/builder2d/PropertiesPanel';
-import DecalUploader from '../components/create/builder2d/DecalUploader';
-import PropsPanel from '../components/create/builder2d/PropsPanel';
-import { useBuilder2D } from '../hooks/useBuilder2D';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import BuilderCanvas from "../components/create/builder2d/BuilderCanvas";
+import DecalUploader from "../components/create/builder2d/DecalUploader";
+import LayerControls from "../components/create/builder2d/LayerControls";
+import PropertiesPanel from "../components/create/builder2d/PropertiesPanel";
+import PropsPanel from "../components/create/builder2d/PropsPanel";
+import ShapePalette from "../components/create/builder2d/ShapePalette";
+import { useBuilder2D } from "../hooks/useBuilder2D";
 
 export default function CreateGamesBuilder2D() {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ export default function CreateGamesBuilder2D() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate({ to: '/create' })}
+              onClick={() => navigate({ to: "/create" })}
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -38,7 +38,7 @@ export default function CreateGamesBuilder2D() {
               size="sm"
               onClick={() => setShowPropsPanel(!showPropsPanel)}
             >
-              {showPropsPanel ? 'Hide Props' : 'Show Props'}
+              {showPropsPanel ? "Hide Props" : "Show Props"}
             </Button>
             <Button
               variant="outline"

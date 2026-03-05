@@ -1,6 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNavigate } from '@tanstack/react-router';
-import { Gamepad2, Shirt } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { Gamepad2, Shirt } from "lucide-react";
 
 export default function Create() {
   const navigate = useNavigate();
@@ -16,16 +22,19 @@ export default function Create() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <Card 
+          <Card
             className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
-            onClick={() => navigate({ to: '/create/games' })}
+            onClick={() => navigate({ to: "/create/games-builder-2d" })}
           >
             <CardHeader className="pb-4">
               <Gamepad2 className="h-16 w-16 text-primary mb-4" />
-              <CardTitle className="text-2xl">Create Games/Experiences</CardTitle>
+              <CardTitle className="text-2xl">
+                Create Games/Experiences
+              </CardTitle>
               <CardDescription className="text-base">
-                Build immersive games and experiences with our easy drag-and-drop 2D builder. 
-                Create props using shapes, decals, and simple controls. Perfect for beginners and pros alike.
+                Build immersive games and experiences with our easy
+                drag-and-drop 2D builder. Create props using shapes, decals, and
+                simple controls. Perfect for beginners and pros alike.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -39,16 +48,17 @@ export default function Create() {
             </CardContent>
           </Card>
 
-          <Card 
+          <Card
             className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
-            onClick={() => navigate({ to: '/create/ugc-accessories' })}
+            onClick={() => navigate({ to: "/create/ugc-accessories" })}
           >
             <CardHeader className="pb-4">
               <Shirt className="h-16 w-16 text-primary mb-4" />
               <CardTitle className="text-2xl">Create UGC Accessories</CardTitle>
               <CardDescription className="text-base">
-                Design custom accessories for your avatar. Create unique clothing, hats, gear, and more 
-                to express your style or share with the community.
+                Design custom accessories for your avatar. Create unique
+                clothing, hats, gear, and more to express your style or share
+                with the community.
               </CardDescription>
             </CardHeader>
             <CardContent>

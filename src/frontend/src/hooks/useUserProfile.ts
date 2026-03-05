@@ -1,67 +1,53 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import { ExternalBlob } from '../backend';
-import type { Principal } from '@icp-sdk/core/principal';
+import { useQuery } from "@tanstack/react-query";
+import { getCurrentUsername, getLocalSettings } from "./useAccountSettings";
+import { useSessionAuth } from "./useSessionAuth";
 
-// Temporary type until backend is updated with session auth
-interface UserProfile {
+interface LocalUserProfile {
   displayName: string;
-  avatar?: ExternalBlob;
+  avatarDataUrl: string | null;
 }
 
+/** Get current user's profile from localStorage — never calls the backend */
 export function useGetCurrentUserProfile() {
-  const { actor, isFetching: actorFetching } = useActor();
+  const { isAuthenticated } = useSessionAuth();
 
-  const query = useQuery<UserProfile | null>({
-    queryKey: ['currentUserProfile'],
-    queryFn: async () => {
-      // Backend method doesn't exist yet - return null
-      // TODO: Replace with session-based getCurrentUser call
-      return null;
+  const query = useQuery<LocalUserProfile | null>({
+    queryKey: ["currentUserProfile"],
+    queryFn: () => {
+      const username = getCurrentUsername();
+      if (!username) return null;
+      const settings = getLocalSettings(username);
+      return {
+        displayName: settings.displayName,
+        avatarDataUrl: settings.avatarDataUrl,
+      };
     },
-    enabled: false, // Disabled until backend implements session auth
+    enabled: isAuthenticated,
     retry: false,
   });
 
   return {
     ...query,
-    isLoading: actorFetching || query.isLoading,
-    isFetched: !!actor && query.isFetched,
+    isLoading: query.isLoading,
   };
 }
 
-export function useGetUserProfile(principal: Principal | undefined) {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<UserProfile | null>({
-    queryKey: ['userProfile', principal?.toString()],
-    queryFn: async () => {
-      // Backend method doesn't exist - return null
-      // TODO: Replace with session-based user lookup
-      return null;
-    },
-    enabled: false, // Disabled until backend implements session auth
+/** Get another user's profile — returns null (no backend user lookup needed) */
+export function useGetUserProfile(_principal: unknown) {
+  return useQuery<LocalUserProfile | null>({
+    queryKey: ["userProfile", String(_principal)],
+    queryFn: () => null,
+    enabled: false,
   });
 }
 
+/** Legacy compat — kept for import compatibility but not used */
 export function useSignUp() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      displayName,
-      avatar,
-    }: {
-      displayName: string;
-      avatar: ExternalBlob | null;
-    }) => {
-      // Backend method doesn't exist yet
-      // TODO: Replace with session-based signup
-      throw new Error('Backend signup not yet implemented with session auth');
+  return {
+    mutateAsync: async (_data: unknown) => {
+      throw new Error("Use useSessionAuth.signup instead");
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
-    },
-  });
+    isPending: false,
+    isError: false,
+  };
 }

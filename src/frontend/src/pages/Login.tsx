@@ -1,57 +1,67 @@
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useSessionAuth } from '../hooks/useSessionAuth';
-import { LogIn, Loader2 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Loader2, LogIn } from "lucide-react";
+import { useState } from "react";
+import { useSessionAuth } from "../hooks/useSessionAuth";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login, isLoading } = useSessionAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setError("");
 
-    if (!username.trim() || !password.trim()) {
-      setError('Please enter both username and password');
+    if (!username.trim()) {
+      setError("Username is required");
+      return;
+    }
+    if (!password) {
+      setError("Password is required");
       return;
     }
 
     try {
       await login({ username: username.trim(), password });
-      navigate({ to: '/' });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      navigate({ to: "/" });
+    } catch (err: any) {
+      setError(err.message || "Login failed. Please try again.");
     }
   };
 
   return (
-    <div className="container py-16">
-      <Card className="max-w-md mx-auto">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center gap-2">
-            <LogIn className="h-5 w-5 text-primary" />
-            <CardTitle className="text-2xl font-bold">Log In</CardTitle>
+    <div className="flex items-center justify-center min-h-[80vh] p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-2">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <LogIn className="w-6 h-6 text-primary" />
+            </div>
           </div>
-          <CardDescription>
-            Enter your credentials to access your Dini.Verse account
-          </CardDescription>
+          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardDescription>Sign in to your Dini.Verse account</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
             {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+              <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                {error}
+              </div>
             )}
-
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input
@@ -60,12 +70,10 @@ export default function Login() {
                 placeholder="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                disabled={isLoading}
                 autoComplete="username"
-                required
+                disabled={isLoading}
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -74,40 +82,33 @@ export default function Login() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
                 autoComplete="current-password"
-                required
+                disabled={isLoading}
               />
             </div>
-
+          </CardContent>
+          <CardFooter className="flex flex-col gap-3">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Logging in...
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Signing in...
                 </>
               ) : (
-                <>
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Log In
-                </>
+                "Sign In"
               )}
             </Button>
-
-            <div className="text-center text-sm text-muted-foreground">
-              Don't have an account?{' '}
-              <Button
-                type="button"
-                variant="link"
-                className="p-0 h-auto font-normal"
-                onClick={() => navigate({ to: '/signup' })}
-                disabled={isLoading}
+            <p className="text-sm text-muted-foreground text-center">
+              Don't have an account?{" "}
+              <Link
+                to="/signup"
+                className="text-primary hover:underline font-medium"
               >
                 Sign up
-              </Button>
-            </div>
-          </form>
-        </CardContent>
+              </Link>
+            </p>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );

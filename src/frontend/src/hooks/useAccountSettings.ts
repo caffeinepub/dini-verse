@@ -1,120 +1,364 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import { ExternalBlob } from '../backend';
-import type { UserSettings, Variant_offline_online } from '../backend';
-import { formatError } from '../utils/formatError';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Gender, Language, Variant_offline_online } from "../backend";
+import { getSessionToken } from "../utils/sessionToken";
+import { useSessionAuth } from "./useSessionAuth";
 
-// Get caller's account settings (always returns non-null)
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export interface LocalUserSettings {
+  username: string;
+  displayName: string;
+  visibility: "online" | "offline";
+  avatarDataUrl: string | null;
+  lastUsernameChange: number;
+  lastDisplayNameChange: number;
+  lastPasswordChange: number;
+  createdAt: number;
+  gender: "female" | "male" | "other";
+  language: string;
+  theme: "light" | "dark";
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function settingsKey(username: string): string {
+  return `diniverse_settings_${username}`;
+}
+
+export function getCurrentUsername(): string | null {
+  try {
+    const token = getSessionToken();
+    if (!token) return null;
+    return token.split("_")[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+export function getLocalSettings(username: string): LocalUserSettings {
+  try {
+    const raw = localStorage.getItem(settingsKey(username));
+    if (raw) {
+      return JSON.parse(raw) as LocalUserSettings;
+    }
+  } catch {
+    // fall through to defaults
+  }
+  // Default settings
+  return {
+    username,
+    displayName: username,
+    visibility: "online",
+    avatarDataUrl: null,
+    lastUsernameChange: 0,
+    lastDisplayNameChange: 0,
+    lastPasswordChange: 0,
+    createdAt: Date.now(),
+    gender: "other",
+    language: "en",
+    theme: "light",
+  };
+}
+
+function saveLocalSettings(
+  username: string,
+  settings: LocalUserSettings,
+): void {
+  localStorage.setItem(settingsKey(username), JSON.stringify(settings));
+}
+
+function clearLocalSettings(username: string): void {
+  localStorage.removeItem(settingsKey(username));
+}
+
+// Map LocalUserSettings to a shape that satisfies places expecting UserSettings-like objects
+function toPublicSettings(s: LocalUserSettings) {
+  return {
+    username: s.username,
+    displayName: s.displayName,
+    visibility:
+      s.visibility === "online"
+        ? Variant_offline_online.online
+        : Variant_offline_online.offline,
+    gender:
+      s.gender === "female"
+        ? Gender.female
+        : s.gender === "male"
+          ? Gender.male
+          : Gender.other,
+    language: (s.language as Language) || Language.en,
+    avatarDataUrl: s.avatarDataUrl,
+    theme: s.theme,
+    // Extra fields for type compat
+    createdAt: BigInt(s.createdAt),
+    lastUsernameChange: BigInt(s.lastUsernameChange),
+    lastDisplayNameChange: BigInt(s.lastDisplayNameChange),
+    lastPasswordChange: BigInt(s.lastPasswordChange),
+    languageCode: s.language,
+    languagePrefix: s.language,
+    textDirection: "leftToRight" as const,
+    nativeLanguage: (s.language as Language) || Language.en,
+    pronunciationLanguage: (s.language as Language) || Language.en,
+    passwordResetAttempts: BigInt(0),
+    updatedAt: BigInt(Date.now()),
+    lastPasswordResetAttempt: BigInt(0),
+  };
+}
+
+// ─── Hooks ───────────────────────────────────────────────────────────────────
+
+/** Get current user's settings from localStorage — never calls the backend */
 export function useGetCallerSettings() {
-  const { actor, isFetching: actorFetching } = useActor();
+  const { isAuthenticated } = useSessionAuth();
 
-  const query = useQuery<UserSettings, Error>({
-    queryKey: ['callerSettings'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      try {
-        return await actor.getSettings();
-      } catch (err) {
-        // Normalize the error to ensure we have a proper Error object with a message
-        const message = formatError(err);
-        throw new Error(message);
-      }
+  const query = useQuery({
+    queryKey: ["callerSettings"],
+    queryFn: () => {
+      const username = getCurrentUsername();
+      if (!username) return null;
+      const raw = getLocalSettings(username);
+      return toPublicSettings(raw);
     },
-    enabled: !!actor && !actorFetching,
+    enabled: isAuthenticated,
     retry: false,
   });
 
   return {
     ...query,
-    isLoading: actorFetching || query.isLoading,
-    isFetched: !!actor && query.isFetched,
+    isLoading: query.isLoading,
+    isFetched: query.isFetched,
   };
 }
 
-// Update display name
+/** Update display name — localStorage only, 24h cooldown */
 export function useUpdateDisplayName() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (newDisplayName: string) => {
-      if (!actor) throw new Error('Actor not available');
+      const username = getCurrentUsername();
+      if (!username) throw new Error("Not authenticated");
+      const settings = getLocalSettings(username);
+      const now = Date.now();
+      const msIn24h = 24 * 60 * 60 * 1000;
+      if (
+        settings.lastDisplayNameChange &&
+        now - settings.lastDisplayNameChange < msIn24h
+      ) {
+        const remaining = msIn24h - (now - settings.lastDisplayNameChange);
+        const hours = Math.ceil(remaining / (60 * 60 * 1000));
+        throw new Error(
+          `You can change your display name again in ${hours} hour(s)`,
+        );
+      }
+      saveLocalSettings(username, {
+        ...settings,
+        displayName: newDisplayName.trim(),
+        lastDisplayNameChange: now,
+      });
+
+      // Also update the diniverse_users record so login shows new display name
       try {
-        await actor.updateDisplayName(newDisplayName);
-      } catch (err) {
-        const message = formatError(err);
-        throw new Error(message);
+        const usersRaw = localStorage.getItem("diniverse_users");
+        if (usersRaw) {
+          const users = JSON.parse(usersRaw);
+          if (users[username]) {
+            users[username].displayName = newDisplayName.trim();
+            localStorage.setItem("diniverse_users", JSON.stringify(users));
+          }
+        }
+      } catch {
+        // non-critical
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['callerSettings'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["callerSettings"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
 
-// Update display name and avatar together
+/** Update display name and avatar — localStorage only */
 export function useUpdateDisplayNameAndAvatar() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { displayName: string; avatar: ExternalBlob | null }) => {
-      if (!actor) throw new Error('Actor not available');
-      try {
-        await actor.updateDisplayNameAndAvatar(data.displayName, data.avatar);
-      } catch (err) {
-        const message = formatError(err);
-        throw new Error(message);
-      }
+    mutationFn: async (data: {
+      displayName: string;
+      avatarDataUrl: string | null;
+    }) => {
+      const username = getCurrentUsername();
+      if (!username) throw new Error("Not authenticated");
+      const settings = getLocalSettings(username);
+      saveLocalSettings(username, {
+        ...settings,
+        displayName: data.displayName.trim(),
+        avatarDataUrl: data.avatarDataUrl,
+        lastDisplayNameChange: Date.now(),
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['callerSettings'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["callerSettings"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
 
-// Update visibility preference
+/** Update visibility — localStorage only */
 export function useUpdateVisibility() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (visibility: Variant_offline_online) => {
-      if (!actor) throw new Error('Actor not available');
-      try {
-        await actor.updateVisibility(visibility);
-      } catch (err) {
-        const message = formatError(err);
-        throw new Error(message);
-      }
+      const username = getCurrentUsername();
+      if (!username) throw new Error("Not authenticated");
+      const settings = getLocalSettings(username);
+      saveLocalSettings(username, {
+        ...settings,
+        visibility:
+          visibility === Variant_offline_online.online ? "online" : "offline",
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['callerSettings'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["callerSettings"] });
     },
   });
 }
 
-// Delete avatar
+/** Update avatar (base64 data URL) — localStorage only */
+export function useUpdateAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (avatarDataUrl: string | null) => {
+      const username = getCurrentUsername();
+      if (!username) throw new Error("Not authenticated");
+      const settings = getLocalSettings(username);
+      saveLocalSettings(username, {
+        ...settings,
+        avatarDataUrl,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["callerSettings"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
+    },
+  });
+}
+
+/** Delete avatar — localStorage only */
 export function useDeleteAvatar() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      try {
-        await actor.deleteAvatar();
-      } catch (err) {
-        const message = formatError(err);
-        throw new Error(message);
-      }
+      const username = getCurrentUsername();
+      if (!username) throw new Error("Not authenticated");
+      const settings = getLocalSettings(username);
+      saveLocalSettings(username, { ...settings, avatarDataUrl: null });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['callerSettings'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["callerSettings"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
+    },
+  });
+}
+
+/** Delete account — clears all localStorage data for this user */
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const username = getCurrentUsername();
+      if (!username) throw new Error("Not authenticated");
+
+      // Remove settings
+      clearLocalSettings(username);
+
+      // Remove from users store
+      try {
+        const usersRaw = localStorage.getItem("diniverse_users");
+        if (usersRaw) {
+          const users = JSON.parse(usersRaw);
+          delete users[username];
+          localStorage.setItem("diniverse_users", JSON.stringify(users));
+        }
+      } catch {
+        // non-critical
+      }
+
+      // Clear session token
+      localStorage.removeItem("diniverse_session_token");
+    },
+    onSuccess: () => {
+      queryClient.clear();
+    },
+  });
+}
+
+/** Set gender — localStorage only */
+export function useSetGender() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (gender: Gender) => {
+      const username = getCurrentUsername();
+      if (!username) throw new Error("Not authenticated");
+      const settings = getLocalSettings(username);
+      const genderStr: "female" | "male" | "other" =
+        gender === Gender.female
+          ? "female"
+          : gender === Gender.male
+            ? "male"
+            : "other";
+      saveLocalSettings(username, { ...settings, gender: genderStr });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["callerSettings"] });
+    },
+  });
+}
+
+/** Set language — localStorage only */
+export function useSetLanguage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      language: Language;
+      languageCode: string;
+      languagePrefix: string;
+      textDirection: string;
+      nativeLanguage: Language;
+    }) => {
+      const username = getCurrentUsername();
+      if (!username) throw new Error("Not authenticated");
+      const settings = getLocalSettings(username);
+      saveLocalSettings(username, {
+        ...settings,
+        language: data.languageCode || data.language,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["callerSettings"] });
+    },
+  });
+}
+
+/** Set theme — localStorage only */
+export function useSetTheme() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (theme: "light" | "dark") => {
+      const username = getCurrentUsername();
+      if (!username) throw new Error("Not authenticated");
+      const settings = getLocalSettings(username);
+      saveLocalSettings(username, { ...settings, theme });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["callerSettings"] });
     },
   });
 }

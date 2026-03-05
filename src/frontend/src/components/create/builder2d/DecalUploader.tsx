@@ -1,9 +1,11 @@
-import { Button } from '@/components/ui/button';
-import { Upload } from 'lucide-react';
-import { useRef } from 'react';
+import { Button } from "@/components/ui/button";
+import { Upload } from "lucide-react";
+import { useRef } from "react";
 
 interface DecalUploaderProps {
-  builder: ReturnType<typeof import('../../../hooks/useBuilder2D').useBuilder2D>;
+  builder: ReturnType<
+    typeof import("../../../hooks/useBuilder2D").useBuilder2D
+  >;
 }
 
 export default function DecalUploader({ builder }: DecalUploaderProps) {
@@ -13,8 +15,8 @@ export default function DecalUploader({ builder }: DecalUploaderProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
       return;
     }
 
@@ -26,7 +28,7 @@ export default function DecalUploader({ builder }: DecalUploaderProps) {
     reader.readAsDataURL(file);
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 

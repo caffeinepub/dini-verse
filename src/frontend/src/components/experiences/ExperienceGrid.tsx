@@ -1,6 +1,6 @@
-import { Skeleton } from '@/components/ui/skeleton';
-import ExperienceCard from './ExperienceCard';
-import type { Experience } from '../../backend';
+import { Skeleton } from "@/components/ui/skeleton";
+import type { Experience } from "../../backend";
+import ExperienceCard from "./ExperienceCard";
 
 interface ExperienceGridProps {
   experiences: Experience[];
@@ -11,13 +11,15 @@ interface ExperienceGridProps {
 export default function ExperienceGrid({
   experiences,
   isLoading,
-  emptyMessage = 'No experiences found',
+  emptyMessage = "No experiences found",
 }: ExperienceGridProps) {
+  const SKELETON_IDS = ["sk-a", "sk-b", "sk-c", "sk-d", "sk-e", "sk-f"];
+
   if (isLoading) {
     return (
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="space-y-3">
+        {SKELETON_IDS.map((id) => (
+          <div key={id} className="space-y-3">
             <Skeleton className="aspect-video w-full" />
             <Skeleton className="h-6 w-3/4" />
             <Skeleton className="h-4 w-full" />

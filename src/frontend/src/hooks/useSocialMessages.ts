@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { Principal } from '@icp-sdk/core/principal';
+import type { Principal } from "@icp-sdk/core/principal";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useActor } from "./useActor";
 
 // Define Message type locally since backend doesn't export it yet
 export interface Message {
@@ -16,7 +16,7 @@ export function useGetMessages(receiver: Principal | null) {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<Message[]>({
-    queryKey: ['messages', receiver?.toString()],
+    queryKey: ["messages", receiver?.toString()],
     queryFn: async () => {
       if (!actor || !receiver) return [];
       // TODO: Backend method not yet implemented
@@ -32,18 +32,20 @@ export function useSendMessage() {
 
   return useMutation({
     mutationFn: async ({
-      receiver,
-      content,
+      receiver: _receiver,
+      content: _content,
     }: {
       receiver: Principal;
       content: string;
     }) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('sendMessage not yet implemented in backend');
+      throw new Error("sendMessage not yet implemented in backend");
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['messages', variables.receiver.toString()] });
+      queryClient.invalidateQueries({
+        queryKey: ["messages", variables.receiver.toString()],
+      });
     },
   });
 }

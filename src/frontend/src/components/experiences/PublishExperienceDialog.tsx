@@ -1,31 +1,40 @@
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ExternalBlob, Category } from '../../backend';
-import { useCreateExperience } from '../../hooks/useExperiences';
-import { toast } from 'sonner';
-import { Loader2, Upload, X } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Upload, X } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Category, ExternalBlob } from "../../backend";
+import { useCreateExperience } from "../../hooks/useExperiences";
 
 interface PublishExperienceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export default function PublishExperienceDialog({ open, onOpenChange }: PublishExperienceDialogProps) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+export default function PublishExperienceDialog({
+  open,
+  onOpenChange,
+}: PublishExperienceDialogProps) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>(Category.adventure);
-  const [gameplayControls, setGameplayControls] = useState('');
+  const [gameplayControls, setGameplayControls] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -53,7 +62,7 @@ export default function PublishExperienceDialog({ open, onOpenChange }: PublishE
     e.preventDefault();
 
     if (!title.trim() || !description.trim()) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -63,12 +72,16 @@ export default function PublishExperienceDialog({ open, onOpenChange }: PublishE
       if (thumbnailFile) {
         const arrayBuffer = await thumbnailFile.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
-        thumbnailBlob = ExternalBlob.fromBytes(uint8Array).withUploadProgress((percentage) => {
-          setUploadProgress(percentage);
-        });
+        thumbnailBlob = ExternalBlob.fromBytes(uint8Array).withUploadProgress(
+          (percentage) => {
+            setUploadProgress(percentage);
+          },
+        );
       }
 
-      const controlsText = gameplayControls.trim() || 'Use WASD to move, Space to jump, Mouse to control camera.';
+      const controlsText =
+        gameplayControls.trim() ||
+        "Use WASD to move, Space to jump, Mouse to control camera.";
 
       await createMutation.mutateAsync({
         title: title.trim(),
@@ -78,18 +91,18 @@ export default function PublishExperienceDialog({ open, onOpenChange }: PublishE
         gameplayControls: controlsText,
       });
 
-      toast.success('Experience published successfully!');
-      setTitle('');
-      setDescription('');
+      toast.success("Experience published successfully!");
+      setTitle("");
+      setDescription("");
       setCategory(Category.adventure);
-      setGameplayControls('');
+      setGameplayControls("");
       setThumbnailFile(null);
       setThumbnailPreview(null);
       setUploadProgress(0);
       onOpenChange(false);
     } catch (error) {
-      console.error('Publish error:', error);
-      toast.error('Failed to publish experience. Please try again.');
+      console.error("Publish error:", error);
+      toast.error("Failed to publish experience. Please try again.");
     }
   };
 
@@ -129,7 +142,10 @@ export default function PublishExperienceDialog({ open, onOpenChange }: PublishE
 
           <div className="space-y-2">
             <Label htmlFor="category">Category *</Label>
-            <Select value={category} onValueChange={(value) => setCategory(value as Category)}>
+            <Select
+              value={category}
+              onValueChange={(value) => setCategory(value as Category)}
+            >
               <SelectTrigger id="category">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
@@ -180,7 +196,9 @@ export default function PublishExperienceDialog({ open, onOpenChange }: PublishE
                 className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors"
               >
                 <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                <span className="text-sm text-muted-foreground">Click to upload thumbnail</span>
+                <span className="text-sm text-muted-foreground">
+                  Click to upload thumbnail
+                </span>
                 <input
                   id="thumbnail-upload"
                   type="file"
@@ -216,7 +234,9 @@ export default function PublishExperienceDialog({ open, onOpenChange }: PublishE
               Cancel
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {createMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Publish
             </Button>
           </div>

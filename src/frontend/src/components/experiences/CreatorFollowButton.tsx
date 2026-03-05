@@ -1,41 +1,46 @@
-import { Button } from '@/components/ui/button';
-import { UserPlus, UserMinus } from 'lucide-react';
-import { useFollowCreator, useUnfollowCreator, useIsFollowing } from '../../hooks/useSocialFollowing';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
-import { toast } from 'sonner';
-import type { Principal } from '@icp-sdk/core/principal';
+import { Button } from "@/components/ui/button";
+import type { Principal } from "@icp-sdk/core/principal";
+import { UserMinus, UserPlus } from "lucide-react";
+import { toast } from "sonner";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
+import {
+  useFollowCreator,
+  useIsFollowing,
+  useUnfollowCreator,
+} from "../../hooks/useSocialFollowing";
 
-export default function CreatorFollowButton({ authorPrincipal }: { authorPrincipal: Principal }) {
-  const { identity } = useInternetIdentity();
+export default function CreatorFollowButton({
+  authorPrincipal,
+}: { authorPrincipal: Principal }) {
+  const { isAuthenticated } = useCurrentUser();
   const { data: isFollowing } = useIsFollowing(authorPrincipal);
   const followMutation = useFollowCreator();
   const unfollowMutation = useUnfollowCreator();
 
-  const isAuthenticated = !!identity;
-  const currentPrincipal = identity?.getPrincipal().toString();
-  const isSelf = currentPrincipal === authorPrincipal.toString();
+  // We can't compare principal with username, so isSelf check is removed for session auth
+  const isSelf = false;
 
   const handleToggleFollow = async () => {
     if (!isAuthenticated) {
-      toast.error('Please log in to follow creators');
+      toast.error("Please log in to follow creators");
       return;
     }
 
     if (isSelf) {
-      toast.error('You cannot follow yourself');
+      toast.error("You cannot follow yourself");
       return;
     }
 
     try {
       if (isFollowing) {
         await unfollowMutation.mutateAsync(authorPrincipal);
-        toast.success('Unfollowed creator');
+        toast.success("Unfollowed creator");
       } else {
         await followMutation.mutateAsync(authorPrincipal);
-        toast.success('Following creator');
+        toast.success("Following creator");
       }
     } catch (error: any) {
-      toast.error(error.message || 'Action failed');
+      toast.error(error.message || "Action failed");
     }
   };
 
@@ -45,7 +50,7 @@ export default function CreatorFollowButton({ authorPrincipal }: { authorPrincip
 
   return (
     <Button
-      variant={isFollowing ? 'outline' : 'default'}
+      variant={isFollowing ? "outline" : "default"}
       size="sm"
       onClick={handleToggleFollow}
       disabled={followMutation.isPending || unfollowMutation.isPending}

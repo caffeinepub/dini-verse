@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
-import { useRateExperience } from '../../hooks/useExperiences';
-import { toast } from 'sonner';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import { Button } from "@/components/ui/button";
+import { ThumbsDown, ThumbsUp } from "lucide-react";
+import { toast } from "sonner";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
+import { useRateExperience } from "../../hooks/useExperiences";
 
 interface ExperienceRatingControlsProps {
   experienceId: string;
@@ -15,23 +15,21 @@ export default function ExperienceRatingControls({
   thumbsUp,
   thumbsDown,
 }: ExperienceRatingControlsProps) {
-  const { identity } = useInternetIdentity();
+  const { isAuthenticated } = useCurrentUser();
   const rateMutation = useRateExperience();
-
-  const isAuthenticated = !!identity;
 
   const handleRate = async (isThumbsUp: boolean) => {
     if (!isAuthenticated) {
-      toast.error('Please log in to rate experiences');
+      toast.error("Please log in to rate experiences");
       return;
     }
 
     try {
       await rateMutation.mutateAsync({ experienceId, isThumbsUp });
-      toast.success(isThumbsUp ? 'Thumbs up!' : 'Thumbs down!');
+      toast.success(isThumbsUp ? "Thumbs up!" : "Thumbs down!");
     } catch (error) {
-      console.error('Rating error:', error);
-      toast.error('Failed to rate experience');
+      console.error("Rating error:", error);
+      toast.error("Failed to rate experience");
     }
   };
 

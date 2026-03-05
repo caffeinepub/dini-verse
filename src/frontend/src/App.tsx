@@ -1,22 +1,28 @@
-import { RouterProvider, createRouter, createRootRoute, createRoute } from '@tanstack/react-router';
-import { ThemeProvider } from 'next-themes';
-import AppLayout from './components/layout/AppLayout';
-import Home from './pages/Home';
-import Discover from './pages/Discover';
-import ExperienceDetails from './pages/ExperienceDetails';
-import Profile from './pages/Profile';
-import SignUp from './pages/SignUp';
-import Login from './pages/Login';
-import AvatarShop from './pages/AvatarShop';
-import Create from './pages/Create';
-import DiniBucks from './pages/DiniBucks';
-import Inventory from './pages/Inventory';
-import Groups from './pages/Groups';
-import Settings from './pages/Settings';
-import Social from './pages/Social';
-import CreateGamesBuilder2D from './pages/CreateGamesBuilder2D';
-import CreateUGCAccessories from './pages/CreateUGCAccessories';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from "@/components/ui/sonner";
+import {
+  RouterProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from "@tanstack/react-router";
+import { ThemeProvider } from "next-themes";
+import AppLayout from "./components/layout/AppLayout";
+import { TranslationProvider } from "./contexts/TranslationContext";
+import AvatarShop from "./pages/AvatarShop";
+import Create from "./pages/Create";
+import CreateGamesBuilder2D from "./pages/CreateGamesBuilder2D";
+import CreateUGCAccessories from "./pages/CreateUGCAccessories";
+import DiniBucks from "./pages/DiniBucks";
+import Discover from "./pages/Discover";
+import ExperienceDetails from "./pages/ExperienceDetails";
+import Groups from "./pages/Groups";
+import Home from "./pages/Home";
+import Inventory from "./pages/Inventory";
+import Login from "./pages/Login";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import SignUp from "./pages/SignUp";
+import Social from "./pages/Social";
 
 const rootRoute = createRootRoute({
   component: AppLayout,
@@ -24,115 +30,115 @@ const rootRoute = createRootRoute({
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/',
+  path: "/",
   component: Home,
 });
 
 const discoverRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/discover',
+  path: "/discover",
   component: Discover,
 });
 
-const experienceRoute = createRoute({
+const experienceDetailsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/experience/$experienceId',
+  path: "/experience/$id",
   component: ExperienceDetails,
 });
 
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/profile',
+  path: "/profile",
   component: Profile,
 });
 
-const signUpRoute = createRoute({
+const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/signup',
+  path: "/signup",
   component: SignUp,
 });
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/login',
+  path: "/login",
   component: Login,
 });
 
 const avatarShopRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/avatar-shop',
+  path: "/avatar-shop",
   component: AvatarShop,
 });
 
 const createRoute_ = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/create',
+  path: "/create",
   component: Create,
-});
-
-const createGamesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/create/games',
-  component: CreateGamesBuilder2D,
-});
-
-const createUGCRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/create/ugc-accessories',
-  component: CreateUGCAccessories,
 });
 
 const diniBucksRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/dini-bucks',
+  path: "/dini-bucks",
   component: DiniBucks,
 });
 
 const inventoryRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/inventory',
+  path: "/inventory",
   component: Inventory,
 });
 
 const groupsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/groups',
+  path: "/groups",
   component: Groups,
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/settings',
+  path: "/settings",
   component: Settings,
 });
 
 const socialRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/social',
+  path: "/social",
   component: Social,
+});
+
+const createGamesBuilder2DRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/create/games-builder-2d",
+  component: CreateGamesBuilder2D,
+});
+
+const createUGCAccessoriesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/create/ugc-accessories",
+  component: CreateUGCAccessories,
 });
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   discoverRoute,
-  experienceRoute,
+  experienceDetailsRoute,
   profileRoute,
-  signUpRoute,
+  signupRoute,
   loginRoute,
   avatarShopRoute,
   createRoute_,
-  createGamesRoute,
-  createUGCRoute,
   diniBucksRoute,
   inventoryRoute,
   groupsRoute,
   settingsRoute,
   socialRoute,
+  createGamesBuilder2DRoute,
+  createUGCAccessoriesRoute,
 ]);
 
 const router = createRouter({ routeTree });
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
@@ -140,9 +146,11 @@ declare module '@tanstack/react-router' {
 
 export default function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      <RouterProvider router={router} />
-      <Toaster />
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <TranslationProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+      </TranslationProvider>
     </ThemeProvider>
   );
 }

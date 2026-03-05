@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { Principal } from '@icp-sdk/core/principal';
+import type { Principal } from "@icp-sdk/core/principal";
+import { useQuery } from "@tanstack/react-query";
 
 // Temporary user type until backend is updated
 interface UserData {
@@ -9,10 +8,8 @@ interface UserData {
 }
 
 export function useSearchUsers(searchTerm: string) {
-  const { actor, isFetching: actorFetching } = useActor();
-
   return useQuery<Array<[Principal, UserData]>>({
-    queryKey: ['users', 'search', searchTerm],
+    queryKey: ["users", "search", searchTerm],
     queryFn: async () => {
       // Backend method doesn't exist yet - return empty array
       // TODO: Replace with session-based user search

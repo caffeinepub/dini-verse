@@ -1,16 +1,24 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSessionAuth } from '../hooks/useSessionAuth';
-import FriendsPanel from '../components/social/FriendsPanel';
-import MessagesPanel from '../components/social/MessagesPanel';
-import PartiesPanel from '../components/social/PartiesPanel';
-import FollowingPanel from '../components/social/FollowingPanel';
-import AccountsDisabledNotice from '../components/auth/AccountsDisabledNotice';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import AccountsDisabledNotice from "../components/auth/AccountsDisabledNotice";
+import FollowingPanel from "../components/social/FollowingPanel";
+import FriendsPanel from "../components/social/FriendsPanel";
+import MessagesPanel from "../components/social/MessagesPanel";
+import PartiesPanel from "../components/social/PartiesPanel";
+import { useSessionAuth } from "../hooks/useSessionAuth";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function Social() {
   const { isAuthenticated } = useSessionAuth();
-  const [activeTab, setActiveTab] = useState('friends');
+  const [activeTab, setActiveTab] = useState("friends");
+  const { t } = useTranslation();
 
   if (!isAuthenticated) {
     return (
@@ -24,18 +32,18 @@ export default function Social() {
     <div className="container py-8">
       <div className="space-y-6">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Social</h1>
-          <p className="text-muted-foreground mt-2">
-            Connect with friends and the Dini.Verse community
-          </p>
+          <h1 className="text-4xl font-bold tracking-tight">
+            {t("social.title")}
+          </h1>
+          <p className="text-muted-foreground mt-2">{t("social.subtitle")}</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="friends">Friends</TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
-            <TabsTrigger value="parties">Parties</TabsTrigger>
-            <TabsTrigger value="following">Following</TabsTrigger>
+            <TabsTrigger value="friends">{t("social.friends")}</TabsTrigger>
+            <TabsTrigger value="messages">{t("social.messages")}</TabsTrigger>
+            <TabsTrigger value="parties">{t("social.parties")}</TabsTrigger>
+            <TabsTrigger value="following">{t("social.following")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="friends" className="mt-6">

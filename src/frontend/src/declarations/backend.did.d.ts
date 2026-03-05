@@ -26,13 +26,34 @@ export interface Experience {
   'gameplayControls' : string,
 }
 export type ExternalBlob = Uint8Array;
-export interface PublicUserProfile {
+export type Gender = { 'other' : null } |
+  { 'female' : null } |
+  { 'male' : null };
+export type Language = { 'de' : null } |
+  { 'en' : null } |
+  { 'es' : null } |
+  { 'fr' : null } |
+  { 'ko' : null } |
+  { 'nl' : null } |
+  { 'pt' : null } |
+  { 'ru' : null } |
+  { 'tr' : null } |
+  { 'vi' : null };
+export type TextDirection = { 'leftToRight' : null } |
+  { 'rightToLeft' : null };
+export type Time = bigint;
+export interface UserProfile {
   'displayName' : string,
+  'languageCode' : string,
+  'language' : Language,
+  'gender' : Gender,
+  'languagePrefix' : string,
+  'textDirection' : TextDirection,
   'visibility' : { 'offline' : null } |
     { 'online' : null },
+  'nativeLanguage' : Language,
   'avatar' : [] | [ExternalBlob],
 }
-export type Time = bigint;
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
@@ -41,12 +62,19 @@ export interface UserSettings {
   'displayName' : string,
   'createdAt' : Time,
   'lastDisplayNameChange' : Time,
+  'languageCode' : string,
+  'language' : Language,
   'passwordResetAttempts' : bigint,
   'updatedAt' : Time,
   'lastPasswordChange' : Time,
+  'gender' : Gender,
+  'pronunciationLanguage' : Language,
+  'languagePrefix' : string,
+  'textDirection' : TextDirection,
   'visibility' : { 'offline' : null } |
     { 'online' : null },
   'lastUsernameChange' : Time,
+  'nativeLanguage' : Language,
   'lastPasswordResetAttempt' : Time,
   'avatar' : [] | [ExternalBlob],
 }
@@ -81,18 +109,44 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'deleteAccount' : ActorMethod<[], undefined>,
   'deleteAvatar' : ActorMethod<[], undefined>,
   'getAllExperiences' : ActorMethod<[], Array<Experience>>,
-  'getCallerUserProfile' : ActorMethod<[], [] | [PublicUserProfile]>,
+  'getAllLanguageSettings' : ActorMethod<[], Array<[Principal, UserSettings]>>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getExperiencesByAuthor' : ActorMethod<[Principal], Array<Experience>>,
   'getExperiencesByCategory' : ActorMethod<[Category], Array<Experience>>,
+  'getGender' : ActorMethod<[], Gender>,
+  'getLanguageSettings' : ActorMethod<
+    [],
+    [Language, string, string, TextDirection, Language]
+  >,
   'getSettings' : ActorMethod<[], UserSettings>,
   'getTrendingExperiences' : ActorMethod<[Category], Array<Experience>>,
-  'getUserProfile' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'saveCallerUserProfile' : ActorMethod<[PublicUserProfile], undefined>,
+  'saveCallerUserProfile' : ActorMethod<
+    [
+      string,
+      [] | [ExternalBlob],
+      { 'offline' : null } |
+        { 'online' : null },
+      Gender,
+      Language,
+      string,
+      string,
+      TextDirection,
+      Language,
+    ],
+    undefined
+  >,
   'searchExperiences' : ActorMethod<[string], Array<Experience>>,
+  'setGender' : ActorMethod<[Gender], undefined>,
+  'setLanguage' : ActorMethod<
+    [Language, string, string, TextDirection, Language],
+    undefined
+  >,
   'updateDisplayName' : ActorMethod<[string], undefined>,
   'updateDisplayNameAndAvatar' : ActorMethod<
     [string, [] | [ExternalBlob]],

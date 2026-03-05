@@ -1,13 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { Principal } from '@icp-sdk/core/principal';
+import type { Principal } from "@icp-sdk/core/principal";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useActor } from "./useActor";
 
 // Placeholder hooks for following system - backend not yet implemented
 export function useGetFollowedCreators() {
-  const { actor, isFetching: actorFetching } = useActor();
-
   return useQuery<Principal[]>({
-    queryKey: ['following'],
+    queryKey: ["following"],
     queryFn: async () => {
       // Backend following methods not yet available
       return [];
@@ -21,13 +19,13 @@ export function useFollowCreator() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (creatorPrincipal: Principal) => {
-      if (!actor) throw new Error('Actor not available');
+    mutationFn: async (_creatorPrincipal: Principal) => {
+      if (!actor) throw new Error("Actor not available");
       // Backend following methods not yet available
-      throw new Error('Follow feature coming soon');
+      throw new Error("Follow feature coming soon");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['following'] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
     },
   });
 }
@@ -37,22 +35,20 @@ export function useUnfollowCreator() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (creatorPrincipal: Principal) => {
-      if (!actor) throw new Error('Actor not available');
+    mutationFn: async (_creatorPrincipal: Principal) => {
+      if (!actor) throw new Error("Actor not available");
       // Backend following methods not yet available
-      throw new Error('Unfollow feature coming soon');
+      throw new Error("Unfollow feature coming soon");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['following'] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
     },
   });
 }
 
-export function useGetFollowerCount(creatorPrincipal: Principal | undefined) {
-  const { actor, isFetching: actorFetching } = useActor();
-
+export function useGetFollowerCount(_creatorPrincipal: Principal | undefined) {
   return useQuery<number>({
-    queryKey: ['followerCount', creatorPrincipal?.toString()],
+    queryKey: ["followerCount", _creatorPrincipal?.toString()],
     queryFn: async () => {
       // Backend following methods not yet available
       return 0;
@@ -61,11 +57,9 @@ export function useGetFollowerCount(creatorPrincipal: Principal | undefined) {
   });
 }
 
-export function useIsFollowing(creatorPrincipal: Principal | undefined) {
-  const { actor, isFetching: actorFetching } = useActor();
-
+export function useIsFollowing(_creatorPrincipal: Principal | undefined) {
   return useQuery<boolean>({
-    queryKey: ['isFollowing', creatorPrincipal?.toString()],
+    queryKey: ["isFollowing", _creatorPrincipal?.toString()],
     queryFn: async () => {
       // Backend following methods not yet available
       return false;

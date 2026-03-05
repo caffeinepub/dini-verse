@@ -1,39 +1,49 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Save, Download, Upload, Trash2 } from 'lucide-react';
-import { useBuilder2DProps } from '../../../hooks/useBuilder2DProps';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Download, Save, Trash2, Upload } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useBuilder2DProps } from "../../../hooks/useBuilder2DProps";
 
 interface PropsPanelProps {
-  builder: ReturnType<typeof import('../../../hooks/useBuilder2D').useBuilder2D>;
+  builder: ReturnType<
+    typeof import("../../../hooks/useBuilder2D").useBuilder2D
+  >;
 }
 
 export default function PropsPanel({ builder }: PropsPanelProps) {
-  const { props, saveProp, deleteProp, exportProp, importProp } = useBuilder2DProps();
+  const { props, saveProp, deleteProp, exportProp, importProp } =
+    useBuilder2DProps();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [propName, setPropName] = useState('');
-  const [exportData, setExportData] = useState('');
-  const [importData, setImportData] = useState('');
+  const [propName, setPropName] = useState("");
+  const [exportData, setExportData] = useState("");
+  const [importData, setImportData] = useState("");
 
   const handleSave = () => {
     if (!propName.trim()) {
-      toast.error('Please enter a name for your prop');
+      toast.error("Please enter a name for your prop");
       return;
     }
     if (builder.elements.length === 0) {
-      toast.error('Canvas is empty. Add some elements first.');
+      toast.error("Canvas is empty. Add some elements first.");
       return;
     }
     saveProp(propName, builder.elements);
     toast.success(`Prop "${propName}" saved!`);
-    setPropName('');
+    setPropName("");
     setSaveDialogOpen(false);
   };
 
@@ -57,10 +67,10 @@ export default function PropsPanel({ builder }: PropsPanelProps) {
     const imported = importProp(importData);
     if (imported) {
       toast.success(`Imported "${imported.name}"`);
-      setImportData('');
+      setImportData("");
       setImportDialogOpen(false);
     } else {
-      toast.error('Failed to import prop. Check the format.');
+      toast.error("Failed to import prop. Check the format.");
     }
   };
 
@@ -68,13 +78,13 @@ export default function PropsPanel({ builder }: PropsPanelProps) {
     const prop = props.find((p) => p.id === propId);
     if (prop && confirm(`Delete "${prop.name}"?`)) {
       deleteProp(propId);
-      toast.success('Prop deleted');
+      toast.success("Prop deleted");
     }
   };
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(exportData);
-    toast.success('Copied to clipboard!');
+    toast.success("Copied to clipboard!");
   };
 
   return (
@@ -113,10 +123,14 @@ export default function PropsPanel({ builder }: PropsPanelProps) {
             ) : (
               <div className="space-y-2">
                 {props.map((prop) => (
-                  <div key={prop.id} className="border rounded-lg p-3 space-y-2">
+                  <div
+                    key={prop.id}
+                    className="border rounded-lg p-3 space-y-2"
+                  >
                     <div className="font-medium text-sm">{prop.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {prop.elements.length} element{prop.elements.length !== 1 ? 's' : ''}
+                      {prop.elements.length} element
+                      {prop.elements.length !== 1 ? "s" : ""}
                     </div>
                     <div className="flex gap-1">
                       <Button
@@ -194,7 +208,10 @@ export default function PropsPanel({ builder }: PropsPanelProps) {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setExportDialogOpen(false)}
+            >
               Close
             </Button>
             <Button onClick={copyToClipboard}>Copy to Clipboard</Button>
@@ -219,7 +236,10 @@ export default function PropsPanel({ builder }: PropsPanelProps) {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setImportDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setImportDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleImport}>Import</Button>

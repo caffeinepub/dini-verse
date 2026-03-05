@@ -1,22 +1,31 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useNavigate } from '@tanstack/react-router';
-import { useGetAllExperiences } from '../hooks/useExperiences';
-import { useGetCurrentUserProfile } from '../hooks/useUserProfile';
-import { useCurrentUser } from '../hooks/useCurrentUser';
-import ExperienceGrid from '../components/experiences/ExperienceGrid';
-import { Sparkles, Users, Clock } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { Clock, Sparkles, Users } from "lucide-react";
+import ExperienceGrid from "../components/experiences/ExperienceGrid";
+import {
+  getCurrentUsername,
+  getLocalSettings,
+} from "../hooks/useAccountSettings";
+import { useCurrentUser } from "../hooks/useCurrentUser";
+import { useGetAllExperiences } from "../hooks/useExperiences";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function Home() {
   const navigate = useNavigate();
-  const { data: experiences, isLoading: experiencesLoading } = useGetAllExperiences();
-  const { data: userProfile, isLoading: profileLoading } = useGetCurrentUserProfile();
+  const { data: experiences, isLoading: experiencesLoading } =
+    useGetAllExperiences();
   const { isAuthenticated, currentUser } = useCurrentUser();
+  const { t } = useTranslation();
 
   const recommendedExperiences = experiences?.slice(0, 6) || [];
 
-  const displayName = currentUser?.displayName || userProfile?.displayName || 'User';
+  const username = getCurrentUsername();
+  const rawSettings = username ? getLocalSettings(username) : null;
+  const displayName =
+    rawSettings?.displayName || currentUser?.displayName || "User";
+  const avatarDataUrl = rawSettings?.avatarDataUrl ?? null;
 
   return (
     <div className="flex flex-col">
@@ -26,28 +35,37 @@ export default function Home() {
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16 border-2 border-primary">
-                  {userProfile?.avatar ? (
-                    <AvatarImage src={userProfile.avatar.getDirectURL()} alt={displayName} />
+                  {avatarDataUrl ? (
+                    <AvatarImage src={avatarDataUrl} alt={displayName} />
                   ) : null}
                   <AvatarFallback className="bg-primary text-primary-foreground text-xl">
                     {displayName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold">
-                    Welcome back, {displayName}!
+                  <h2
+                    className="text-2xl font-bold"
+                    data-ocid="home.welcome.section"
+                  >
+                    {t("home.welcome")}, {displayName}!
                   </h2>
-                  <p className="text-muted-foreground">
-                    Ready to explore new experiences or create something amazing?
-                  </p>
+                  <p className="text-muted-foreground">{t("home.ready")}</p>
                 </div>
                 <div className="hidden md:flex gap-2">
-                  <Button onClick={() => navigate({ to: '/create' })} className="gap-2">
+                  <Button
+                    onClick={() => navigate({ to: "/create" })}
+                    className="gap-2"
+                    data-ocid="home.create.button"
+                  >
                     <Sparkles className="h-4 w-4" />
-                    Create
+                    {t("home.create")}
                   </Button>
-                  <Button variant="outline" onClick={() => navigate({ to: '/discover' })}>
-                    Discover
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate({ to: "/discover" })}
+                    data-ocid="home.discover.button"
+                  >
+                    {t("home.discover")}
                   </Button>
                 </div>
               </div>
@@ -60,16 +78,25 @@ export default function Home() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-primary">Recommended</h2>
+                  <h2 className="text-2xl font-bold text-primary">
+                    {t("home.recommended")}
+                  </h2>
                   <p className="text-sm text-muted-foreground">
-                    Popular experiences you might enjoy
+                    {t("home.recommendedDesc")}
                   </p>
                 </div>
-                <Button variant="ghost" onClick={() => navigate({ to: '/discover' })}>
-                  View All
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate({ to: "/discover" })}
+                  data-ocid="home.viewall.button"
+                >
+                  {t("home.viewAll")}
                 </Button>
               </div>
-              <ExperienceGrid experiences={recommendedExperiences} isLoading={experiencesLoading} />
+              <ExperienceGrid
+                experiences={recommendedExperiences}
+                isLoading={experiencesLoading}
+              />
             </div>
           </div>
 
@@ -78,7 +105,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
                   <Users className="h-5 w-5" />
-                  Friend Activity
+                  {t("home.friendActivity")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -87,21 +114,25 @@ export default function Home() {
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
-                        No recent friend activity to display
+                        {t("home.noActivity")}
                       </p>
                     </div>
                     <p className="text-xs text-muted-foreground text-center">
-                      Connect with friends to see their activity here
+                      {t("home.connectFriends")}
                     </p>
                   </div>
                 ) : (
                   <div className="text-center py-6">
                     <Users className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground mb-4">
-                      Log in to see what your friends are playing
+                      {t("home.loginToSee")}
                     </p>
-                    <Button size="sm" onClick={() => navigate({ to: '/signup' })}>
-                      Log In
+                    <Button
+                      size="sm"
+                      onClick={() => navigate({ to: "/signup" })}
+                      data-ocid="home.login.button"
+                    >
+                      {t("auth.login")}
                     </Button>
                   </div>
                 )}
@@ -110,20 +141,28 @@ export default function Home() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-primary">Quick Stats</CardTitle>
+                <CardTitle className="text-primary">
+                  {t("home.quickStats")}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Total Experiences</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("home.totalExperiences")}
+                  </span>
                   <span className="font-bold">{experiences?.length || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Active Players</span>
-                  <span className="font-bold">Coming Soon</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("home.activePlayers")}
+                  </span>
+                  <span className="font-bold">{t("home.comingSoon")}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Creators</span>
-                  <span className="font-bold">Growing Daily</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("home.creators")}
+                  </span>
+                  <span className="font-bold">{t("home.growingDaily")}</span>
                 </div>
               </CardContent>
             </Card>

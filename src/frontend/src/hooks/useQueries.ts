@@ -1,48 +1,38 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import { Principal } from '@icp-sdk/core/principal';
-import type { 
-  Experience, 
-  Category, 
-  PublicUserProfile,
-  ExternalBlob
-} from '../backend';
+import type { Principal } from "@icp-sdk/core/principal";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type {
+  Category,
+  Experience,
+  ExternalBlob,
+  UserProfile,
+} from "../backend";
+import { useActor } from "./useActor";
 
-// User Profile Queries
+// User Profile Queries — localStorage-based, no backend calls needed
 export function useGetCallerUserProfile() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  const query = useQuery<PublicUserProfile | null>({
-    queryKey: ['currentUserProfile'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      // Backend doesn't have getCallerUserProfile, this is a placeholder
-      // In a real implementation, we'd need to get the caller's principal and call getUserProfile
-      return null;
-    },
-    enabled: !!actor && !actorFetching,
+  const query = useQuery<UserProfile | null>({
+    queryKey: ["currentUserProfile"],
+    queryFn: () => null, // Profile data is handled by useGetCurrentUserProfile in useUserProfile.ts
+    enabled: false,
     retry: false,
   });
 
   return {
     ...query,
-    isLoading: actorFetching || query.isLoading,
-    isFetched: !!actor && query.isFetched,
+    isLoading: false,
+    isFetched: true,
   };
 }
 
 export function useSaveCallerUserProfile() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (profile: PublicUserProfile) => {
-      if (!actor) throw new Error('Actor not available');
-      // TODO: Backend method not yet implemented
-      throw new Error('saveCallerUserProfile not yet implemented in backend');
+    mutationFn: async (_profile: UserProfile) => {
+      // No-op: profile is managed in localStorage via useAccountSettings
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
@@ -52,7 +42,7 @@ export function useGetAllExperiences() {
   const { actor, isFetching } = useActor();
 
   return useQuery<Experience[]>({
-    queryKey: ['experiences'],
+    queryKey: ["experiences"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllExperiences();
@@ -65,7 +55,7 @@ export function useGetExperiencesByCategory(category: Category) {
   const { actor, isFetching } = useActor();
 
   return useQuery<Experience[]>({
-    queryKey: ['experiences', 'category', category],
+    queryKey: ["experiences", "category", category],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getExperiencesByCategory(category);
@@ -78,7 +68,7 @@ export function useGetTrendingExperiences(category: Category) {
   const { actor, isFetching } = useActor();
 
   return useQuery<Experience[]>({
-    queryKey: ['experiences', 'trending', category],
+    queryKey: ["experiences", "trending", category],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getTrendingExperiences(category);
@@ -91,7 +81,7 @@ export function useSearchExperiences(searchTerm: string) {
   const { actor, isFetching } = useActor();
 
   return useQuery<Experience[]>({
-    queryKey: ['experiences', 'search', searchTerm],
+    queryKey: ["experiences", "search", searchTerm],
     queryFn: async () => {
       if (!actor) return [];
       return actor.searchExperiences(searchTerm);
@@ -104,12 +94,12 @@ export function useGetExperience(id: string) {
   const { actor, isFetching } = useActor();
 
   return useQuery<Experience | null>({
-    queryKey: ['experience', id],
+    queryKey: ["experience", id],
     queryFn: async () => {
       if (!actor) return null;
       // TODO: Backend method not yet implemented - find by ID from all experiences
       const experiences = await actor.getAllExperiences();
-      return experiences.find(exp => exp.id === id) || null;
+      return experiences.find((exp) => exp.id === id) || null;
     },
     enabled: !!actor && !isFetching && !!id,
   });
@@ -120,19 +110,19 @@ export function useCreateExperience() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: {
+    mutationFn: async (_data: {
       title: string;
       description: string;
       thumbnail: ExternalBlob | null;
       category: Category;
       gameplayControls: string;
     }) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('createExperience not yet implemented in backend');
+      throw new Error("createExperience not yet implemented in backend");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['experiences'] });
+      queryClient.invalidateQueries({ queryKey: ["experiences"] });
     },
   });
 }
@@ -142,14 +132,19 @@ export function useRateExperience() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { experienceId: string; isThumbsUp: boolean }) => {
-      if (!actor) throw new Error('Actor not available');
+    mutationFn: async (_data: {
+      experienceId: string;
+      isThumbsUp: boolean;
+    }) => {
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('rateExperience not yet implemented in backend');
+      throw new Error("rateExperience not yet implemented in backend");
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['experience', variables.experienceId] });
-      queryClient.invalidateQueries({ queryKey: ['experiences'] });
+      queryClient.invalidateQueries({
+        queryKey: ["experience", variables.experienceId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["experiences"] });
     },
   });
 }
@@ -159,14 +154,14 @@ export function useIncrementPlayerCount() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (experienceId: string) => {
-      if (!actor) throw new Error('Actor not available');
+    mutationFn: async (_experienceId: string) => {
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('incrementPlayerCount not yet implemented in backend');
+      throw new Error("incrementPlayerCount not yet implemented in backend");
     },
     onSuccess: (_, experienceId) => {
-      queryClient.invalidateQueries({ queryKey: ['experience', experienceId] });
-      queryClient.invalidateQueries({ queryKey: ['experiences'] });
+      queryClient.invalidateQueries({ queryKey: ["experience", experienceId] });
+      queryClient.invalidateQueries({ queryKey: ["experiences"] });
     },
   });
 }
@@ -176,7 +171,7 @@ export function useGetFriendsList() {
   const { actor, isFetching } = useActor();
 
   return useQuery<Principal[]>({
-    queryKey: ['friends'],
+    queryKey: ["friends"],
     queryFn: async () => {
       if (!actor) return [];
       // TODO: Backend method not yet implemented
@@ -190,7 +185,7 @@ export function useGetPendingFriendRequests() {
   const { actor, isFetching } = useActor();
 
   return useQuery<Principal[]>({
-    queryKey: ['friendRequests', 'pending'],
+    queryKey: ["friendRequests", "pending"],
     queryFn: async () => {
       if (!actor) return [];
       // TODO: Backend method not yet implemented
@@ -205,13 +200,13 @@ export function useSendFriendRequest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (target: Principal) => {
-      if (!actor) throw new Error('Actor not available');
+    mutationFn: async (_target: Principal) => {
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('sendFriendRequest not yet implemented in backend');
+      throw new Error("sendFriendRequest not yet implemented in backend");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
     },
   });
 }
@@ -221,14 +216,17 @@ export function useRespondToFriendRequest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { from: Principal; action: 'accept' | 'decline' }) => {
-      if (!actor) throw new Error('Actor not available');
+    mutationFn: async (_data: {
+      from: Principal;
+      action: "accept" | "decline";
+    }) => {
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('respondToFriendRequest not yet implemented in backend');
+      throw new Error("respondToFriendRequest not yet implemented in backend");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
     },
   });
 }
@@ -238,13 +236,13 @@ export function useUnfriend() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (target: Principal) => {
-      if (!actor) throw new Error('Actor not available');
+    mutationFn: async (_target: Principal) => {
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('unfriend not yet implemented in backend');
+      throw new Error("unfriend not yet implemented in backend");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
     },
   });
 }
@@ -268,7 +266,7 @@ export function useGetMessages(receiver: Principal | null) {
   const { actor, isFetching } = useActor();
 
   return useQuery<Message[]>({
-    queryKey: ['messages', receiver?.toString()],
+    queryKey: ["messages", receiver?.toString()],
     queryFn: async () => {
       if (!actor || !receiver) return [];
       // TODO: Backend method not yet implemented
@@ -283,13 +281,15 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: MessageInput) => {
-      if (!actor) throw new Error('Actor not available');
+    mutationFn: async (_input: MessageInput) => {
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('sendMessage not yet implemented in backend');
+      throw new Error("sendMessage not yet implemented in backend");
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['messages', variables.receiver.toString()] });
+      queryClient.invalidateQueries({
+        queryKey: ["messages", variables.receiver.toString()],
+      });
     },
   });
 }

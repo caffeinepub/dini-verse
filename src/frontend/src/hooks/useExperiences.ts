@@ -1,14 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { Experience } from '../backend';
-import { ExternalBlob, Category } from '../backend';
-import type { Principal } from '@icp-sdk/core/principal';
+import type { Principal } from "@icp-sdk/core/principal";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Experience } from "../backend";
+import type { Category, ExternalBlob } from "../backend";
+import { useActor } from "./useActor";
 
 export function useGetAllExperiences() {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<Experience[]>({
-    queryKey: ['experiences'],
+    queryKey: ["experiences"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllExperiences();
@@ -21,7 +21,7 @@ export function useSearchExperiences(searchTerm: string) {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<Experience[]>({
-    queryKey: ['experiences', 'search', searchTerm],
+    queryKey: ["experiences", "search", searchTerm],
     queryFn: async () => {
       if (!actor) return [];
       return actor.searchExperiences(searchTerm);
@@ -34,12 +34,12 @@ export function useGetExperience(id: string) {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<Experience | null>({
-    queryKey: ['experience', id],
+    queryKey: ["experience", id],
     queryFn: async () => {
       if (!actor) return null;
       // Backend doesn't have getExperience method yet, so find by ID from all experiences
       const experiences = await actor.getAllExperiences();
-      return experiences.find(exp => exp.id === id) || null;
+      return experiences.find((exp) => exp.id === id) || null;
     },
     enabled: !!actor && !actorFetching && !!id,
   });
@@ -49,7 +49,7 @@ export function useGetExperiencesByAuthor(author: Principal | undefined) {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<Experience[]>({
-    queryKey: ['experiences', 'author', author?.toString()],
+    queryKey: ["experiences", "author", author?.toString()],
     queryFn: async () => {
       if (!actor || !author) return [];
       return actor.getExperiencesByAuthor(author);
@@ -62,7 +62,7 @@ export function useGetExperiencesByCategory(category: Category) {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<Experience[]>({
-    queryKey: ['experiences', 'category', category],
+    queryKey: ["experiences", "category", category],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getExperiencesByCategory(category);
@@ -75,7 +75,7 @@ export function useGetTrendingExperiences(category: Category) {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<Experience[]>({
-    queryKey: ['experiences', 'trending', category],
+    queryKey: ["experiences", "trending", category],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getTrendingExperiences(category);
@@ -89,25 +89,19 @@ export function useCreateExperience() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      title,
-      description,
-      thumbnail,
-      category,
-      gameplayControls,
-    }: {
+    mutationFn: async (_data: {
       title: string;
       description: string;
       thumbnail: ExternalBlob | null;
       category: Category;
       gameplayControls: string;
     }) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('createExperience not yet implemented in backend');
+      throw new Error("createExperience not yet implemented in backend");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['experiences'] });
+      queryClient.invalidateQueries({ queryKey: ["experiences"] });
     },
   });
 }
@@ -117,20 +111,19 @@ export function useRateExperience() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      experienceId,
-      isThumbsUp,
-    }: {
+    mutationFn: async (_data: {
       experienceId: string;
       isThumbsUp: boolean;
     }) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('rateExperience not yet implemented in backend');
+      throw new Error("rateExperience not yet implemented in backend");
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['experience', variables.experienceId] });
-      queryClient.invalidateQueries({ queryKey: ['experiences'] });
+      queryClient.invalidateQueries({
+        queryKey: ["experience", variables.experienceId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["experiences"] });
     },
   });
 }
@@ -140,14 +133,14 @@ export function useIncrementPlayerCount() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (experienceId: string) => {
-      if (!actor) throw new Error('Actor not available');
+    mutationFn: async (_experienceId: string) => {
+      if (!actor) throw new Error("Actor not available");
       // TODO: Backend method not yet implemented
-      throw new Error('incrementPlayerCount not yet implemented in backend');
+      throw new Error("incrementPlayerCount not yet implemented in backend");
     },
     onSuccess: (_, experienceId) => {
-      queryClient.invalidateQueries({ queryKey: ['experience', experienceId] });
-      queryClient.invalidateQueries({ queryKey: ['experiences'] });
+      queryClient.invalidateQueries({ queryKey: ["experience", experienceId] });
+      queryClient.invalidateQueries({ queryKey: ["experiences"] });
     },
   });
 }

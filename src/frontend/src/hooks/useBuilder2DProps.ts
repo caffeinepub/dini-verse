@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { BuilderElement } from './useBuilder2D';
+import { useCallback, useEffect, useState } from "react";
+import type { BuilderElement } from "./useBuilder2D";
 
 export interface SavedProp {
   id: string;
@@ -8,7 +8,7 @@ export interface SavedProp {
   createdAt: number;
 }
 
-const STORAGE_KEY = 'diniverse-builder-props';
+const STORAGE_KEY = "diniverse-builder-props";
 
 export function useBuilder2DProps() {
   const [props, setProps] = useState<SavedProp[]>([]);
@@ -19,7 +19,7 @@ export function useBuilder2DProps() {
       try {
         setProps(JSON.parse(stored));
       } catch (e) {
-        console.error('Failed to load props:', e);
+        console.error("Failed to load props:", e);
       }
     }
   }, []);
@@ -29,39 +29,48 @@ export function useBuilder2DProps() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newProps));
   }, []);
 
-  const saveProp = useCallback((name: string, elements: BuilderElement[]) => {
-    const newProp: SavedProp = {
-      id: `prop-${Date.now()}`,
-      name,
-      elements: JSON.parse(JSON.stringify(elements)),
-      createdAt: Date.now(),
-    };
-    saveProps([...props, newProp]);
-    return newProp;
-  }, [props, saveProps]);
+  const saveProp = useCallback(
+    (name: string, elements: BuilderElement[]) => {
+      const newProp: SavedProp = {
+        id: `prop-${Date.now()}`,
+        name,
+        elements: JSON.parse(JSON.stringify(elements)),
+        createdAt: Date.now(),
+      };
+      saveProps([...props, newProp]);
+      return newProp;
+    },
+    [props, saveProps],
+  );
 
-  const deleteProp = useCallback((id: string) => {
-    saveProps(props.filter((p) => p.id !== id));
-  }, [props, saveProps]);
+  const deleteProp = useCallback(
+    (id: string) => {
+      saveProps(props.filter((p) => p.id !== id));
+    },
+    [props, saveProps],
+  );
 
   const exportProp = useCallback((prop: SavedProp): string => {
     return JSON.stringify(prop, null, 2);
   }, []);
 
-  const importProp = useCallback((jsonString: string): SavedProp | null => {
-    try {
-      const prop = JSON.parse(jsonString) as SavedProp;
-      if (!prop.id || !prop.name || !Array.isArray(prop.elements)) {
-        throw new Error('Invalid prop format');
+  const importProp = useCallback(
+    (jsonString: string): SavedProp | null => {
+      try {
+        const prop = JSON.parse(jsonString) as SavedProp;
+        if (!prop.id || !prop.name || !Array.isArray(prop.elements)) {
+          throw new Error("Invalid prop format");
+        }
+        const imported = { ...prop, id: `prop-${Date.now()}` };
+        saveProps([...props, imported]);
+        return imported;
+      } catch (e) {
+        console.error("Failed to import prop:", e);
+        return null;
       }
-      const imported = { ...prop, id: `prop-${Date.now()}` };
-      saveProps([...props, imported]);
-      return imported;
-    } catch (e) {
-      console.error('Failed to import prop:', e);
-      return null;
-    }
-  }, [props, saveProps]);
+    },
+    [props, saveProps],
+  );
 
   return {
     props,

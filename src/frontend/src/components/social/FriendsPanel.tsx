@@ -1,68 +1,86 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, UserPlus, Check, X, UserMinus } from 'lucide-react';
-import { useSearchUsers } from '../../hooks/useUserDiscovery';
-import { useSendFriendRequest, useGetFriendsList, useGetPendingFriendRequests, useRespondToFriendRequest, useUnfriend } from '../../hooks/useSocialFriends';
-import { useGetUserProfile } from '../../hooks/useUserProfile';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
-import { toast } from 'sonner';
-import type { Principal } from '@icp-sdk/core/principal';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { Principal } from "@icp-sdk/core/principal";
+import { Check, Search, UserMinus, UserPlus, X } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  useGetFriendsList,
+  useGetPendingFriendRequests,
+  useRespondToFriendRequest,
+  useSendFriendRequest,
+  useUnfriend,
+} from "../../hooks/useSocialFriends";
+import { useSearchUsers } from "../../hooks/useUserDiscovery";
+import { useGetUserProfile } from "../../hooks/useUserProfile";
 
 export default function FriendsPanel() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const { identity } = useInternetIdentity();
-  const { data: searchResults, isLoading: searchLoading } = useSearchUsers(searchTerm);
+  const [searchTerm, setSearchTerm] = useState("");
+  const { data: searchResults, isLoading: searchLoading } =
+    useSearchUsers(searchTerm);
   const { data: friends, isLoading: friendsLoading } = useGetFriendsList();
-  const { data: pendingRequests, isLoading: requestsLoading } = useGetPendingFriendRequests();
+  const { data: pendingRequests, isLoading: requestsLoading } =
+    useGetPendingFriendRequests();
   const sendRequestMutation = useSendFriendRequest();
   const respondMutation = useRespondToFriendRequest();
   const unfriendMutation = useUnfriend();
 
-  const currentPrincipal = identity?.getPrincipal().toString();
+  const currentPrincipal: string | undefined = undefined;
 
   const handleSendRequest = async (targetPrincipal: Principal) => {
     try {
       await sendRequestMutation.mutateAsync(targetPrincipal);
-      toast.success('Friend request sent');
-      setSearchTerm('');
+      toast.success("Friend request sent");
+      setSearchTerm("");
     } catch (error: any) {
-      toast.error(error.message || 'Failed to send friend request');
+      toast.error(error.message || "Failed to send friend request");
     }
   };
 
   const handleAccept = async (fromPrincipal: Principal) => {
     try {
-      await respondMutation.mutateAsync({ from: fromPrincipal, action: 'accept' });
-      toast.success('Friend request accepted');
+      await respondMutation.mutateAsync({
+        from: fromPrincipal,
+        action: "accept",
+      });
+      toast.success("Friend request accepted");
     } catch (error: any) {
-      toast.error(error.message || 'Failed to accept request');
+      toast.error(error.message || "Failed to accept request");
     }
   };
 
   const handleDecline = async (fromPrincipal: Principal) => {
     try {
-      await respondMutation.mutateAsync({ from: fromPrincipal, action: 'decline' });
-      toast.success('Friend request declined');
+      await respondMutation.mutateAsync({
+        from: fromPrincipal,
+        action: "decline",
+      });
+      toast.success("Friend request declined");
     } catch (error: any) {
-      toast.error(error.message || 'Failed to decline request');
+      toast.error(error.message || "Failed to decline request");
     }
   };
 
   const handleUnfriend = async (targetPrincipal: Principal) => {
     try {
       await unfriendMutation.mutateAsync(targetPrincipal);
-      toast.success('Friend removed');
+      toast.success("Friend removed");
     } catch (error: any) {
-      toast.error(error.message || 'Failed to remove friend');
+      toast.error(error.message || "Failed to remove friend");
     }
   };
 
   const filteredSearchResults = searchResults?.filter(
-    ([principal]) => principal.toString() !== currentPrincipal
+    ([principal]) => principal.toString() !== currentPrincipal,
   );
 
   return (
@@ -90,7 +108,10 @@ export default function FriendsPanel() {
               {searchLoading ? (
                 <div className="space-y-2">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 p-3 rounded-lg border"
+                    >
                       <Skeleton className="h-10 w-10 rounded-full" />
                       <Skeleton className="h-4 w-32" />
                     </div>
@@ -120,7 +141,9 @@ export default function FriendsPanel() {
         <Card>
           <CardHeader>
             <CardTitle>Pending Requests</CardTitle>
-            <CardDescription>Friend requests waiting for your response</CardDescription>
+            <CardDescription>
+              Friend requests waiting for your response
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {requestsLoading ? (
@@ -195,10 +218,12 @@ function UserSearchResult({
     <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors">
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
-          {user.avatar && (
-            <AvatarImage src={user.avatar.getDirectURL()} alt={user.displayName} />
+          {user.avatarDataUrl && (
+            <AvatarImage src={user.avatarDataUrl} alt={user.displayName} />
           )}
-          <AvatarFallback>{user.displayName.charAt(0).toUpperCase()}</AvatarFallback>
+          <AvatarFallback>
+            {user.displayName.charAt(0).toUpperCase()}
+          </AvatarFallback>
         </Avatar>
         <div>
           <div className="font-medium">{user.displayName}</div>
@@ -234,14 +259,20 @@ function PendingRequestItem({
     <div className="flex items-center justify-between p-3 rounded-lg border">
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
-          {user?.avatar && (
-            <AvatarImage src={user.avatar.getDirectURL()} alt={user.displayName} />
+          {user?.avatarDataUrl && (
+            <AvatarImage src={user.avatarDataUrl} alt={user.displayName} />
           )}
-          <AvatarFallback>{user?.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+          <AvatarFallback>
+            {user?.displayName?.charAt(0).toUpperCase() || "U"}
+          </AvatarFallback>
         </Avatar>
         <div>
-          <div className="font-medium">{user?.displayName || 'Unknown User'}</div>
-          <div className="text-xs text-muted-foreground">Sent you a friend request</div>
+          <div className="font-medium">
+            {user?.displayName || "Unknown User"}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Sent you a friend request
+          </div>
         </div>
       </div>
       <div className="flex gap-2">
@@ -284,13 +315,17 @@ function FriendItem({
     <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors">
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
-          {user?.avatar && (
-            <AvatarImage src={user.avatar.getDirectURL()} alt={user.displayName} />
+          {user?.avatarDataUrl && (
+            <AvatarImage src={user.avatarDataUrl} alt={user.displayName} />
           )}
-          <AvatarFallback>{user?.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+          <AvatarFallback>
+            {user?.displayName?.charAt(0).toUpperCase() || "U"}
+          </AvatarFallback>
         </Avatar>
         <div>
-          <div className="font-medium">{user?.displayName || 'Unknown User'}</div>
+          <div className="font-medium">
+            {user?.displayName || "Unknown User"}
+          </div>
         </div>
       </div>
       <Button

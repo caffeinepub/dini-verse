@@ -1,8 +1,10 @@
-import { Button } from '@/components/ui/button';
-import { ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 
 interface LayerControlsProps {
-  builder: ReturnType<typeof import('../../../hooks/useBuilder2D').useBuilder2D>;
+  builder: ReturnType<
+    typeof import("../../../hooks/useBuilder2D").useBuilder2D
+  >;
 }
 
 export default function LayerControls({ builder }: LayerControlsProps) {
@@ -19,7 +21,8 @@ export default function LayerControls({ builder }: LayerControlsProps) {
   return (
     <div className="space-y-2">
       <div className="text-xs text-muted-foreground mb-2">
-        Selected: {selectedElement.type === 'shape' ? selectedElement.shapeType : 'decal'}
+        Selected:{" "}
+        {selectedElement.type === "shape" ? selectedElement.shapeType : "decal"}
       </div>
       <Button
         variant="outline"

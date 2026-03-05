@@ -1,29 +1,37 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Search } from 'lucide-react';
-import { useSearchUsers } from '../../hooks/useUserDiscovery';
-import { useSendMessage, useGetMessages } from '../../hooks/useSocialMessages';
-import { useGetUserProfile } from '../../hooks/useUserProfile';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
-import { toast } from 'sonner';
-import type { Principal } from '@icp-sdk/core/principal';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import type { Principal } from "@icp-sdk/core/principal";
+import { Search, Send } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useGetMessages, useSendMessage } from "../../hooks/useSocialMessages";
+import { useSearchUsers } from "../../hooks/useUserDiscovery";
+import { useGetUserProfile } from "../../hooks/useUserProfile";
 
 export default function MessagesPanel() {
-  const [selectedRecipient, setSelectedRecipient] = useState<Principal | null>(null);
-  const [messageContent, setMessageContent] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const { identity } = useInternetIdentity();
-  const { data: searchResults, isLoading: searchLoading } = useSearchUsers(searchTerm);
-  const { data: messages, isLoading: messagesLoading } = useGetMessages(selectedRecipient);
+  const [selectedRecipient, setSelectedRecipient] = useState<Principal | null>(
+    null,
+  );
+  const [messageContent, setMessageContent] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const { data: searchResults, isLoading: searchLoading } =
+    useSearchUsers(searchTerm);
+  const { data: messages, isLoading: messagesLoading } =
+    useGetMessages(selectedRecipient);
   const sendMessageMutation = useSendMessage();
 
-  const currentPrincipal = identity?.getPrincipal().toString();
+  const currentPrincipal: string | undefined = undefined;
 
   const handleSendMessage = async () => {
     if (!selectedRecipient || !messageContent.trim()) return;
@@ -33,15 +41,15 @@ export default function MessagesPanel() {
         receiver: selectedRecipient,
         content: messageContent.trim(),
       });
-      setMessageContent('');
-      toast.success('Message sent');
+      setMessageContent("");
+      toast.success("Message sent");
     } catch (error: any) {
-      toast.error(error.message || 'Failed to send message');
+      toast.error(error.message || "Failed to send message");
     }
   };
 
   const filteredSearchResults = searchResults?.filter(
-    ([principal]) => principal.toString() !== currentPrincipal
+    ([principal]) => principal.toString() !== currentPrincipal,
   );
 
   return (
@@ -73,18 +81,24 @@ export default function MessagesPanel() {
               ) : filteredSearchResults && filteredSearchResults.length > 0 ? (
                 filteredSearchResults.map(([principal, user]) => (
                   <button
+                    type="button"
                     key={principal.toString()}
                     onClick={() => {
                       setSelectedRecipient(principal);
-                      setSearchTerm('');
+                      setSearchTerm("");
                     }}
                     className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-accent transition-colors text-left"
                   >
                     <Avatar className="h-10 w-10">
-                      {user.avatar && (
-                        <AvatarImage src={user.avatar.getDirectURL()} alt={user.displayName} />
+                      {(user as any).avatarDataUrl && (
+                        <AvatarImage
+                          src={(user as any).avatarDataUrl}
+                          alt={user.displayName}
+                        />
                       )}
-                      <AvatarFallback>{user.displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback>
+                        {user.displayName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="font-medium">{user.displayName}</div>
                   </button>
@@ -108,7 +122,11 @@ export default function MessagesPanel() {
       <Card className="md:col-span-2">
         <CardHeader>
           <CardTitle>
-            {selectedRecipient ? <RecipientHeader principal={selectedRecipient} /> : 'Messages'}
+            {selectedRecipient ? (
+              <RecipientHeader principal={selectedRecipient} />
+            ) : (
+              "Messages"
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -148,7 +166,7 @@ export default function MessagesPanel() {
                   value={messageContent}
                   onChange={(e) => setMessageContent(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
+                    if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       handleSendMessage();
                     }
@@ -157,7 +175,9 @@ export default function MessagesPanel() {
                 />
                 <Button
                   onClick={handleSendMessage}
-                  disabled={!messageContent.trim() || sendMessageMutation.isPending}
+                  disabled={
+                    !messageContent.trim() || sendMessageMutation.isPending
+                  }
                   className="gap-2"
                 >
                   <Send className="h-4 w-4" />
@@ -177,12 +197,14 @@ function RecipientHeader({ principal }: { principal: Principal }) {
   return (
     <div className="flex items-center gap-3">
       <Avatar className="h-8 w-8">
-        {user?.avatar && (
-          <AvatarImage src={user.avatar.getDirectURL()} alt={user.displayName} />
+        {user?.avatarDataUrl && (
+          <AvatarImage src={user.avatarDataUrl} alt={user.displayName} />
         )}
-        <AvatarFallback>{user?.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+        <AvatarFallback>
+          {user?.displayName?.charAt(0).toUpperCase() || "U"}
+        </AvatarFallback>
       </Avatar>
-      <span>{user?.displayName || 'Unknown User'}</span>
+      <span>{user?.displayName || "Unknown User"}</span>
     </div>
   );
 }
@@ -191,20 +213,22 @@ function MessageItem({ message, isOwn }: { message: any; isOwn: boolean }) {
   const { data: sender } = useGetUserProfile(message.sender);
 
   return (
-    <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
+    <div className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""}`}>
       <Avatar className="h-8 w-8">
-        {sender?.avatar && (
-          <AvatarImage src={sender.avatar.getDirectURL()} alt={sender.displayName} />
+        {sender?.avatarDataUrl && (
+          <AvatarImage src={sender.avatarDataUrl} alt={sender.displayName} />
         )}
-        <AvatarFallback>{sender?.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+        <AvatarFallback>
+          {sender?.displayName?.charAt(0).toUpperCase() || "U"}
+        </AvatarFallback>
       </Avatar>
-      <div className={`flex-1 ${isOwn ? 'text-right' : ''}`}>
+      <div className={`flex-1 ${isOwn ? "text-right" : ""}`}>
         <div className="text-xs text-muted-foreground mb-1">
-          {sender?.displayName || 'Unknown User'}
+          {sender?.displayName || "Unknown User"}
         </div>
         <div
           className={`inline-block p-3 rounded-lg ${
-            isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'
+            isOwn ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
           <p className="text-sm whitespace-pre-wrap">{message.content}</p>

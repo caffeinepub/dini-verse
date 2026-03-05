@@ -1,12 +1,3 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,16 +7,28 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Menu, LogOut, RotateCcw, Settings } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { LogOut, Menu, RotateCcw, Settings } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface InGameMenuProps {
   onLeave: () => void;
   onResetCharacter: () => void;
 }
 
-export default function InGameMenu({ onLeave, onResetCharacter }: InGameMenuProps) {
+export default function InGameMenu({
+  onLeave,
+  onResetCharacter,
+}: InGameMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
@@ -39,7 +42,7 @@ export default function InGameMenu({ onLeave, onResetCharacter }: InGameMenuProp
     setResetDialogOpen(false);
     setMenuOpen(false);
     onResetCharacter();
-    toast.success('Character reset successfully');
+    toast.success("Character reset successfully");
   };
 
   return (
@@ -101,12 +104,15 @@ export default function InGameMenu({ onLeave, onResetCharacter }: InGameMenuProp
           <AlertDialogHeader>
             <AlertDialogTitle>Reset Character?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will reset your character to the starting position. This action cannot be undone.
+              This will reset your character to the starting position. This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleResetCharacter}>Reset</AlertDialogAction>
+            <AlertDialogAction onClick={handleResetCharacter}>
+              Reset
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

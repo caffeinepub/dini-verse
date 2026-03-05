@@ -1,5 +1,11 @@
-import { Package } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Package } from "lucide-react";
 
 export default function Inventory() {
   return (
@@ -18,15 +24,14 @@ export default function Inventory() {
               <Package className="h-5 w-5" />
               Your Items
             </CardTitle>
-            <CardDescription>
-              Your inventory is currently empty
-            </CardDescription>
+            <CardDescription>Your inventory is currently empty</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Package className="h-16 w-16 text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
-                You don't have any items yet. Visit the Avatar Shop to get started!
+                You don't have any items yet. Visit the Avatar Shop to get
+                started!
               </p>
             </div>
           </CardContent>

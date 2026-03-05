@@ -1,9 +1,15 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from '@tanstack/react-router';
-import { Play, User } from 'lucide-react';
-import type { Experience } from '../../backend';
-import { useGetUserProfile } from '../../hooks/useUserProfile';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { Play, User } from "lucide-react";
+import type { Experience } from "../../backend";
+import { useGetUserProfile } from "../../hooks/useUserProfile";
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -17,9 +23,16 @@ export default function ExperienceCard({ experience }: ExperienceCardProps) {
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
-      <div
-        onClick={() => navigate({ to: '/experience/$experienceId', params: { experienceId: experience.id } })}
-        className="relative aspect-video bg-muted overflow-hidden"
+      <button
+        type="button"
+        onClick={() =>
+          navigate({ to: "/experience/$id", params: { id: experience.id } })
+        }
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ")
+            navigate({ to: "/experience/$id", params: { id: experience.id } });
+        }}
+        className="relative aspect-video bg-muted overflow-hidden w-full text-left"
       >
         {thumbnailUrl ? (
           <img
@@ -38,22 +51,29 @@ export default function ExperienceCard({ experience }: ExperienceCardProps) {
             className="opacity-0 group-hover:opacity-100 transition-opacity gap-2"
             onClick={(e) => {
               e.stopPropagation();
-              navigate({ to: '/experience/$experienceId', params: { experienceId: experience.id } });
+              navigate({
+                to: "/experience/$id",
+                params: { id: experience.id },
+              });
             }}
           >
             <Play className="h-5 w-5" />
             Play
           </Button>
         </div>
-      </div>
+      </button>
       <CardHeader>
         <CardTitle className="line-clamp-1">{experience.title}</CardTitle>
-        <CardDescription className="line-clamp-2">{experience.description}</CardDescription>
+        <CardDescription className="line-clamp-2">
+          {experience.description}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <User className="h-4 w-4" />
-          <span className="line-clamp-1">{creator?.displayName || 'Unknown Creator'}</span>
+          <span className="line-clamp-1">
+            {creator?.displayName || "Unknown Creator"}
+          </span>
         </div>
       </CardContent>
     </Card>

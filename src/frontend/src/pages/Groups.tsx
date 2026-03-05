@@ -1,5 +1,11 @@
-import { Users } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Users } from "lucide-react";
 
 export default function Groups() {
   return (
@@ -18,15 +24,14 @@ export default function Groups() {
               <Users className="h-5 w-5" />
               Your Groups
             </CardTitle>
-            <CardDescription>
-              You haven't joined any groups yet
-            </CardDescription>
+            <CardDescription>You haven't joined any groups yet</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Users className="h-16 w-16 text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
-                Join groups to connect with other players and discover new experiences together!
+                Join groups to connect with other players and discover new
+                experiences together!
               </p>
             </div>
           </CardContent>

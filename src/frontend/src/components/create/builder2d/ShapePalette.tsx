@@ -1,8 +1,10 @@
-import { Button } from '@/components/ui/button';
-import { Square, Circle, Triangle } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Circle, Square, Triangle } from "lucide-react";
 
 interface ShapePaletteProps {
-  builder: ReturnType<typeof import('../../../hooks/useBuilder2D').useBuilder2D>;
+  builder: ReturnType<
+    typeof import("../../../hooks/useBuilder2D").useBuilder2D
+  >;
 }
 
 export default function ShapePalette({ builder }: ShapePaletteProps) {
@@ -11,7 +13,7 @@ export default function ShapePalette({ builder }: ShapePaletteProps) {
       <Button
         variant="outline"
         className="w-full justify-start gap-2"
-        onClick={() => builder.addShape('rectangle')}
+        onClick={() => builder.addShape("rectangle")}
       >
         <Square className="h-4 w-4" />
         Rectangle
@@ -19,7 +21,7 @@ export default function ShapePalette({ builder }: ShapePaletteProps) {
       <Button
         variant="outline"
         className="w-full justify-start gap-2"
-        onClick={() => builder.addShape('circle')}
+        onClick={() => builder.addShape("circle")}
       >
         <Circle className="h-4 w-4" />
         Circle
@@ -27,7 +29,7 @@ export default function ShapePalette({ builder }: ShapePaletteProps) {
       <Button
         variant="outline"
         className="w-full justify-start gap-2"
-        onClick={() => builder.addShape('triangle')}
+        onClick={() => builder.addShape("triangle")}
       >
         <Triangle className="h-4 w-4" />
         Triangle

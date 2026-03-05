@@ -42,23 +42,57 @@ export const Experience = IDL.Record({
   'category' : Category,
   'gameplayControls' : IDL.Text,
 });
-export const PublicUserProfile = IDL.Record({
-  'displayName' : IDL.Text,
-  'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
-  'avatar' : IDL.Opt(ExternalBlob),
-});
 export const Time = IDL.Int;
+export const Language = IDL.Variant({
+  'de' : IDL.Null,
+  'en' : IDL.Null,
+  'es' : IDL.Null,
+  'fr' : IDL.Null,
+  'ko' : IDL.Null,
+  'nl' : IDL.Null,
+  'pt' : IDL.Null,
+  'ru' : IDL.Null,
+  'tr' : IDL.Null,
+  'vi' : IDL.Null,
+});
+export const Gender = IDL.Variant({
+  'other' : IDL.Null,
+  'female' : IDL.Null,
+  'male' : IDL.Null,
+});
+export const TextDirection = IDL.Variant({
+  'leftToRight' : IDL.Null,
+  'rightToLeft' : IDL.Null,
+});
 export const UserSettings = IDL.Record({
   'username' : IDL.Text,
   'displayName' : IDL.Text,
   'createdAt' : Time,
   'lastDisplayNameChange' : Time,
+  'languageCode' : IDL.Text,
+  'language' : Language,
   'passwordResetAttempts' : IDL.Nat,
   'updatedAt' : Time,
   'lastPasswordChange' : Time,
+  'gender' : Gender,
+  'pronunciationLanguage' : Language,
+  'languagePrefix' : IDL.Text,
+  'textDirection' : TextDirection,
   'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
   'lastUsernameChange' : Time,
+  'nativeLanguage' : Language,
   'lastPasswordResetAttempt' : Time,
+  'avatar' : IDL.Opt(ExternalBlob),
+});
+export const UserProfile = IDL.Record({
+  'displayName' : IDL.Text,
+  'languageCode' : IDL.Text,
+  'language' : Language,
+  'gender' : Gender,
+  'languagePrefix' : IDL.Text,
+  'textDirection' : TextDirection,
+  'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
+  'nativeLanguage' : Language,
   'avatar' : IDL.Opt(ExternalBlob),
 });
 export const Visibility = IDL.Variant({
@@ -95,13 +129,15 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'deleteAccount' : IDL.Func([], [], []),
   'deleteAvatar' : IDL.Func([], [], []),
   'getAllExperiences' : IDL.Func([], [IDL.Vec(Experience)], ['query']),
-  'getCallerUserProfile' : IDL.Func(
+  'getAllLanguageSettings' : IDL.Func(
       [],
-      [IDL.Opt(PublicUserProfile)],
+      [IDL.Vec(IDL.Tuple(IDL.Principal, UserSettings))],
       ['query'],
     ),
+  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getExperiencesByAuthor' : IDL.Func(
       [IDL.Principal],
@@ -113,6 +149,12 @@ export const idlService = IDL.Service({
       [IDL.Vec(Experience)],
       ['query'],
     ),
+  'getGender' : IDL.Func([], [Gender], ['query']),
+  'getLanguageSettings' : IDL.Func(
+      [],
+      [Language, IDL.Text, IDL.Text, TextDirection, Language],
+      ['query'],
+    ),
   'getSettings' : IDL.Func([], [UserSettings], ['query']),
   'getTrendingExperiences' : IDL.Func(
       [Category],
@@ -121,12 +163,32 @@ export const idlService = IDL.Service({
     ),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
-      [IDL.Opt(PublicUserProfile)],
+      [IDL.Opt(UserProfile)],
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'saveCallerUserProfile' : IDL.Func([PublicUserProfile], [], []),
+  'saveCallerUserProfile' : IDL.Func(
+      [
+        IDL.Text,
+        IDL.Opt(ExternalBlob),
+        IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
+        Gender,
+        Language,
+        IDL.Text,
+        IDL.Text,
+        TextDirection,
+        Language,
+      ],
+      [],
+      [],
+    ),
   'searchExperiences' : IDL.Func([IDL.Text], [IDL.Vec(Experience)], ['query']),
+  'setGender' : IDL.Func([Gender], [], []),
+  'setLanguage' : IDL.Func(
+      [Language, IDL.Text, IDL.Text, TextDirection, Language],
+      [],
+      [],
+    ),
   'updateDisplayName' : IDL.Func([IDL.Text], [], []),
   'updateDisplayNameAndAvatar' : IDL.Func(
       [IDL.Text, IDL.Opt(ExternalBlob)],
@@ -173,23 +235,57 @@ export const idlFactory = ({ IDL }) => {
     'category' : Category,
     'gameplayControls' : IDL.Text,
   });
-  const PublicUserProfile = IDL.Record({
-    'displayName' : IDL.Text,
-    'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
-    'avatar' : IDL.Opt(ExternalBlob),
-  });
   const Time = IDL.Int;
+  const Language = IDL.Variant({
+    'de' : IDL.Null,
+    'en' : IDL.Null,
+    'es' : IDL.Null,
+    'fr' : IDL.Null,
+    'ko' : IDL.Null,
+    'nl' : IDL.Null,
+    'pt' : IDL.Null,
+    'ru' : IDL.Null,
+    'tr' : IDL.Null,
+    'vi' : IDL.Null,
+  });
+  const Gender = IDL.Variant({
+    'other' : IDL.Null,
+    'female' : IDL.Null,
+    'male' : IDL.Null,
+  });
+  const TextDirection = IDL.Variant({
+    'leftToRight' : IDL.Null,
+    'rightToLeft' : IDL.Null,
+  });
   const UserSettings = IDL.Record({
     'username' : IDL.Text,
     'displayName' : IDL.Text,
     'createdAt' : Time,
     'lastDisplayNameChange' : Time,
+    'languageCode' : IDL.Text,
+    'language' : Language,
     'passwordResetAttempts' : IDL.Nat,
     'updatedAt' : Time,
     'lastPasswordChange' : Time,
+    'gender' : Gender,
+    'pronunciationLanguage' : Language,
+    'languagePrefix' : IDL.Text,
+    'textDirection' : TextDirection,
     'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
     'lastUsernameChange' : Time,
+    'nativeLanguage' : Language,
     'lastPasswordResetAttempt' : Time,
+    'avatar' : IDL.Opt(ExternalBlob),
+  });
+  const UserProfile = IDL.Record({
+    'displayName' : IDL.Text,
+    'languageCode' : IDL.Text,
+    'language' : Language,
+    'gender' : Gender,
+    'languagePrefix' : IDL.Text,
+    'textDirection' : TextDirection,
+    'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
+    'nativeLanguage' : Language,
     'avatar' : IDL.Opt(ExternalBlob),
   });
   const Visibility = IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null });
@@ -223,13 +319,15 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'deleteAccount' : IDL.Func([], [], []),
     'deleteAvatar' : IDL.Func([], [], []),
     'getAllExperiences' : IDL.Func([], [IDL.Vec(Experience)], ['query']),
-    'getCallerUserProfile' : IDL.Func(
+    'getAllLanguageSettings' : IDL.Func(
         [],
-        [IDL.Opt(PublicUserProfile)],
+        [IDL.Vec(IDL.Tuple(IDL.Principal, UserSettings))],
         ['query'],
       ),
+    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getExperiencesByAuthor' : IDL.Func(
         [IDL.Principal],
@@ -241,6 +339,12 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(Experience)],
         ['query'],
       ),
+    'getGender' : IDL.Func([], [Gender], ['query']),
+    'getLanguageSettings' : IDL.Func(
+        [],
+        [Language, IDL.Text, IDL.Text, TextDirection, Language],
+        ['query'],
+      ),
     'getSettings' : IDL.Func([], [UserSettings], ['query']),
     'getTrendingExperiences' : IDL.Func(
         [Category],
@@ -249,15 +353,35 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
-        [IDL.Opt(PublicUserProfile)],
+        [IDL.Opt(UserProfile)],
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'saveCallerUserProfile' : IDL.Func([PublicUserProfile], [], []),
+    'saveCallerUserProfile' : IDL.Func(
+        [
+          IDL.Text,
+          IDL.Opt(ExternalBlob),
+          IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
+          Gender,
+          Language,
+          IDL.Text,
+          IDL.Text,
+          TextDirection,
+          Language,
+        ],
+        [],
+        [],
+      ),
     'searchExperiences' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(Experience)],
         ['query'],
+      ),
+    'setGender' : IDL.Func([Gender], [], []),
+    'setLanguage' : IDL.Func(
+        [Language, IDL.Text, IDL.Text, TextDirection, Language],
+        [],
+        [],
       ),
     'updateDisplayName' : IDL.Func([IDL.Text], [], []),
     'updateDisplayNameAndAvatar' : IDL.Func(

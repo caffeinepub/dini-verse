@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from "react";
 
-export type ShapeType = 'rectangle' | 'circle' | 'triangle';
+export type ShapeType = "rectangle" | "circle" | "triangle";
 
 export interface BuilderElement {
   id: string;
-  type: 'shape' | 'decal';
+  type: "shape" | "decal";
   shapeType?: ShapeType;
   x: number;
   y: number;
@@ -34,7 +34,7 @@ export function useBuilder2D() {
     setState((prev) => {
       const newElement: BuilderElement = {
         id: `element-${prev.nextId}`,
-        type: 'shape',
+        type: "shape",
         shapeType,
         x: 100,
         y: 100,
@@ -42,7 +42,7 @@ export function useBuilder2D() {
         height: 100,
         rotation: 0,
         opacity: 1,
-        color: '#cde5aa',
+        color: "#cde5aa",
         zIndex: prev.elements.length,
       };
       return {
@@ -57,7 +57,7 @@ export function useBuilder2D() {
     setState((prev) => {
       const newElement: BuilderElement = {
         id: `element-${prev.nextId}`,
-        type: 'decal',
+        type: "decal",
         x: 100,
         y: 100,
         width: 150,
@@ -79,14 +79,17 @@ export function useBuilder2D() {
     setState((prev) => ({ ...prev, selectedId: id }));
   }, []);
 
-  const updateElement = useCallback((id: string, updates: Partial<BuilderElement>) => {
-    setState((prev) => ({
-      ...prev,
-      elements: prev.elements.map((el) =>
-        el.id === id ? { ...el, ...updates } : el
-      ),
-    }));
-  }, []);
+  const updateElement = useCallback(
+    (id: string, updates: Partial<BuilderElement>) => {
+      setState((prev) => ({
+        ...prev,
+        elements: prev.elements.map((el) =>
+          el.id === id ? { ...el, ...updates } : el,
+        ),
+      }));
+    },
+    [],
+  );
 
   const deleteElement = useCallback((id: string) => {
     setState((prev) => ({
@@ -140,7 +143,9 @@ export function useBuilder2D() {
     }));
   }, []);
 
-  const selectedElement = state.elements.find((el) => el.id === state.selectedId);
+  const selectedElement = state.elements.find(
+    (el) => el.id === state.selectedId,
+  );
 
   return {
     elements: state.elements,

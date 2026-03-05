@@ -1,173 +1,241 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
-import { useActor } from './useActor';
-import { getSessionToken, setSessionToken, clearSessionToken } from '../utils/sessionToken';
+import { useCallback, useEffect, useState } from "react";
+import {
+  clearSessionToken,
+  getSessionToken,
+  setSessionToken,
+} from "../utils/sessionToken";
 
-export interface User {
-  username: string;
-  displayName: string;
-  avatar?: string;
+/** Returns the username from the current session token, or null if not logged in */
+export function getCurrentUsername(): string | null {
+  try {
+    const token = getSessionToken();
+    if (!token) return null;
+    return token.split("_")[0] || null;
+  } catch {
+    return null;
+  }
 }
 
-export interface LoginCredentials {
+interface SessionUser {
+  username: string;
+  displayName: string;
+  token: string;
+}
+
+interface SessionAuthState {
+  user: SessionUser | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
+interface LoginCredentials {
   username: string;
   password: string;
 }
 
-export interface SignupData {
+interface SignupCredentials {
   username: string;
   displayName: string;
   password: string;
+}
+
+// Simple in-memory user store for demo purposes
+// In production this would be backed by the canister's session auth
+const USERS_KEY = "diniverse_users";
+
+function getStoredUsers(): Record<
+  string,
+  { displayName: string; passwordHash: string }
+> {
+  try {
+    const raw = localStorage.getItem(USERS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function storeUser(
+  username: string,
+  displayName: string,
+  passwordHash: string,
+) {
+  const users = getStoredUsers();
+  users[username] = { displayName, passwordHash };
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+// Simple hash function for demo (not cryptographically secure)
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  return hash.toString(36);
+}
+
+function generateToken(username: string): string {
+  return `${username}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
 export function useSessionAuth() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<SessionAuthState>({
+    user: null,
+    isAuthenticated: false,
+    isLoading: true,
+    error: null,
+  });
 
-  const sessionToken = getSessionToken();
-  const isAuthenticated = !!sessionToken && !!currentUser;
-
-  // Validate session and fetch user on mount
+  // Restore session from localStorage on mount
   useEffect(() => {
-    const validateAndFetchUser = async () => {
-      if (!actor || !sessionToken) {
-        setIsLoading(false);
-        setCurrentUser(null);
-        return;
-      }
-
+    const token = getSessionToken();
+    if (token) {
       try {
-        // TODO: Call backend validateSession method when available
-        // For now, assume token is valid if it exists
-        // const principal = await actor.validateSession(sessionToken);
-        // if (!principal) {
-        //   clearSessionToken();
-        //   setCurrentUser(null);
-        //   setIsLoading(false);
-        //   return;
-        // }
-
-        // TODO: Fetch user profile using session token
-        // const profile = await actor.getCallerUserProfile();
-        // if (profile) {
-        //   setCurrentUser({
-        //     username: sessionToken.slice(0, 8),
-        //     displayName: profile.displayName,
-        //     avatar: profile.avatar?.getDirectURL(),
-        //   });
-        // }
-        
-        // Temporary: Set a placeholder user if token exists
-        setCurrentUser({
-          username: sessionToken.slice(0, 8),
-          displayName: 'User',
-          avatar: undefined,
-        });
-      } catch (err) {
-        console.error('Session validation error:', err);
+        // Token format: username_timestamp_random
+        const username = token.split("_")[0];
+        const users = getStoredUsers();
+        if (users[username]) {
+          setState({
+            user: { username, displayName: users[username].displayName, token },
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+          return;
+        }
+      } catch {
         clearSessionToken();
-        setCurrentUser(null);
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    validateAndFetchUser();
-  }, [actor, sessionToken]);
-
-  const login = async (credentials: LoginCredentials): Promise<void> => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      if (!actor) throw new Error('Backend not available');
-      
-      // TODO: Call backend login method when available
-      // const result = await actor.login(credentials.username, credentials.password);
-      // if ('Err' in result) {
-      //   throw new Error(result.Err);
-      // }
-      // const token = result.Ok;
-      
-      // Temporary: Generate a mock token
-      const token = `session_${credentials.username}_${Date.now()}`;
-      
-      setSessionToken(token);
-      setCurrentUser({
-        username: credentials.username,
-        displayName: credentials.username,
-        avatar: undefined,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      setError(message);
-      throw err;
-    } finally {
-      setIsLoading(false);
     }
-  };
+    setState((prev) => ({ ...prev, isLoading: false }));
+  }, []);
 
-  const signup = async (data: SignupData): Promise<void> => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      if (!actor) throw new Error('Backend not available');
-      
-      // TODO: Call backend signup method when available
-      // const result = await actor.signup(data.username, data.displayName, data.password);
-      // if ('Err' in result) {
-      //   throw new Error(result.Err);
-      // }
-      // const token = result.Ok;
-      
-      // Temporary: Generate a mock token
-      const token = `session_${data.username}_${Date.now()}`;
-      
-      setSessionToken(token);
-      setCurrentUser({
-        username: data.username,
-        displayName: data.displayName,
-        avatar: undefined,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Signup failed';
-      setError(message);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const logout = async (): Promise<void> => {
-    setError(null);
-    try {
-      if (actor && sessionToken) {
-        // TODO: Call backend logout method when available
-        // await actor.logout(sessionToken);
+  const login = useCallback(
+    async (credentials: LoginCredentials): Promise<void> => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      try {
+        const users = getStoredUsers();
+        const user = users[credentials.username];
+        if (!user) {
+          throw new Error("Invalid username or password");
+        }
+        const hash = simpleHash(credentials.password);
+        if (user.passwordHash !== hash) {
+          throw new Error("Invalid username or password");
+        }
+        const token = generateToken(credentials.username);
+        setSessionToken(token);
+        setState({
+          user: {
+            username: credentials.username,
+            displayName: user.displayName,
+            token,
+          },
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        });
+      } catch (err: any) {
+        setState((prev) => ({ ...prev, isLoading: false, error: err.message }));
+        throw err;
       }
-    } catch (err) {
-      console.error('Logout error:', err);
-    } finally {
-      clearSessionToken();
-      setCurrentUser(null);
-      queryClient.clear();
-    }
-  };
+    },
+    [],
+  );
 
-  const fetchCurrentUser = async (): Promise<void> => {
-    // User is fetched automatically in useEffect
-  };
+  const signup = useCallback(
+    async (credentials: SignupCredentials): Promise<void> => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      try {
+        const users = getStoredUsers();
+        if (users[credentials.username]) {
+          throw new Error("Username already taken");
+        }
+        if (credentials.username.length < 3) {
+          throw new Error("Username must be at least 3 characters");
+        }
+        if (credentials.password.length < 6) {
+          throw new Error("Password must be at least 6 characters");
+        }
+        const passwordHash = simpleHash(credentials.password);
+        storeUser(
+          credentials.username,
+          credentials.displayName || credentials.username,
+          passwordHash,
+        );
+        const token = generateToken(credentials.username);
+        setSessionToken(token);
+        setState({
+          user: {
+            username: credentials.username,
+            displayName: credentials.displayName || credentials.username,
+            token,
+          },
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        });
+      } catch (err: any) {
+        setState((prev) => ({ ...prev, isLoading: false, error: err.message }));
+        throw err;
+      }
+    },
+    [],
+  );
+
+  const logout = useCallback(async (): Promise<void> => {
+    clearSessionToken();
+    setState({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+    });
+  }, []);
+
+  const changePassword = useCallback(
+    async (
+      currentPassword: string,
+      newPassword: string,
+      confirmPassword: string,
+    ): Promise<void> => {
+      const token = getSessionToken();
+      if (!token) throw new Error("Not authenticated");
+
+      const username = token.split("_")[0];
+      const users = getStoredUsers();
+      const user = users[username];
+      if (!user) throw new Error("User not found");
+
+      if (newPassword !== confirmPassword) {
+        throw new Error("New passwords do not match");
+      }
+      if (newPassword.length < 6) {
+        throw new Error("New password must be at least 6 characters");
+      }
+
+      const currentHash = simpleHash(currentPassword);
+      if (user.passwordHash !== currentHash) {
+        throw new Error("Current password is incorrect");
+      }
+
+      const newHash = simpleHash(newPassword);
+      storeUser(username, user.displayName, newHash);
+    },
+    [],
+  );
 
   return {
-    isAuthenticated,
-    currentUser,
-    isLoading,
-    error,
+    user: state.user,
+    isAuthenticated: state.isAuthenticated,
+    isLoading: state.isLoading,
+    error: state.error,
     login,
     signup,
     logout,
-    fetchCurrentUser,
+    changePassword,
   };
 }

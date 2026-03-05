@@ -1,8 +1,22 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useCurrentUser } from '../hooks/useCurrentUser';
-import { useNavigate } from '@tanstack/react-router';
-import { Coins, TrendingUp, Gift, Star, Zap, LogIn, UserPlus } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  Coins,
+  Gift,
+  LogIn,
+  Star,
+  TrendingUp,
+  UserPlus,
+  Zap,
+} from "lucide-react";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 export default function DiniBucks() {
   const { isAuthenticated } = useCurrentUser();
@@ -22,16 +36,26 @@ export default function DiniBucks() {
           <Card className="mb-8 border-primary/20 bg-primary/5">
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
-                <p className="text-lg font-medium">Balance Viewing Requires Authentication</p>
+                <p className="text-lg font-medium">
+                  Balance Viewing Requires Authentication
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  Log in or create an account to view and manage your Dini Bucks balance.
+                  Log in or create an account to view and manage your Dini Bucks
+                  balance.
                 </p>
                 <div className="flex gap-2 justify-center">
-                  <Button onClick={() => navigate({ to: '/login' })} className="gap-2">
+                  <Button
+                    onClick={() => navigate({ to: "/login" })}
+                    className="gap-2"
+                  >
                     <LogIn className="h-4 w-4" />
                     Log In
                   </Button>
-                  <Button onClick={() => navigate({ to: '/signup' })} variant="outline" className="gap-2">
+                  <Button
+                    onClick={() => navigate({ to: "/signup" })}
+                    variant="outline"
+                    className="gap-2"
+                  >
                     <UserPlus className="h-4 w-4" />
                     Sign Up
                   </Button>
@@ -50,7 +74,9 @@ export default function DiniBucks() {
                     <Coins className="h-8 w-8 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Your Balance</p>
+                    <p className="text-sm text-muted-foreground">
+                      Your Balance
+                    </p>
                     <p className="text-3xl font-bold">0 Dini Bucks</p>
                   </div>
                 </div>
@@ -95,9 +121,7 @@ export default function DiniBucks() {
             <CardHeader>
               <Zap className="h-10 w-10 text-primary mb-2" />
               <CardTitle>Premium</CardTitle>
-              <CardDescription>
-                Access exclusive content
-              </CardDescription>
+              <CardDescription>Access exclusive content</CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -108,14 +132,18 @@ export default function DiniBucks() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Dini Bucks is the virtual currency used throughout Dini.Verse. You can earn Dini Bucks by playing experiences, creating content, and participating in the community.
+              Dini Bucks is the virtual currency used throughout Dini.Verse. You
+              can earn Dini Bucks by playing experiences, creating content, and
+              participating in the community.
             </p>
             <p className="text-muted-foreground">
-              Use your Dini Bucks to purchase avatar items, accessories, animations, and other virtual goods in the Avatar Shop.
+              Use your Dini Bucks to purchase avatar items, accessories,
+              animations, and other virtual goods in the Avatar Shop.
             </p>
             <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground">
-                <strong>Note:</strong> The Dini Bucks economy and purchasing system is currently under development. Stay tuned for updates!
+                <strong>Note:</strong> The Dini Bucks economy and purchasing
+                system is currently under development. Stay tuned for updates!
               </p>
             </div>
           </CardContent>

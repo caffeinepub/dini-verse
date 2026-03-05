@@ -1,6 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ShoppingBag, Shirt, Glasses, Crown, Sparkles } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Crown, Glasses, Shirt, ShoppingBag, Sparkles } from "lucide-react";
 
 export default function AvatarShop() {
   return (
@@ -53,7 +59,9 @@ export default function AvatarShop() {
               <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Shop Coming Soon</h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                The Avatar Shop is currently under development. Soon you'll be able to purchase items using Dini Bucks to customize your avatar.
+                The Avatar Shop is currently under development. Soon you'll be
+                able to purchase items using Dini Bucks to customize your
+                avatar.
               </p>
               <Button disabled>Browse Items (Coming Soon)</Button>
             </div>
