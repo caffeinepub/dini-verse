@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,12 +44,17 @@ import {
   BookOpen,
   Coins,
   Crown,
+  Edit2,
+  Eye,
   Gamepad2,
   Image,
   LogIn,
+  Paperclip,
   Plus,
+  Settings,
   Shield,
   Shirt,
+  ShoppingBag,
   Swords,
   Trash2,
   TrendingUp,
@@ -95,6 +100,7 @@ interface GroupPost {
   id: string;
   author: string;
   content: string;
+  imageDataUrl?: string;
   createdAt: number;
 }
 
@@ -146,6 +152,7 @@ interface Group {
 
 const GROUPS_KEY = "diniverse_groups";
 const GROUP_COST = 500;
+const RENAME_COST = 100;
 
 function getGroups(): Group[] {
   try {
@@ -1096,26 +1103,54 @@ function ItemSalesTab({
   );
 }
 
+// ─── Enhanced Social Tab ──────────────────────────────────────────────────────
+
 function SocialTab({
   group,
   currentUser,
+  isOwnerOrAdmin,
   onUpdate,
 }: {
   group: Group;
   currentUser: string;
+  isOwnerOrAdmin: boolean;
   onUpdate: (g: Group) => void;
 }) {
   const [postContent, setPostContent] = useState("");
+  const [pendingImageDataUrl, setPendingImageDataUrl] = useState<string | null>(
+    null,
+  );
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    setPendingImageDataUrl(dataUrl);
+    if (imageInputRef.current) imageInputRef.current.value = "";
+  };
 
   const handlePost = () => {
-    if (!postContent.trim()) {
-      toast.error("Post content is required");
+    if (!postContent.trim() && !pendingImageDataUrl) {
+      toast.error("Post content or image is required");
       return;
     }
     const post: GroupPost = {
       id: generateId(),
       author: currentUser,
       content: postContent.trim(),
+      imageDataUrl: pendingImageDataUrl ?? undefined,
       createdAt: Date.now(),
     };
     const updated: Group = {
@@ -1124,7 +1159,51 @@ function SocialTab({
     };
     onUpdate(updated);
     setPostContent("");
+    setPendingImageDataUrl(null);
     toast.success("Post published!");
+  };
+
+  const handleStartEdit = (post: GroupPost) => {
+    setEditingPostId(post.id);
+    setEditContent(post.content);
+  };
+
+  const handleSaveEdit = (postId: string) => {
+    const updated: Group = {
+      ...group,
+      posts: group.posts.map((p) =>
+        p.id === postId ? { ...p, content: editContent } : p,
+      ),
+    };
+    onUpdate(updated);
+    setEditingPostId(null);
+    setEditContent("");
+    toast.success("Post updated");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPostId(null);
+    setEditContent("");
+  };
+
+  const handleDelete = (post: GroupPost, idx: number) => {
+    let updated: Group = {
+      ...group,
+      posts: group.posts.filter((p) => p.id !== post.id),
+    };
+    // If an admin/owner deletes someone else's post, log it
+    if (isOwnerOrAdmin && post.author !== currentUser) {
+      updated = addAuditEntry(
+        updated,
+        `Deleted post by ${post.author}`,
+        currentUser,
+        post.author,
+      );
+    }
+    onUpdate(updated);
+    toast.success("Post deleted");
+    // suppress unused warning
+    void idx;
   };
 
   const sortedPosts = [...group.posts].sort(
@@ -1142,13 +1221,50 @@ function SocialTab({
           rows={3}
           data-ocid="groups.social.textarea"
         />
-        <Button
-          size="sm"
-          onClick={handlePost}
-          data-ocid="groups.social.primary_button"
-        >
-          Post
-        </Button>
+
+        {/* Pending image preview */}
+        {pendingImageDataUrl && (
+          <div className="relative inline-block">
+            <img
+              src={pendingImageDataUrl}
+              alt="Attachment preview"
+              className="max-h-32 rounded-lg object-contain border"
+            />
+            <button
+              type="button"
+              onClick={() => setPendingImageDataUrl(null)}
+              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={handlePost}
+            data-ocid="groups.social.primary_button"
+          >
+            Post
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => imageInputRef.current?.click()}
+            data-ocid="groups.social.upload_button"
+          >
+            <Paperclip className="w-3 h-3 mr-1" />
+            Attach Image
+          </Button>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageSelect}
+          />
+        </div>
       </div>
 
       <Separator />
@@ -1166,26 +1282,100 @@ function SocialTab({
       ) : (
         <ScrollArea className="h-80">
           <div className="space-y-3 pr-3">
-            {sortedPosts.map((post, idx) => (
-              <div
-                key={post.id}
-                className="p-3 border rounded-lg space-y-2"
-                data-ocid={`groups.social.item.${idx + 1}`}
-              >
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs">
-                      {post.author.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium text-sm">{post.author}</span>
-                  <span className="text-xs text-muted-foreground ml-auto">
-                    {formatRelativeTime(post.createdAt)}
-                  </span>
+            {sortedPosts.map((post, idx) => {
+              const isAuthor = post.author === currentUser;
+              const canDelete = isAuthor || isOwnerOrAdmin;
+              const canEdit = isAuthor;
+              const isEditing = editingPostId === post.id;
+
+              return (
+                <div
+                  key={post.id}
+                  className="p-3 border rounded-lg space-y-2"
+                  data-ocid={`groups.social.item.${idx + 1}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback className="text-xs">
+                        {post.author.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium text-sm">{post.author}</span>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {formatRelativeTime(post.createdAt)}
+                    </span>
+                    {/* Edit button */}
+                    {canEdit && !isEditing && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => handleStartEdit(post)}
+                        title="Edit post"
+                        data-ocid={`groups.social.edit_button.${idx + 1}`}
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
+                    )}
+                    {/* Delete button */}
+                    {canDelete && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(post, idx)}
+                        title="Delete post"
+                        data-ocid={`groups.social.delete_button.${idx + 1}`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Post body or edit mode */}
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        rows={3}
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveEdit(post.id)}
+                          data-ocid="groups.social.save_button"
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleCancelEdit}
+                          data-ocid="groups.social.cancel_button"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {post.content && (
+                        <p className="text-sm">{post.content}</p>
+                      )}
+                      {post.imageDataUrl && (
+                        <img
+                          src={post.imageDataUrl}
+                          alt="Post attachment"
+                          className="rounded-lg max-h-48 object-contain"
+                        />
+                      )}
+                    </>
+                  )}
                 </div>
-                <p className="text-sm">{post.content}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       )}
@@ -1494,6 +1684,187 @@ function AlliesEnemiesTab({
   );
 }
 
+// ─── Member View ──────────────────────────────────────────────────────────────
+
+function MemberView({
+  group,
+  currentUser,
+  isOwnerOrAdmin,
+  onUpdate,
+}: {
+  group: Group;
+  currentUser: string;
+  isOwnerOrAdmin: boolean;
+  onUpdate: (g: Group) => void;
+}) {
+  const typeLabels: Record<string, string> = {
+    shirt: "Shirt",
+    pants: "Pants",
+    ugc: "UGC Item",
+  };
+
+  const allies = group.alliesEnemies.filter((e) => e.type === "ally");
+  const enemies = group.alliesEnemies.filter((e) => e.type === "enemy");
+
+  return (
+    <Tabs defaultValue="social" className="w-full">
+      <TabsList className="w-full">
+        <TabsTrigger value="social" data-ocid="groups.memberview.tab">
+          Social
+        </TabsTrigger>
+        <TabsTrigger value="ugcstore" data-ocid="groups.memberview.tab">
+          UGC Store
+        </TabsTrigger>
+        <TabsTrigger value="allies" data-ocid="groups.memberview.tab">
+          Allies &amp; Enemies
+        </TabsTrigger>
+      </TabsList>
+
+      {/* Social */}
+      <TabsContent value="social" className="mt-4">
+        <SocialTab
+          group={group}
+          currentUser={currentUser}
+          isOwnerOrAdmin={isOwnerOrAdmin}
+          onUpdate={onUpdate}
+        />
+      </TabsContent>
+
+      {/* UGC Store */}
+      <TabsContent value="ugcstore" className="mt-4">
+        <div className="space-y-4">
+          <h3 className="font-semibold text-sm flex items-center gap-2">
+            <ShoppingBag className="w-4 h-4" />
+            UGC Store — {group.items.length} item
+            {group.items.length !== 1 ? "s" : ""}
+          </h3>
+          {group.items.length === 0 ? (
+            <div
+              className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed rounded-xl"
+              data-ocid="groups.ugcstore.empty_state"
+            >
+              <ShoppingBag className="w-10 h-10 text-muted-foreground mb-3" />
+              <p className="text-muted-foreground text-sm">
+                No items available in the store yet.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {group.items.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className="p-4 border rounded-xl space-y-3"
+                  data-ocid={`groups.ugcstore.item.${idx + 1}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-sm leading-tight">
+                      {item.name}
+                    </p>
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      {typeLabels[item.type] ?? item.type}
+                    </Badge>
+                  </div>
+                  <p className="text-base font-bold text-primary">
+                    {item.price} Dini Bucks
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    by {item.createdBy}
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      const bucks = getDiniBucks(currentUser);
+                      if (bucks < item.price) {
+                        toast.error(
+                          `Insufficient Dini Bucks. You need ${item.price} but have ${bucks}.`,
+                        );
+                        return;
+                      }
+                      setDiniBucks(currentUser, bucks - item.price);
+                      toast.success(
+                        `Purchased ${item.name}! ${item.price} Dini Bucks deducted.`,
+                      );
+                    }}
+                    data-ocid={`groups.ugcstore.buy_button.${idx + 1}`}
+                  >
+                    Buy
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </TabsContent>
+
+      {/* Allies & Enemies */}
+      <TabsContent value="allies" className="mt-4">
+        <div className="space-y-6">
+          {/* Allies */}
+          <div>
+            <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
+              <Shield className="w-4 h-4 text-green-500" />
+              Allies ({allies.length})
+            </h3>
+            {allies.length === 0 ? (
+              <p
+                className="text-sm text-muted-foreground py-4 text-center border-2 border-dashed rounded-lg"
+                data-ocid="groups.memberallies.empty_state"
+              >
+                No allies yet.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {allies.map((e, idx) => (
+                  <div
+                    key={e.groupId}
+                    className="flex items-center gap-3 p-3 border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800 rounded-lg"
+                    data-ocid={`groups.memberallies.item.${idx + 1}`}
+                  >
+                    <Shield className="w-4 h-4 text-green-500 shrink-0" />
+                    <span className="font-medium text-sm">{e.groupName}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Enemies */}
+          <div>
+            <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
+              <Swords className="w-4 h-4 text-red-500" />
+              Enemies ({enemies.length})
+            </h3>
+            {enemies.length === 0 ? (
+              <p
+                className="text-sm text-muted-foreground py-4 text-center border-2 border-dashed rounded-lg"
+                data-ocid="groups.memberenemies.empty_state"
+              >
+                No enemies declared.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {enemies.map((e, idx) => (
+                  <div
+                    key={e.groupId}
+                    className="flex items-center gap-3 p-3 border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 rounded-lg"
+                    data-ocid={`groups.memberenemies.item.${idx + 1}`}
+                  >
+                    <Swords className="w-4 h-4 text-red-500 shrink-0" />
+                    <span className="font-medium text-sm">{e.groupName}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </TabsContent>
+    </Tabs>
+  );
+}
+
 // ─── Group Detail View ────────────────────────────────────────────────────────
 
 function GroupDetail({
@@ -1506,6 +1877,23 @@ function GroupDetail({
   onBack: () => void;
 }) {
   const [group, setGroup] = useState<Group>(initialGroup);
+  const [memberViewMode, setMemberViewMode] = useState(false);
+
+  // Rename dialog state
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [newGroupNameInput, setNewGroupNameInput] = useState(group.name);
+
+  // Change thumbnail ref
+  const changeThumbnailRef = useRef<HTMLInputElement>(null);
+
+  const isOwner = currentUser === group.ownedBy;
+  const isMember = group.members.some(
+    (m) => m.username === currentUser && m.status === "active",
+  );
+  const memberRole = group.members.find(
+    (m) => m.username === currentUser,
+  )?.role;
+  const isOwnerOrAdmin = memberRole === "Owner" || memberRole === "Admin";
 
   const handleUpdate = (updated: Group) => {
     setGroup(updated);
@@ -1517,10 +1905,61 @@ function GroupDetail({
     }
   };
 
-  return (
-    <div className="space-y-6" data-ocid="groups.detail.panel">
-      {/* Header */}
-      <div className="flex items-center gap-4">
+  const handleRenameConfirm = () => {
+    const trimmed = newGroupNameInput.trim();
+    if (!trimmed) {
+      toast.error("Group name is required");
+      return;
+    }
+    const bucks = getDiniBucks(currentUser);
+    if (bucks < RENAME_COST) {
+      toast.error(
+        `Insufficient Dini Bucks. You need ${RENAME_COST} but have ${bucks}.`,
+      );
+      return;
+    }
+    setDiniBucks(currentUser, bucks - RENAME_COST);
+    let updated = addAuditEntry(
+      { ...group, name: trimmed },
+      `Renamed group to "${trimmed}"`,
+      currentUser,
+    );
+    handleUpdate(updated);
+    setShowRenameDialog(false);
+    toast.success(
+      `Group renamed to "${trimmed}"! ${RENAME_COST} Dini Bucks deducted.`,
+    );
+  };
+
+  const handleChangeThumbnail = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    let updated = addAuditEntry(
+      { ...group, thumbnailDataUrl: dataUrl },
+      "Changed group thumbnail",
+      currentUser,
+    );
+    handleUpdate(updated);
+    if (changeThumbnailRef.current) changeThumbnailRef.current.value = "";
+    toast.success("Thumbnail updated!");
+  };
+
+  // Not a member at all
+  if (!isMember && !isOwner) {
+    return (
+      <div className="space-y-6" data-ocid="groups.detail.panel">
         <Button
           variant="ghost"
           size="sm"
@@ -1529,101 +1968,246 @@ function GroupDetail({
         >
           ← Back
         </Button>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Users className="w-12 h-12 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-bold mb-2">{group.name}</h2>
+          <p className="text-muted-foreground">
+            You are not a member of this group.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Owner in member view mode OR regular member: show MemberView
+  const showingMemberView = !isOwner || memberViewMode;
+
+  return (
+    <div className="space-y-6" data-ocid="groups.detail.panel">
+      {/* Header */}
+      <div className="flex items-start gap-4 flex-wrap">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          data-ocid="groups.detail.cancel_button"
+        >
+          ← Back
+        </Button>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* Hidden file input for thumbnail change */}
+          <input
+            ref={changeThumbnailRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleChangeThumbnail}
+          />
           {group.thumbnailDataUrl ? (
             <img
               src={group.thumbnailDataUrl}
               alt={group.name}
-              className="w-12 h-12 rounded-lg object-cover"
+              className="w-12 h-12 rounded-lg object-cover shrink-0"
             />
           ) : (
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Users className="w-6 h-6 text-primary" />
             </div>
           )}
-          <div>
-            <h2 className="text-2xl font-bold">{group.name}</h2>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-2xl font-bold truncate">{group.name}</h2>
             <p className="text-sm text-muted-foreground">
               {group.members.filter((m) => m.status === "active").length}{" "}
               members · {group.treasury} Dini Bucks treasury
             </p>
           </div>
         </div>
+
+        {/* Owner-only action buttons */}
+        {isOwner && (
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Rename button */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setNewGroupNameInput(group.name);
+                setShowRenameDialog(true);
+              }}
+              data-ocid="groups.rename.open_modal_button"
+            >
+              <Edit2 className="w-3 h-3 mr-1" />
+              Rename (100 DB)
+            </Button>
+
+            {/* Change Thumbnail */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => changeThumbnailRef.current?.click()}
+              data-ocid="groups.thumbnail.upload_button"
+            >
+              <Image className="w-3 h-3 mr-1" />
+              Change Thumbnail
+            </Button>
+
+            {/* Member View / Owner View toggle */}
+            <Button
+              size="sm"
+              variant={memberViewMode ? "default" : "outline"}
+              onClick={() => setMemberViewMode((v) => !v)}
+              data-ocid="groups.memberview.toggle"
+            >
+              {memberViewMode ? (
+                <>
+                  <Settings className="w-3 h-3 mr-1" />
+                  Owner View
+                </>
+              ) : (
+                <>
+                  <Eye className="w-3 h-3 mr-1" />
+                  Member View
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="members" className="w-full">
-        <ScrollArea className="w-full">
-          <TabsList className="w-full flex flex-nowrap overflow-x-auto">
-            <TabsTrigger value="members" data-ocid="groups.detail.tab">
-              Member Management
-            </TabsTrigger>
-            <TabsTrigger value="revenue" data-ocid="groups.detail.tab">
-              Revenue
-            </TabsTrigger>
-            <TabsTrigger value="experiences" data-ocid="groups.detail.tab">
-              Experiences
-            </TabsTrigger>
-            <TabsTrigger value="items" data-ocid="groups.detail.tab">
-              Item Sales
-            </TabsTrigger>
-            <TabsTrigger value="social" data-ocid="groups.detail.tab">
-              Social
-            </TabsTrigger>
-            <TabsTrigger value="audit" data-ocid="groups.detail.tab">
-              Audit Log
-            </TabsTrigger>
-            <TabsTrigger value="allies" data-ocid="groups.detail.tab">
-              Allies/Enemies
-            </TabsTrigger>
-          </TabsList>
-        </ScrollArea>
-        <TabsContent value="members" className="mt-4">
-          <MemberManagementTab
-            group={group}
-            currentUser={currentUser}
-            onUpdate={handleUpdate}
-          />
-        </TabsContent>
-        <TabsContent value="revenue" className="mt-4">
-          <RevenueTab
-            group={group}
-            currentUser={currentUser}
-            onUpdate={handleUpdate}
-          />
-        </TabsContent>
-        <TabsContent value="experiences" className="mt-4">
-          <ExperiencesTab
-            group={group}
-            currentUser={currentUser}
-            onUpdate={handleUpdate}
-          />
-        </TabsContent>
-        <TabsContent value="items" className="mt-4">
-          <ItemSalesTab
-            group={group}
-            currentUser={currentUser}
-            onUpdate={handleUpdate}
-          />
-        </TabsContent>
-        <TabsContent value="social" className="mt-4">
-          <SocialTab
-            group={group}
-            currentUser={currentUser}
-            onUpdate={handleUpdate}
-          />
-        </TabsContent>
-        <TabsContent value="audit" className="mt-4">
-          <AuditLogTab group={group} />
-        </TabsContent>
-        <TabsContent value="allies" className="mt-4">
-          <AlliesEnemiesTab
-            group={group}
-            currentUser={currentUser}
-            onUpdate={handleUpdate}
-          />
-        </TabsContent>
-      </Tabs>
+      {/* Rename Dialog */}
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent data-ocid="groups.rename.dialog">
+          <DialogHeader>
+            <DialogTitle>Rename Group</DialogTitle>
+            <DialogDescription>
+              Current name: <strong>{group.name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label htmlFor="renameInput">New Group Name</Label>
+              <Input
+                id="renameInput"
+                value={newGroupNameInput}
+                onChange={(e) => setNewGroupNameInput(e.target.value)}
+                placeholder="Enter new group name"
+                onKeyDown={(e) => e.key === "Enter" && handleRenameConfirm()}
+                data-ocid="groups.rename.input"
+              />
+            </div>
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                <span className="font-semibold">
+                  {RENAME_COST} Dini Bucks will be deducted
+                </span>{" "}
+                from your account upon renaming.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowRenameDialog(false)}
+              data-ocid="groups.rename.cancel_button"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRenameConfirm}
+              data-ocid="groups.rename.confirm_button"
+            >
+              Rename ({RENAME_COST} Dini Bucks)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Content */}
+      {showingMemberView ? (
+        /* Member view: Social, UGC Store, Allies */
+        <MemberView
+          group={group}
+          currentUser={currentUser}
+          isOwnerOrAdmin={isOwnerOrAdmin}
+          onUpdate={handleUpdate}
+        />
+      ) : (
+        /* Owner view: full 7-tab config */
+        <Tabs defaultValue="members" className="w-full">
+          <ScrollArea className="w-full">
+            <TabsList className="w-full flex flex-nowrap overflow-x-auto">
+              <TabsTrigger value="members" data-ocid="groups.detail.tab">
+                Member Management
+              </TabsTrigger>
+              <TabsTrigger value="revenue" data-ocid="groups.detail.tab">
+                Revenue
+              </TabsTrigger>
+              <TabsTrigger value="experiences" data-ocid="groups.detail.tab">
+                Experiences
+              </TabsTrigger>
+              <TabsTrigger value="items" data-ocid="groups.detail.tab">
+                Item Sales
+              </TabsTrigger>
+              <TabsTrigger value="social" data-ocid="groups.detail.tab">
+                Social
+              </TabsTrigger>
+              <TabsTrigger value="audit" data-ocid="groups.detail.tab">
+                Audit Log
+              </TabsTrigger>
+              <TabsTrigger value="allies" data-ocid="groups.detail.tab">
+                Allies/Enemies
+              </TabsTrigger>
+            </TabsList>
+          </ScrollArea>
+          <TabsContent value="members" className="mt-4">
+            <MemberManagementTab
+              group={group}
+              currentUser={currentUser}
+              onUpdate={handleUpdate}
+            />
+          </TabsContent>
+          <TabsContent value="revenue" className="mt-4">
+            <RevenueTab
+              group={group}
+              currentUser={currentUser}
+              onUpdate={handleUpdate}
+            />
+          </TabsContent>
+          <TabsContent value="experiences" className="mt-4">
+            <ExperiencesTab
+              group={group}
+              currentUser={currentUser}
+              onUpdate={handleUpdate}
+            />
+          </TabsContent>
+          <TabsContent value="items" className="mt-4">
+            <ItemSalesTab
+              group={group}
+              currentUser={currentUser}
+              onUpdate={handleUpdate}
+            />
+          </TabsContent>
+          <TabsContent value="social" className="mt-4">
+            <SocialTab
+              group={group}
+              currentUser={currentUser}
+              isOwnerOrAdmin={isOwnerOrAdmin}
+              onUpdate={handleUpdate}
+            />
+          </TabsContent>
+          <TabsContent value="audit" className="mt-4">
+            <AuditLogTab group={group} />
+          </TabsContent>
+          <TabsContent value="allies" className="mt-4">
+            <AlliesEnemiesTab
+              group={group}
+              currentUser={currentUser}
+              onUpdate={handleUpdate}
+            />
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }

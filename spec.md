@@ -2,51 +2,56 @@
 
 ## Current State
 
-- Full-stack gaming platform with Motoko backend and React/TypeScript frontend.
-- Authentication is localStorage-based (username + password, session token).
-- Settings page has profile picture upload/remove, display name, username, password, visibility, language, gender, theme, delete account.
-- SignUp page collects username, display name, password only — no gender or language selection.
-- Profile picture: upload button + "Remove" button shown when an image exists. Removing clears avatar but does not allow immediate re-upload in the same flow.
-- Groups page is a near-empty stub showing "Your Groups" placeholder with no functionality.
-- Profile picture avatar is used in Settings page but its usage across the whole platform (header, sidebar, profile page) needs to be confirmed/ensured.
+The Groups page (`src/frontend/src/pages/Groups.tsx`) is fully implemented with:
+- Group creation (500 Dini Bucks)
+- Group detail view with tabs: Member Management, Revenue, Experiences, Item Sales, Social, Audit Log, Allies/Enemies
+- Social tab has a post composer (text only) and a read-only feed — no edit/delete on posts
+- Group header shows name and thumbnail but has no controls to change them after creation
+- The full tab configuration (all 7 tabs) is always visible to whoever opens the group — no distinction between owner/admin view and member view
 
 ## Requested Changes (Diff)
 
 ### Add
 
-- **SignUp page — Gender selector**: A dropdown/select for Female, Male, or Other. Value stored in localStorage settings on account creation.
-- **SignUp page — Language selector**: A dropdown/select for all 10 supported languages (English, Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, Dutch). Value stored in localStorage settings on account creation.
-- **Settings page — Profile picture "Remove" becomes re-upload trigger**: When a profile picture is set, show only a "Remove" button. Clicking "Remove" clears the image AND immediately opens the file picker so the user can upload a new one in the same action. When no image is set, show "Upload" button as normal.
-- **Profile picture propagation**: Ensure the avatar (avatarDataUrl from localStorage settings) is displayed everywhere it appears across the platform — header user avatar, left sidebar, profile page, etc.
-- **Groups page — Full implementation** (all localStorage-based, no backend calls):
-  - **Groups list view**: Shows user's groups and a "Trending Groups" section. Has a "Create Group" button (costs 500 Dini Bucks, shown as a deduction from a local Dini Bucks balance).
-  - **Create Group flow**: Modal/dialog with group name input and thumbnail upload. First thumbnail becomes the primary one shown on Trending Groups.
-  - **Group detail view**: When clicking a group, shows the group detail with tabs for all sections below.
-  - **Member Management tab**: UI for creating roles, changing rankings, accepting join requests, banning/kicking members. Stored locally.
-  - **Revenue tab**: Shared treasury showing Dini Bucks balance from sales. UI for one-time and recurring payouts to members.
-  - **Group Experiences tab**: List of games owned by the group. Members with permission can create/edit games. Links to Create game flow.
-  - **Item Creation & Sales tab**: UI to create and sell clothing (shirts, pants) and UGC items. Shows items listed for sale.
-  - **Social tab**: Community wall for posts. Anyone can post a message. Posts are stored locally.
-  - **Audit Log tab**: Read-only log of group activities (member joins, role changes, payouts, etc.).
-  - **Allies/Enemies tab**: List of allied and rival groups. Buttons to add alliance or rivalry with another group.
+1. **Rename Group button** in the group detail header — costs 100 Dini Bucks. Opens a dialog where the owner can type a new name, confirm, and have 100 Dini Bucks deducted. Add an audit log entry for the rename.
+2. **Change Thumbnail button** in the group detail header — free. Owner clicks it, a file picker opens, they select a new image, and the thumbnail updates immediately. Add an audit log entry.
+3. **Edit button on each social post** — visible only to the post author. Clicking it turns the post content into an inline editable textarea. Confirm saves the edit, cancel reverts. The edit should update the post in the group's posts array.
+4. **Delete button on each social post** — visible to the post author AND to the group owner/admin. Clicking removes the post from the posts array. Add an audit log entry for admin/owner deletions.
+5. **Image upload in social posts** — the post composer should allow attaching an image (file picker). The post stores an optional `imageDataUrl`. Images are displayed in the feed below the text content.
+6. **"Switch to Member View" toggle button** in the group detail header — only visible to the group owner. When toggled ON, the owner sees the group as a regular member would see it. The tab bar is replaced with a member-only view showing: Social tab, UGC Store tab (showing group items for sale), and Allies tab.
+7. **Member View** — non-owner members who open a group they belong to should see the same limited view: Social (can post text and images), UGC Store (group items for sale, buy button), and Allies (read-only list of allies). The full configuration tabs (Member Management, Revenue, Experiences, Item Sales, Audit Log) are only shown to the group owner/admin.
 
 ### Modify
 
-- **Settings page — Profile picture section**: Change the button behavior so "Remove" triggers file picker for replacement (not just remove). Keep the "Upload" button for first-time upload when no image exists.
-- **SignUp page**: Add gender and language fields before the submit button.
+- `GroupPost` interface: add optional `imageDataUrl?: string` field.
+- `SocialTab`: add image upload button to post composer, display image in posts, add edit/delete buttons on each post card.
+- `GroupDetail` header: add "Rename Group (100 DB)" button and "Change Thumbnail" button, both only visible when `currentUser === group.ownedBy`. Add "Switch to Member View" toggle for owners.
+- `GroupDetail` routing logic: if the current user is NOT the owner (but is a member), show the member view instead of the full config tabs. If the current user IS the owner and toggles member view, show the member view temporarily.
 
 ### Remove
 
-- Nothing removed.
+- Nothing is removed.
 
 ## Implementation Plan
 
-1. **SignUp.tsx**: Add `gender` state (default "other") and `language` state (default "en"). Add Select components for both. On signup success, create default settings in localStorage with the chosen gender and language using `saveLocalSettings`.
-2. **Settings.tsx — Profile picture**: Change the "Remove" button logic: clicking Remove calls `handleRemoveAvatar` AND then opens the file input immediately after. Remove the separate "Upload" button when an image already exists (only show "Remove" which re-opens picker). When no image exists, show "Upload Photo" button as before.
-3. **Profile picture propagation**: Read `getLocalSettings(username).avatarDataUrl` in `SiteHeader`, `LeftSidebar`, and `Profile` page avatars so the uploaded image is always shown.
-4. **Groups.tsx**: Full replacement with localStorage-based groups system:
-   - Groups stored in `localStorage` under key `diniverse_groups`.
-   - Create Group modal (name + thumbnail upload, deduct 500 Dini Bucks from `diniverse_dinibucks_{username}`).
-   - Group list and Trending Groups.
-   - Group detail page with tabbed navigation covering all 7 sections.
-   - All data (members, roles, posts, audit log, allies/enemies) stored in localStorage.
+1. Update `GroupPost` interface to add `imageDataUrl?: string`.
+2. In `SocialTab`:
+   - Add a file input ref and upload button in the composer for image attachment.
+   - Preview the selected image below the textarea before posting.
+   - Store `imageDataUrl` on the post object.
+   - Render post images in the feed.
+   - Add edit button (pencil icon) on posts authored by `currentUser` — renders an inline textarea + save/cancel.
+   - Add delete button (trash icon) on posts authored by `currentUser` OR when `currentUser` is owner/admin. Removing calls `onUpdate`.
+   - Pass `isAdmin` prop into `SocialTab` so it knows who can delete others' posts.
+3. In `GroupDetail` header:
+   - Add "Rename Group" button (only owner). Opens a dialog: text input pre-filled with current name, confirm button costs 100 Dini Bucks (check balance, deduct, update group name, add audit entry).
+   - Add "Change Thumbnail" button (only owner). Hidden file input, clicking opens picker, on select updates `thumbnailDataUrl`, adds audit entry.
+   - Add "Member View" toggle button (only owner). State: `memberViewMode: boolean`.
+4. In `GroupDetail` render:
+   - Determine `isOwner = currentUser === group.ownedBy`.
+   - Determine `isAdmin = member role is Owner or Admin`.
+   - If `isOwner && !memberViewMode`: show full 7-tab config layout as today, plus the header buttons.
+   - If `!isOwner && isMember`: show member view (Social, UGC Store, Allies tabs only).
+   - If `isOwner && memberViewMode`: show same member view (Social, UGC Store, Allies).
+5. Create a `MemberView` component (or inline in `GroupDetail`) with three tabs: Social (full posting), UGC Store (read-only item grid with buy button placeholder), Allies (read-only list).
+6. Add `data-ocid` markers to all new interactive surfaces.
