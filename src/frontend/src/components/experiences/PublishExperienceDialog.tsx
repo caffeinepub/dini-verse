@@ -16,11 +16,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Upload, X } from "lucide-react";
-import { useState } from "react";
+import { Loader2, Plus, Upload, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Category, ExternalBlob } from "../../backend";
 import { useCreateExperience } from "../../hooks/useExperiences";
+
+interface ThumbnailEntry {
+  id: string;
+  file: File;
+  preview: string;
+}
 
 interface PublishExperienceDialogProps {
   open: boolean;
@@ -35,27 +41,41 @@ export default function PublishExperienceDialog({
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>(Category.adventure);
   const [gameplayControls, setGameplayControls] = useState("");
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [thumbnails, setThumbnails] = useState<ThumbnailEntry[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const addInputRef = useRef<HTMLInputElement>(null);
 
   const createMutation = useCreateExperience();
 
-  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setThumbnailFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setThumbnailPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const addThumbnails = (files: FileList | null) => {
+    if (!files) return;
+    const newEntries: ThumbnailEntry[] = [];
+    const promises = Array.from(files).map(
+      (file) =>
+        new Promise<void>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            // Use name + size + lastModified as a stable-enough key
+            const id = `${file.name}-${file.size}-${file.lastModified}`;
+            newEntries.push({ id, file, preview: reader.result as string });
+            resolve();
+          };
+          reader.readAsDataURL(file);
+        }),
+    );
+    Promise.all(promises).then(() => {
+      setThumbnails((prev) => [...prev, ...newEntries]);
+    });
   };
 
-  const handleRemoveThumbnail = () => {
-    setThumbnailFile(null);
-    setThumbnailPreview(null);
+  const handleAddThumbnails = (e: React.ChangeEvent<HTMLInputElement>) => {
+    addThumbnails(e.target.files);
+    // Reset so the same file can be re-added if removed
+    e.target.value = "";
+  };
+
+  const handleRemoveThumbnail = (id: string) => {
+    setThumbnails((prev) => prev.filter((t) => t.id !== id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,8 +89,10 @@ export default function PublishExperienceDialog({
     try {
       let thumbnailBlob: ExternalBlob | null = null;
 
-      if (thumbnailFile) {
-        const arrayBuffer = await thumbnailFile.arrayBuffer();
+      // Only the first (primary) thumbnail is sent to the backend
+      const primaryFile = thumbnails[0]?.file ?? null;
+      if (primaryFile) {
+        const arrayBuffer = await primaryFile.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
         thumbnailBlob = ExternalBlob.fromBytes(uint8Array).withUploadProgress(
           (percentage) => {
@@ -96,8 +118,7 @@ export default function PublishExperienceDialog({
       setDescription("");
       setCategory(Category.adventure);
       setGameplayControls("");
-      setThumbnailFile(null);
-      setThumbnailPreview(null);
+      setThumbnails([]);
       setUploadProgress(0);
       onOpenChange(false);
     } catch (error) {
@@ -125,6 +146,7 @@ export default function PublishExperienceDialog({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+              data-ocid="publish.title.input"
             />
           </div>
 
@@ -137,6 +159,7 @@ export default function PublishExperienceDialog({
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
               required
+              data-ocid="publish.description.textarea"
             />
           </div>
 
@@ -146,7 +169,7 @@ export default function PublishExperienceDialog({
               value={category}
               onValueChange={(value) => setCategory(value as Category)}
             >
-              <SelectTrigger id="category">
+              <SelectTrigger id="category" data-ocid="publish.category.select">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
@@ -165,53 +188,85 @@ export default function PublishExperienceDialog({
               value={gameplayControls}
               onChange={(e) => setGameplayControls(e.target.value)}
               rows={3}
+              data-ocid="publish.controls.textarea"
             />
             <p className="text-xs text-muted-foreground">
               Leave blank to use default controls
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label>Thumbnail (Optional)</Label>
-            {thumbnailPreview ? (
-              <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-                <img
-                  src={thumbnailPreview}
-                  alt="Thumbnail preview"
-                  className="w-full h-full object-cover"
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2"
-                  onClick={handleRemoveThumbnail}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
+          {/* ── Multi-thumbnail section ── */}
+          <div className="space-y-3">
+            <Label>Thumbnails (Optional)</Label>
+            <p className="text-xs text-muted-foreground -mt-1">
+              The{" "}
+              <span className="font-semibold text-foreground">
+                first thumbnail
+              </span>{" "}
+              is the primary one shown on the Discover page. Add more for extra
+              previews.
+            </p>
+
+            <div className="space-y-3">
+              {thumbnails.map((entry, index) => (
+                <div key={entry.id} className="relative">
+                  {/* Primary badge */}
+                  {index === 0 && (
+                    <span className="absolute top-2 left-2 z-10 bg-primary text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                      Primary (shown on Discover page)
+                    </span>
+                  )}
+                  <div className="relative aspect-video bg-muted rounded-lg overflow-hidden border border-border">
+                    <img
+                      src={entry.preview}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-7 w-7"
+                      onClick={() => handleRemoveThumbnail(entry.id)}
+                      data-ocid={`publish.thumbnail.delete_button.${index + 1}`}
+                      aria-label={`Remove thumbnail ${index + 1}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Add thumbnail zone — always visible */}
               <label
-                htmlFor="thumbnail-upload"
-                className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors"
+                htmlFor="thumbnail-add-input"
+                className="flex flex-col items-center justify-center gap-1.5 py-5 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                data-ocid="publish.thumbnail.upload_button"
               >
-                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Plus className="h-4 w-4" />
+                  <Upload className="h-4 w-4" />
+                </div>
                 <span className="text-sm text-muted-foreground">
-                  Click to upload thumbnail
+                  {thumbnails.length === 0
+                    ? "Click to upload thumbnail(s)"
+                    : "Add more thumbnails"}
                 </span>
                 <input
-                  id="thumbnail-upload"
+                  ref={addInputRef}
+                  id="thumbnail-add-input"
                   type="file"
                   accept="image/*"
-                  onChange={handleThumbnailChange}
+                  multiple
+                  onChange={handleAddThumbnails}
                   className="hidden"
                 />
               </label>
-            )}
+            </div>
           </div>
 
           {uploadProgress > 0 && uploadProgress < 100 && (
-            <div className="space-y-2">
+            <div className="space-y-2" data-ocid="publish.upload.loading_state">
               <div className="text-sm text-muted-foreground">
                 Uploading: {uploadProgress}%
               </div>
@@ -230,10 +285,15 @@ export default function PublishExperienceDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={createMutation.isPending}
+              data-ocid="publish.cancel_button"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={createMutation.isPending}
+              data-ocid="publish.submit_button"
+            >
               {createMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}

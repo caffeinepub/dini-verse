@@ -4,6 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "@tanstack/react-router";
 import { Settings, User } from "lucide-react";
 import RequireProfile from "../components/auth/RequireProfile";
+import {
+  getCurrentUsername,
+  getLocalSettings,
+} from "../hooks/useAccountSettings";
 import { useSessionAuth } from "../hooks/useSessionAuth";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -11,6 +15,11 @@ export default function Profile() {
   const { user } = useSessionAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const username = getCurrentUsername();
+  const localSettings = username ? getLocalSettings(username) : null;
+  const avatarDataUrl = localSettings?.avatarDataUrl ?? null;
+  const displayName = localSettings?.displayName || user?.displayName || "User";
 
   return (
     <RequireProfile>
@@ -25,12 +34,15 @@ export default function Profile() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-20 w-20">
+                      {avatarDataUrl && (
+                        <AvatarImage src={avatarDataUrl} alt={displayName} />
+                      )}
                       <AvatarFallback className="text-2xl">
-                        {user.displayName.charAt(0).toUpperCase()}
+                        {displayName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h2 className="text-2xl font-bold">{user.displayName}</h2>
+                      <h2 className="text-2xl font-bold">{displayName}</h2>
                       <p className="text-sm text-muted-foreground">
                         @{user.username}
                       </p>
@@ -64,7 +76,7 @@ export default function Profile() {
                       <p className="text-sm font-medium text-muted-foreground">
                         {t("profile.displayName")}
                       </p>
-                      <p className="text-base">{user.displayName}</p>
+                      <p className="text-base">{displayName}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">

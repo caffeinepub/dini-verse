@@ -60,7 +60,7 @@ export function getLocalSettings(username: string): LocalUserSettings {
   };
 }
 
-function saveLocalSettings(
+export function saveLocalSettings(
   username: string,
   settings: LocalUserSettings,
 ): void {

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload } from "lucide-react";
 import { useState } from "react";
 import BuilderCanvas from "../components/create/builder2d/BuilderCanvas";
 import DecalUploader from "../components/create/builder2d/DecalUploader";
@@ -9,12 +9,14 @@ import LayerControls from "../components/create/builder2d/LayerControls";
 import PropertiesPanel from "../components/create/builder2d/PropertiesPanel";
 import PropsPanel from "../components/create/builder2d/PropsPanel";
 import ShapePalette from "../components/create/builder2d/ShapePalette";
+import PublishExperienceDialog from "../components/experiences/PublishExperienceDialog";
 import { useBuilder2D } from "../hooks/useBuilder2D";
 
 export default function CreateGamesBuilder2D() {
   const navigate = useNavigate();
   const builder = useBuilder2D();
   const [showPropsPanel, setShowPropsPanel] = useState(false);
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col">
@@ -46,6 +48,15 @@ export default function CreateGamesBuilder2D() {
               onClick={() => builder.clearCanvas()}
             >
               Clear Canvas
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setPublishDialogOpen(true)}
+              className="gap-1.5"
+              data-ocid="builder.publish.primary_button"
+            >
+              <Upload className="h-4 w-4" />
+              Publish Experience
             </Button>
           </div>
         </div>
@@ -93,6 +104,11 @@ export default function CreateGamesBuilder2D() {
           )}
         </div>
       </div>
+
+      <PublishExperienceDialog
+        open={publishDialogOpen}
+        onOpenChange={setPublishDialogOpen}
+      />
     </div>
   );
 }

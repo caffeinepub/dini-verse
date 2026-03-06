@@ -9,9 +9,20 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Loader2, UserPlus } from "lucide-react";
 import { useState } from "react";
+import {
+  getLocalSettings,
+  saveLocalSettings,
+} from "../hooks/useAccountSettings";
 import { useSessionAuth } from "../hooks/useSessionAuth";
 
 export default function SignUp() {
@@ -22,6 +33,8 @@ export default function SignUp() {
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [gender, setGender] = useState("other");
+  const [language, setLanguage] = useState("en");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,9 +68,23 @@ export default function SignUp() {
         displayName: displayName.trim() || username.trim(),
         password,
       });
+
+      // Save gender and language to localStorage settings
+      const uname = username.trim();
+      const existing = getLocalSettings(uname);
+      saveLocalSettings(uname, {
+        ...existing,
+        gender: gender as "female" | "male" | "other",
+        language,
+      });
+
       navigate({ to: "/" });
-    } catch (err: any) {
-      setError(err.message || "Sign up failed. Please try again.");
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Sign up failed. Please try again.";
+      setError(msg);
     }
   };
 
@@ -76,7 +103,10 @@ export default function SignUp() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
-              <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+              <div
+                className="p-3 rounded-md bg-destructive/10 text-destructive text-sm"
+                data-ocid="signup.error_state"
+              >
                 {error}
               </div>
             )}
@@ -90,6 +120,7 @@ export default function SignUp() {
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
                 disabled={isLoading}
+                data-ocid="signup.username.input"
               />
             </div>
             <div className="space-y-2">
@@ -105,6 +136,7 @@ export default function SignUp() {
                 onChange={(e) => setDisplayName(e.target.value)}
                 autoComplete="name"
                 disabled={isLoading}
+                data-ocid="signup.displayname.input"
               />
             </div>
             <div className="space-y-2">
@@ -117,6 +149,7 @@ export default function SignUp() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
                 disabled={isLoading}
+                data-ocid="signup.password.input"
               />
             </div>
             <div className="space-y-2">
@@ -129,11 +162,58 @@ export default function SignUp() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 autoComplete="new-password"
                 disabled={isLoading}
+                data-ocid="signup.confirm-password.input"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gender</Label>
+              <Select
+                value={gender}
+                onValueChange={setGender}
+                disabled={isLoading}
+              >
+                <SelectTrigger id="gender" data-ocid="signup.gender.select">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="language">Language</Label>
+              <Select
+                value={language}
+                onValueChange={setLanguage}
+                disabled={isLoading}
+              >
+                <SelectTrigger id="language" data-ocid="signup.language.select">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="es">Español</SelectItem>
+                  <SelectItem value="fr">Français</SelectItem>
+                  <SelectItem value="pt">Português</SelectItem>
+                  <SelectItem value="de">Deutsch</SelectItem>
+                  <SelectItem value="tr">Türkçe</SelectItem>
+                  <SelectItem value="ru">Русский</SelectItem>
+                  <SelectItem value="vi">Tiếng Việt</SelectItem>
+                  <SelectItem value="ko">한국어</SelectItem>
+                  <SelectItem value="nl">Nederlands</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+              data-ocid="signup.submit_button"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -148,6 +228,7 @@ export default function SignUp() {
               <Link
                 to="/login"
                 className="text-primary hover:underline font-medium"
+                data-ocid="signup.login.link"
               >
                 Sign in
               </Link>

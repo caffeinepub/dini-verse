@@ -1,51 +1,52 @@
 # Dini.Verse
 
 ## Current State
-No existing project code. Full rebuild from scratch.
+
+- Full-stack gaming platform with Motoko backend and React/TypeScript frontend.
+- Authentication is localStorage-based (username + password, session token).
+- Settings page has profile picture upload/remove, display name, username, password, visibility, language, gender, theme, delete account.
+- SignUp page collects username, display name, password only — no gender or language selection.
+- Profile picture: upload button + "Remove" button shown when an image exists. Removing clears avatar but does not allow immediate re-upload in the same flow.
+- Groups page is a near-empty stub showing "Your Groups" placeholder with no functionality.
+- Profile picture avatar is used in Settings page but its usage across the whole platform (header, sidebar, profile page) needs to be confirmed/ensured.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Full on-platform username + password + display name authentication (no Internet Identity, no external redirects)
-- User sessions managed in Motoko backend
-- User settings: username (changeable every 7 days), display name (changeable daily), password (changeable daily), profile picture (letter avatar default, image upload option, removable), visibility toggle (Online/Offline Mode), gender (Female/Male/Other), language preference, light/dark mode toggle, delete account
-- Home page: dark-blue/white (light mode default), "Welcome back, [display name]!" greeting, recommended games grid, friend activity feed
-- Top navigation: Home, Discover, Avatar Shop, Create, Dini Bucks
-- Left sidebar: Profile, Inventory, Groups, Settings
-- Discover page: trending games by category (Adventure, Roleplay, Simulator), game cards with Play button, description, player count, thumbs up/down ratings
-- Avatar Shop: buy clothes, accessories, animations with Dini Bucks earned from games; items listed with price tags
-- Create page: two large containers — "Create a Game" (drag-and-drop 2D shapes, resize/rotate/layer, decals, sliders) and "Create UGC" (same toolset for accessories/models)
-- Dini Studio: canvas with 2D shapes (squares, circles, rectangles), resize/rotate/layer, decal image uploads, color/transparency/position sliders, save to inventory
-- Social features: friend requests, private messaging, party system, follow creators
-- Safety features: chat filters, reporting system, parental controls section in settings
-- Settings page: all account fields functional, no "unauthorized" errors for any logged-in user
-- Language switcher: English (default), Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, Dutch
-- Light/dark mode toggle affecting whole site
-- Platform logo (Dini.Verse branding) in header
-- Header background: light green (#cde5aa)
-- All text font: Builder Sans (Google Fonts)
-- No external redirects anywhere in the app
-- Dini Bucks virtual currency display and balance
+
+- **SignUp page — Gender selector**: A dropdown/select for Female, Male, or Other. Value stored in localStorage settings on account creation.
+- **SignUp page — Language selector**: A dropdown/select for all 10 supported languages (English, Spanish, French, Portuguese, German, Turkish, Russian, Vietnamese, Korean, Dutch). Value stored in localStorage settings on account creation.
+- **Settings page — Profile picture "Remove" becomes re-upload trigger**: When a profile picture is set, show only a "Remove" button. Clicking "Remove" clears the image AND immediately opens the file picker so the user can upload a new one in the same action. When no image is set, show "Upload" button as normal.
+- **Profile picture propagation**: Ensure the avatar (avatarDataUrl from localStorage settings) is displayed everywhere it appears across the platform — header user avatar, left sidebar, profile page, etc.
+- **Groups page — Full implementation** (all localStorage-based, no backend calls):
+  - **Groups list view**: Shows user's groups and a "Trending Groups" section. Has a "Create Group" button (costs 500 Dini Bucks, shown as a deduction from a local Dini Bucks balance).
+  - **Create Group flow**: Modal/dialog with group name input and thumbnail upload. First thumbnail becomes the primary one shown on Trending Groups.
+  - **Group detail view**: When clicking a group, shows the group detail with tabs for all sections below.
+  - **Member Management tab**: UI for creating roles, changing rankings, accepting join requests, banning/kicking members. Stored locally.
+  - **Revenue tab**: Shared treasury showing Dini Bucks balance from sales. UI for one-time and recurring payouts to members.
+  - **Group Experiences tab**: List of games owned by the group. Members with permission can create/edit games. Links to Create game flow.
+  - **Item Creation & Sales tab**: UI to create and sell clothing (shirts, pants) and UGC items. Shows items listed for sale.
+  - **Social tab**: Community wall for posts. Anyone can post a message. Posts are stored locally.
+  - **Audit Log tab**: Read-only log of group activities (member joins, role changes, payouts, etc.).
+  - **Allies/Enemies tab**: List of allied and rival groups. Buttons to add alliance or rivalry with another group.
 
 ### Modify
-- N/A (fresh build)
+
+- **Settings page — Profile picture section**: Change the button behavior so "Remove" triggers file picker for replacement (not just remove). Keep the "Upload" button for first-time upload when no image exists.
+- **SignUp page**: Add gender and language fields before the submit button.
 
 ### Remove
-- N/A (fresh build)
+
+- Nothing removed.
 
 ## Implementation Plan
-1. Backend: user accounts (signup/login/logout/session), settings CRUD with field-level cooldowns, friend system, messaging, Dini Bucks balance, game catalog, avatar shop items, inventory
-2. Backend: auto-create default settings for every new user on signup
-3. Frontend: AuthContext wrapping entire app, in-platform login/signup forms (no external auth)
-4. Frontend: persistent session check on load — show login/signup if not authenticated, show main app if authenticated
-5. Frontend: Header with logo, nav, Dini Bucks balance, logout button (no signup button when logged in)
-6. Frontend: Left sidebar with Profile, Inventory, Groups, Settings links
-7. Frontend: Home page with welcome message using display name, recommended games grid, friend activity
-8. Frontend: Discover page with category tabs and game cards
-9. Frontend: Avatar Shop page with items and Dini Bucks purchase flow
-10. Frontend: Create page with two large containers linking to Dini Studio modes
-11. Frontend: Dini Studio canvas with 2D shapes, decal uploads, property sliders
-12. Frontend: Settings page — all fields functional, cooldown enforcement, profile picture upload/remove, visibility, gender, language, dark mode, delete account
-13. Frontend: Translation provider wrapping all pages, language switcher in settings
-14. Frontend: Light/dark mode context applied globally
-15. Frontend: No window.open() or external href links anywhere
+
+1. **SignUp.tsx**: Add `gender` state (default "other") and `language` state (default "en"). Add Select components for both. On signup success, create default settings in localStorage with the chosen gender and language using `saveLocalSettings`.
+2. **Settings.tsx — Profile picture**: Change the "Remove" button logic: clicking Remove calls `handleRemoveAvatar` AND then opens the file input immediately after. Remove the separate "Upload" button when an image already exists (only show "Remove" which re-opens picker). When no image exists, show "Upload Photo" button as before.
+3. **Profile picture propagation**: Read `getLocalSettings(username).avatarDataUrl` in `SiteHeader`, `LeftSidebar`, and `Profile` page avatars so the uploaded image is always shown.
+4. **Groups.tsx**: Full replacement with localStorage-based groups system:
+   - Groups stored in `localStorage` under key `diniverse_groups`.
+   - Create Group modal (name + thumbnail upload, deduct 500 Dini Bucks from `diniverse_dinibucks_{username}`).
+   - Group list and Trending Groups.
+   - Group detail page with tabbed navigation covering all 7 sections.
+   - All data (members, roles, posts, audit log, allies/enemies) stored in localStorage.

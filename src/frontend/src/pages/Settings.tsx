@@ -46,7 +46,7 @@ import {
   X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Gender,
@@ -210,10 +210,13 @@ export default function Settings() {
     }
   };
 
-  const handleRemoveAvatar = async () => {
+  const handleRemoveAndReupload = async () => {
     try {
       await updateAvatarMutation.mutateAsync(null);
-      toast.success(t("settings.avatar.removed"));
+      // After clearing, open file picker so user can upload a new one
+      setTimeout(() => {
+        fileInputRef.current?.click();
+      }, 100);
     } catch {
       toast.error(t("settings.avatar.removeError"));
     }
@@ -433,35 +436,47 @@ export default function Settings() {
             </Avatar>
             <div className="flex flex-col gap-2">
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingAvatar}
-                  data-ocid="settings.avatar.upload_button"
-                >
-                  {isUploadingAvatar ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                      {t("settings.avatar.uploading")}
-                    </>
-                  ) : (
-                    <>
-                      <Camera className="w-4 h-4 mr-1" />
-                      {t("settings.avatar.upload")}
-                    </>
-                  )}
-                </Button>
-                {currentAvatarUrl && (
+                {currentAvatarUrl ? (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleRemoveAvatar}
-                    disabled={updateAvatarMutation.isPending}
+                    onClick={handleRemoveAndReupload}
+                    disabled={
+                      updateAvatarMutation.isPending || isUploadingAvatar
+                    }
                     data-ocid="settings.avatar.delete_button"
                   >
-                    <X className="w-4 h-4 mr-1" />
-                    {t("settings.avatar.remove")}
+                    {updateAvatarMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                        Removing...
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-4 h-4 mr-1" />
+                        Remove
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                    data-ocid="settings.avatar.upload_button"
+                  >
+                    {isUploadingAvatar ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                        {t("settings.avatar.uploading")}
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-4 h-4 mr-1" />
+                        {t("settings.avatar.upload")}
+                      </>
+                    )}
                   </Button>
                 )}
               </div>
