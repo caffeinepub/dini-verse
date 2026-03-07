@@ -153,6 +153,7 @@ interface Group {
 const GROUPS_KEY = "diniverse_groups";
 const GROUP_COST = 500;
 const RENAME_COST = 100;
+const ROLE_COST = 50;
 
 function getGroups(): Group[] {
   try {
@@ -299,6 +300,14 @@ function MemberManagementTab({
       toast.error("Role already exists");
       return;
     }
+    const bucks = getDiniBucks(currentUser);
+    if (bucks < ROLE_COST) {
+      toast.error(
+        `Insufficient Dini Bucks. You need ${ROLE_COST} but have ${bucks}.`,
+      );
+      return;
+    }
+    setDiniBucks(currentUser, bucks - ROLE_COST);
     let updated: Group = {
       ...group,
       roles: [...group.roles, newRole.trim()],
@@ -311,7 +320,9 @@ function MemberManagementTab({
     onUpdate(updated);
     setNewRole("");
     setShowRoleDialog(false);
-    toast.success(`Role "${newRole.trim()}" created`);
+    toast.success(
+      `Role "${newRole.trim()}" created! ${ROLE_COST} Dini Bucks deducted.`,
+    );
   };
 
   const handleRoleChange = (memberUsername: string, role: string) => {
@@ -345,7 +356,7 @@ function MemberManagementTab({
               data-ocid="groups.member.open_modal_button"
             >
               <Plus className="w-3 h-3 mr-1" />
-              Create Role
+              Create Role ({ROLE_COST} DB)
             </Button>
           )}
         </div>
@@ -501,7 +512,7 @@ function MemberManagementTab({
             <DialogTitle>Create Role</DialogTitle>
             <DialogDescription>Add a new role to the group.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-2">
+          <div className="space-y-3 py-2">
             <Label htmlFor="roleName">Role Name</Label>
             <Input
               id="roleName"
@@ -511,6 +522,15 @@ function MemberManagementTab({
               onKeyDown={(e) => e.key === "Enter" && handleCreateRole()}
               data-ocid="groups.role.input"
             />
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                <span className="font-semibold">
+                  {ROLE_COST} Dini Bucks will be deducted
+                </span>{" "}
+                from your account to create this role.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -524,7 +544,7 @@ function MemberManagementTab({
               onClick={handleCreateRole}
               data-ocid="groups.role.confirm_button"
             >
-              Create
+              Create ({ROLE_COST} Dini Bucks)
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -567,7 +587,7 @@ function RevenueTab({
       return;
     }
     if (amt > group.treasury) {
-      toast.error("Insufficient treasury funds");
+      toast.error("Insufficient Dini Buck Funds");
       return;
     }
     let updated: Group = { ...group, treasury: group.treasury - amt };
@@ -629,11 +649,11 @@ function RevenueTab({
 
   return (
     <div className="space-y-6">
-      {/* Treasury balance */}
+      {/* Dini Buck Funds balance */}
       <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
         <Coins className="w-8 h-8 text-primary" />
         <div>
-          <p className="text-sm text-muted-foreground">Treasury Balance</p>
+          <p className="text-sm text-muted-foreground">Dini Buck Funds</p>
           <p className="text-2xl font-bold">
             {group.treasury.toLocaleString()} Dini Bucks
           </p>
@@ -2018,7 +2038,7 @@ function GroupDetail({
             <h2 className="text-2xl font-bold truncate">{group.name}</h2>
             <p className="text-sm text-muted-foreground">
               {group.members.filter((m) => m.status === "active").length}{" "}
-              members · {group.treasury} Dini Bucks treasury
+              members · {group.treasury} Dini Buck Funds
             </p>
           </div>
         </div>
@@ -2418,34 +2438,102 @@ export default function Groups() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {groups.map((group, idx) => (
-              <button
-                key={group.id}
-                type="button"
-                className="text-left p-3 border rounded-xl hover:border-primary/50 hover:bg-accent/50 transition-all group"
-                onClick={() => setSelectedGroup(group)}
-                data-ocid={`groups.trending.item.${idx + 1}`}
-              >
-                <div className="aspect-square rounded-lg overflow-hidden bg-primary/10 mb-2 flex items-center justify-center">
-                  {group.thumbnailDataUrl ? (
-                    <img
-                      src={group.thumbnailDataUrl}
-                      alt={group.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Image className="w-8 h-8 text-muted-foreground" />
+            {groups.map((group, idx) => {
+              const isMember = group.members.some(
+                (m) => m.username === username && m.status === "active",
+              );
+              const hasRequested = group.joinRequests.some(
+                (r) => r.username === username,
+              );
+              return (
+                <div
+                  key={group.id}
+                  className="text-left p-3 border rounded-xl hover:border-primary/50 hover:bg-accent/50 transition-all"
+                  data-ocid={`groups.trending.item.${idx + 1}`}
+                >
+                  <button
+                    type="button"
+                    className="w-full text-left"
+                    onClick={() => setSelectedGroup(group)}
+                  >
+                    <div className="aspect-square rounded-lg overflow-hidden bg-primary/10 mb-2 flex items-center justify-center">
+                      {group.thumbnailDataUrl ? (
+                        <img
+                          src={group.thumbnailDataUrl}
+                          alt={group.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Image className="w-8 h-8 text-muted-foreground" />
+                      )}
+                    </div>
+                    <p className="font-semibold text-sm truncate hover:text-primary transition-colors">
+                      {group.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {
+                        group.members.filter((m) => m.status === "active")
+                          .length
+                      }{" "}
+                      members
+                    </p>
+                  </button>
+                  {!isMember && (
+                    <Button
+                      size="sm"
+                      variant={hasRequested ? "outline" : "default"}
+                      className="w-full text-xs h-7"
+                      disabled={hasRequested}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!username) {
+                          toast.error(
+                            "Please log in to request joining a group",
+                          );
+                          return;
+                        }
+                        if (hasRequested) return;
+                        const allGroups = getGroups();
+                        const updated = allGroups.map((g) =>
+                          g.id === group.id
+                            ? {
+                                ...g,
+                                joinRequests: [
+                                  ...g.joinRequests,
+                                  {
+                                    username: username!,
+                                    requestedAt: Date.now(),
+                                  },
+                                ],
+                              }
+                            : g,
+                        );
+                        saveGroups(updated);
+                        setGroupsState(updated);
+                        toast.success(`Join request sent to "${group.name}"`);
+                      }}
+                      data-ocid={`groups.trending.secondary_button.${idx + 1}`}
+                    >
+                      {hasRequested ? "Request Sent" : "Request to Join"}
+                    </Button>
+                  )}
+                  {isMember && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs h-7"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedGroup(group);
+                      }}
+                      data-ocid={`groups.trending.primary_button.${idx + 1}`}
+                    >
+                      View Group
+                    </Button>
                   )}
                 </div>
-                <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
-                  {group.name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {group.members.filter((m) => m.status === "active").length}{" "}
-                  members
-                </p>
-              </button>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

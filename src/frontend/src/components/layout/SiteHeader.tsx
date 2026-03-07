@@ -2,13 +2,16 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { getCurrentUsername } from "../../hooks/useAccountSettings";
 import { useTranslation } from "../../hooks/useTranslation";
 import AuthButtons from "../auth/AuthButtons";
+import NotificationsPanel from "../notifications/NotificationsPanel";
 
 export default function SiteHeader() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { t } = useTranslation();
+  const username = getCurrentUsername();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-header backdrop-blur supports-[backdrop-filter]:bg-header/90">
@@ -65,7 +68,8 @@ export default function SiteHeader() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex">
+          <div className="hidden md:flex items-center gap-2">
+            <NotificationsPanel username={username} />
             <AuthButtons />
           </div>
           <Button
