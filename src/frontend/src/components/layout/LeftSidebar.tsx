@@ -1,6 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "@tanstack/react-router";
-import { MessageCircle, Package, Settings, Users } from "lucide-react";
+import {
+  MessageCircle,
+  Package,
+  Settings,
+  UserSearch,
+  Users,
+} from "lucide-react";
 import {
   getCurrentUsername,
   getLocalSettings,
@@ -18,6 +24,7 @@ export default function LeftSidebar() {
   const navItems = [
     { to: "/profile", label: t("nav.profile") },
     { to: "/social", label: t("nav.social"), icon: MessageCircle },
+    { to: "/people", label: "People", icon: UserSearch },
     { to: "/inventory", label: t("nav.inventory"), icon: Package },
     { to: "/groups", label: t("nav.groups"), icon: Users },
     { to: "/settings", label: t("nav.settings"), icon: Settings },
@@ -48,6 +55,7 @@ export default function LeftSidebar() {
         {/* Other nav items */}
         {navItems.slice(1).map((item) => {
           const Icon = item.icon;
+          const isPeopleLink = item.to === "/people";
           return (
             <Link
               key={item.to}
@@ -56,6 +64,7 @@ export default function LeftSidebar() {
               activeProps={{
                 className: "bg-accent text-accent-foreground",
               }}
+              data-ocid={isPeopleLink ? "people.link" : undefined}
             >
               {Icon && <Icon className="h-5 w-5" />}
               {item.label}

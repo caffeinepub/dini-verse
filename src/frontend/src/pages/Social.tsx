@@ -1,24 +1,18 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import AccountsDisabledNotice from "../components/auth/AccountsDisabledNotice";
-import FollowingPanel from "../components/social/FollowingPanel";
+import FindFriendsPanel from "../components/social/FindFriendsPanel";
 import FriendsPanel from "../components/social/FriendsPanel";
 import MessagesPanel from "../components/social/MessagesPanel";
-import PartiesPanel from "../components/social/PartiesPanel";
 import { useSessionAuth } from "../hooks/useSessionAuth";
+import { useGetFriends } from "../hooks/useSocialFriends";
 import { useTranslation } from "../hooks/useTranslation";
 
 export default function Social() {
   const { isAuthenticated } = useSessionAuth();
   const [activeTab, setActiveTab] = useState("friends");
   const { t } = useTranslation();
+  const { data: friends, isLoading: friendsLoading } = useGetFriends();
 
   if (!isAuthenticated) {
     return (
@@ -39,27 +33,31 @@ export default function Social() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="friends">{t("social.friends")}</TabsTrigger>
-            <TabsTrigger value="messages">{t("social.messages")}</TabsTrigger>
-            <TabsTrigger value="parties">{t("social.parties")}</TabsTrigger>
-            <TabsTrigger value="following">{t("social.following")}</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="friends" data-ocid="social.friends.tab">
+              {t("social.friends")}
+            </TabsTrigger>
+            <TabsTrigger value="find" data-ocid="social.find_friends.tab">
+              Find Friends
+            </TabsTrigger>
+            <TabsTrigger value="messages" data-ocid="social.messages.tab">
+              {t("social.messages")}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="friends" className="mt-6">
             <FriendsPanel />
           </TabsContent>
 
+          <TabsContent value="find" className="mt-6">
+            <FindFriendsPanel />
+          </TabsContent>
+
           <TabsContent value="messages" className="mt-6">
-            <MessagesPanel />
-          </TabsContent>
-
-          <TabsContent value="parties" className="mt-6">
-            <PartiesPanel />
-          </TabsContent>
-
-          <TabsContent value="following" className="mt-6">
-            <FollowingPanel />
+            <MessagesPanel
+              friends={friends ?? []}
+              friendsLoading={friendsLoading}
+            />
           </TabsContent>
         </Tabs>
       </div>

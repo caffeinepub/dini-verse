@@ -17,13 +17,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Loader2, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, Loader2, UserPlus, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   getLocalSettings,
   saveLocalSettings,
 } from "../hooks/useAccountSettings";
 import { useSessionAuth } from "../hooks/useSessionAuth";
+
+type UsernameStatus = "idle" | "checking" | "available" | "taken";
+
+function getStoredUsers(): Record<
+  string,
+  { displayName: string; passwordHash: string }
+> {
+  try {
+    const raw = localStorage.getItem("diniverse_users");
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -36,6 +50,29 @@ export default function SignUp() {
   const [gender, setGender] = useState("other");
   const [language, setLanguage] = useState("en");
   const [error, setError] = useState("");
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
+
+  // Debounced username availability check
+  useEffect(() => {
+    if (username.trim().length < 3) {
+      setUsernameStatus("idle");
+      return;
+    }
+
+    // While typing — set to checking
+    setUsernameStatus("checking");
+
+    const timer = setTimeout(() => {
+      const users = getStoredUsers();
+      if (users[username.trim().toLowerCase()] || users[username.trim()]) {
+        setUsernameStatus("taken");
+      } else {
+        setUsernameStatus("available");
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [username]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +84,10 @@ export default function SignUp() {
     }
     if (username.trim().length < 3) {
       setError("Username must be at least 3 characters");
+      return;
+    }
+    if (usernameStatus === "taken") {
+      setError("That username is already taken. Please choose another.");
       return;
     }
     if (!password) {
@@ -88,6 +129,8 @@ export default function SignUp() {
     }
   };
 
+  const isSubmitDisabled = isLoading || usernameStatus === "taken";
+
   return (
     <div className="flex items-center justify-center min-h-[80vh] p-4">
       <Card className="w-full max-w-md">
@@ -122,6 +165,38 @@ export default function SignUp() {
                 disabled={isLoading}
                 data-ocid="signup.username.input"
               />
+              {/* Username availability status */}
+              {username.trim().length >= 3 && usernameStatus !== "idle" && (
+                <div
+                  className="flex items-center gap-1.5 text-xs"
+                  data-ocid="signup.username_status"
+                >
+                  {usernameStatus === "checking" && (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                      <span className="text-muted-foreground">
+                        Checking availability…
+                      </span>
+                    </>
+                  )}
+                  {usernameStatus === "available" && (
+                    <>
+                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                      <span className="text-green-600 font-medium">
+                        Username is available
+                      </span>
+                    </>
+                  )}
+                  {usernameStatus === "taken" && (
+                    <>
+                      <XCircle className="w-3 h-3 text-destructive" />
+                      <span className="text-destructive font-medium">
+                        Username is already taken
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="displayName">
@@ -211,7 +286,7 @@ export default function SignUp() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading}
+              disabled={isSubmitDisabled}
               data-ocid="signup.submit_button"
             >
               {isLoading ? (

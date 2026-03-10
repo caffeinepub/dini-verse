@@ -35,6 +35,7 @@ import {
   AlertTriangle,
   Camera,
   Eye,
+  Gift,
   Globe,
   Loader2,
   Lock,
@@ -68,6 +69,11 @@ import {
 } from "../hooks/useAccountSettings";
 import { useSessionAuth } from "../hooks/useSessionAuth";
 import { useTranslation } from "../hooks/useTranslation";
+import {
+  getDiniBucks,
+  getCurrentUser as getSocialUser,
+  redeemPromoCode,
+} from "../utils/socialStorage";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -120,8 +126,24 @@ export default function Settings() {
   // Delete account confirmation
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
+  // Promo code state
+  const [promoCode, setPromoCode] = useState("");
+  const [isRedeemingPromo, setIsRedeemingPromo] = useState(false);
+  const [diniBucksBalance, setDiniBucksBalance] = useState<number | null>(null);
+
   const username = getCurrentUsername();
   const rawSettings = username ? getLocalSettings(username) : null;
+
+  // Load Dini Bucks balance
+  const loadBalance = () => {
+    const socialUsername = getSocialUser();
+    if (socialUsername) {
+      setDiniBucksBalance(getDiniBucks(socialUsername));
+    }
+  };
+  if (diniBucksBalance === null && username) {
+    loadBalance();
+  }
 
   // Cooldown checks
   const now = Date.now();
@@ -383,6 +405,33 @@ export default function Settings() {
       toast.error(msg);
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const handleRedeemPromo = async () => {
+    const socialUsername = getSocialUser();
+    if (!socialUsername) {
+      toast.error("Please log in to redeem promo codes");
+      return;
+    }
+    if (!promoCode.trim()) {
+      toast.error("Please enter a promo code");
+      return;
+    }
+    setIsRedeemingPromo(true);
+    try {
+      const result = redeemPromoCode(socialUsername, promoCode.trim());
+      if (result.success) {
+        toast.success(
+          `Promo code redeemed! +${result.amount} Dini Bucks added to your balance.`,
+        );
+        setPromoCode("");
+        setDiniBucksBalance(getDiniBucks(socialUsername));
+      } else {
+        toast.error(result.error || "Invalid promo code");
+      }
+    } finally {
+      setIsRedeemingPromo(false);
     }
   };
 
@@ -820,6 +869,51 @@ export default function Settings() {
               "Change Password"
             )}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Promo Codes */}
+      <Card data-ocid="settings.promo.card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Gift className="w-5 h-5" />
+            Promo Codes
+          </CardTitle>
+          <CardDescription>
+            Redeem a promo code to earn Dini Bucks
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-md bg-muted/50 border px-4 py-3 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Your balance</span>
+            <span className="font-bold text-lg text-primary">
+              {diniBucksBalance !== null
+                ? diniBucksBalance.toLocaleString()
+                : "—"}{" "}
+              Dini Bucks
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+              placeholder="Enter promo code (e.g. WELCOME)"
+              onKeyDown={(e) => e.key === "Enter" && handleRedeemPromo()}
+              data-ocid="settings.promo.input"
+              className="uppercase"
+            />
+            <Button
+              onClick={handleRedeemPromo}
+              disabled={isRedeemingPromo || !promoCode.trim()}
+              data-ocid="settings.promo.submit_button"
+            >
+              {isRedeemingPromo ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Redeem"
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

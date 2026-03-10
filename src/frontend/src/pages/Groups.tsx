@@ -43,6 +43,7 @@ import {
   Ban,
   BookOpen,
   Coins,
+  CornerDownRight,
   Crown,
   Edit2,
   Eye,
@@ -96,12 +97,21 @@ interface GroupItem {
   createdAt: number;
 }
 
+interface GroupReply {
+  id: string;
+  author: string;
+  content: string;
+  createdAt: number;
+}
+
 interface GroupPost {
   id: string;
   author: string;
   content: string;
   imageDataUrl?: string;
   createdAt: number;
+  edited?: boolean;
+  replies?: GroupReply[];
 }
 
 interface AuditEntry {
@@ -1142,6 +1152,8 @@ function SocialTab({
   );
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1192,7 +1204,7 @@ function SocialTab({
     const updated: Group = {
       ...group,
       posts: group.posts.map((p) =>
-        p.id === postId ? { ...p, content: editContent } : p,
+        p.id === postId ? { ...p, content: editContent, edited: true } : p,
       ),
     };
     onUpdate(updated);
@@ -1224,6 +1236,29 @@ function SocialTab({
     toast.success("Post deleted");
     // suppress unused warning
     void idx;
+  };
+
+  const handleSendReply = (postId: string) => {
+    if (!replyContent.trim()) {
+      toast.error("Reply cannot be empty");
+      return;
+    }
+    const reply: GroupReply = {
+      id: generateId(),
+      author: currentUser,
+      content: replyContent.trim(),
+      createdAt: Date.now(),
+    };
+    const updated: Group = {
+      ...group,
+      posts: group.posts.map((p) =>
+        p.id === postId ? { ...p, replies: [reply, ...(p.replies ?? [])] } : p,
+      ),
+    };
+    onUpdate(updated);
+    setReplyingToId(null);
+    setReplyContent("");
+    toast.success("Reply sent!");
   };
 
   const sortedPosts = [...group.posts].sort(
@@ -1384,12 +1419,94 @@ function SocialTab({
                       {post.content && (
                         <p className="text-sm">{post.content}</p>
                       )}
+                      {post.edited && (
+                        <span className="text-xs text-muted-foreground italic">
+                          (Edited)
+                        </span>
+                      )}
                       {post.imageDataUrl && (
                         <img
                           src={post.imageDataUrl}
                           alt="Post attachment"
                           className="rounded-lg max-h-48 object-contain"
                         />
+                      )}
+                      {/* Reply button */}
+                      <div className="flex items-center gap-1 pt-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() =>
+                            setReplyingToId(
+                              replyingToId === post.id ? null : post.id,
+                            )
+                          }
+                          data-ocid={`groups.social.secondary_button.${idx + 1}`}
+                        >
+                          <CornerDownRight className="w-3 h-3 mr-1" />
+                          Reply
+                        </Button>
+                      </div>
+                      {/* Reply composer */}
+                      {replyingToId === post.id && (
+                        <div className="mt-2 space-y-2 pl-4 border-l-2 border-muted">
+                          <Textarea
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                            placeholder="Write a reply..."
+                            rows={2}
+                            data-ocid="groups.social.textarea"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleSendReply(post.id)}
+                              data-ocid="groups.social.submit_button"
+                            >
+                              Send Reply
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setReplyingToId(null);
+                                setReplyContent("");
+                              }}
+                              data-ocid="groups.social.cancel_button"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {/* Replies list */}
+                      {(post.replies ?? []).length > 0 && (
+                        <div className="mt-2 space-y-2 pl-4 border-l-2 border-muted">
+                          {(post.replies ?? []).map((reply) => (
+                            <div
+                              key={reply.id}
+                              className="flex items-start gap-2"
+                            >
+                              <Avatar className="h-5 w-5">
+                                <AvatarFallback className="text-xs">
+                                  {reply.author.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="flex items-center gap-1">
+                                  <span className="font-medium text-xs">
+                                    {reply.author}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatRelativeTime(reply.createdAt)}
+                                  </span>
+                                </div>
+                                <p className="text-xs">{reply.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </>
                   )}

@@ -19,7 +19,9 @@ import Groups from "./pages/Groups";
 import Home from "./pages/Home";
 import Inventory from "./pages/Inventory";
 import Login from "./pages/Login";
+import People from "./pages/People";
 import Profile from "./pages/Profile";
+import PublicProfile from "./pages/PublicProfile";
 import Settings from "./pages/Settings";
 import SignUp from "./pages/SignUp";
 import Social from "./pages/Social";
@@ -118,6 +120,18 @@ const createUGCAccessoriesRoute = createRoute({
   component: CreateUGCAccessories,
 });
 
+const peopleRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/people",
+  component: People,
+});
+
+const publicProfileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/people/$username",
+  component: PublicProfile,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   discoverRoute,
@@ -134,6 +148,8 @@ const routeTree = rootRoute.addChildren([
   socialRoute,
   createGamesBuilder2DRoute,
   createUGCAccessoriesRoute,
+  peopleRoute,
+  publicProfileRoute,
 ]);
 
 const router = createRouter({ routeTree });

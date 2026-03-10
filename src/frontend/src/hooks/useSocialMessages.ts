@@ -1,50 +1,145 @@
-import type { Principal } from "@icp-sdk/core/principal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useActor } from "./useActor";
+import {
+  type ChatMessage,
+  getCurrentUser,
+  getMessages,
+  saveMessages,
+} from "../utils/socialStorage";
 
-// Define Message type locally since backend doesn't export it yet
-export interface Message {
-  id: number;
-  sender: Principal;
-  receiver: Principal;
-  content: string;
-  timestamp: bigint;
-  read: boolean;
+function genId(): string {
+  return `${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
-export function useGetMessages(receiver: Principal | null) {
-  const { actor, isFetching: actorFetching } = useActor();
+export type { ChatMessage };
 
-  return useQuery<Message[]>({
-    queryKey: ["messages", receiver?.toString()],
-    queryFn: async () => {
-      if (!actor || !receiver) return [];
-      // TODO: Backend method not yet implemented
-      return [];
+export function useGetMessages(friendUsername: string | null) {
+  return useQuery<ChatMessage[]>({
+    queryKey: ["social", "messages", friendUsername],
+    queryFn: () => {
+      const me = getCurrentUser();
+      if (!me || !friendUsername) return [];
+      return getMessages(me, friendUsername);
     },
-    enabled: !!actor && !actorFetching && !!receiver,
+    enabled: !!friendUsername,
+    refetchInterval: 2000,
   });
 }
 
 export function useSendMessage() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      receiver: _receiver,
-      content: _content,
+      to,
+      content,
     }: {
-      receiver: Principal;
+      to: string;
       content: string;
     }) => {
-      if (!actor) throw new Error("Actor not available");
-      // TODO: Backend method not yet implemented
-      throw new Error("sendMessage not yet implemented in backend");
+      const me = getCurrentUser();
+      if (!me) throw new Error("Not authenticated");
+      const msgs = getMessages(me, to);
+      msgs.push({
+        id: genId(),
+        sender: me,
+        type: "text",
+        content,
+        timestamp: Date.now(),
+        deleted: false,
+      });
+      saveMessages(me, to, msgs);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["messages", variables.receiver.toString()],
+        queryKey: ["social", "messages", variables.to],
+      });
+    },
+  });
+}
+
+export function useSendMedia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      to,
+      dataUrl,
+      mediaType,
+    }: {
+      to: string;
+      dataUrl: string;
+      mediaType: "image" | "video";
+    }) => {
+      const me = getCurrentUser();
+      if (!me) throw new Error("Not authenticated");
+      const msgs = getMessages(me, to);
+      msgs.push({
+        id: genId(),
+        sender: me,
+        type: mediaType,
+        content: dataUrl,
+        timestamp: Date.now(),
+        deleted: false,
+      });
+      saveMessages(me, to, msgs);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["social", "messages", variables.to],
+      });
+    },
+  });
+}
+
+export function useSendGif() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ to, gifUrl }: { to: string; gifUrl: string }) => {
+      const me = getCurrentUser();
+      if (!me) throw new Error("Not authenticated");
+      const msgs = getMessages(me, to);
+      msgs.push({
+        id: genId(),
+        sender: me,
+        type: "gif",
+        content: gifUrl,
+        gifUrl,
+        timestamp: Date.now(),
+        deleted: false,
+      });
+      saveMessages(me, to, msgs);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["social", "messages", variables.to],
+      });
+    },
+  });
+}
+
+export function useDeleteMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      friendUsername,
+      messageId,
+    }: {
+      friendUsername: string;
+      messageId: string;
+    }) => {
+      const me = getCurrentUser();
+      if (!me) throw new Error("Not authenticated");
+      const msgs = getMessages(me, friendUsername);
+      const updated = msgs.map((m) =>
+        m.id === messageId && m.sender === me ? { ...m, deleted: true } : m,
+      );
+      saveMessages(me, friendUsername, updated);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["social", "messages", variables.friendUsername],
       });
     },
   });

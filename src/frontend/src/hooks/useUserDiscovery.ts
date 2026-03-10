@@ -1,20 +1,38 @@
-import type { Principal } from "@icp-sdk/core/principal";
 import { useQuery } from "@tanstack/react-query";
+import {
+  getAllUsers,
+  getCurrentUser,
+  getUserAvatarUrl,
+  getUserDisplayName,
+} from "../utils/socialStorage";
 
-// Temporary user type until backend is updated
-interface UserData {
+export interface DiscoveredUser {
+  username: string;
   displayName: string;
-  avatar?: any;
+  avatarUrl: string | null;
 }
 
 export function useSearchUsers(searchTerm: string) {
-  return useQuery<Array<[Principal, UserData]>>({
+  return useQuery<DiscoveredUser[]>({
     queryKey: ["users", "search", searchTerm],
-    queryFn: async () => {
-      // Backend method doesn't exist yet - return empty array
-      // TODO: Replace with session-based user search
-      return [];
+    queryFn: () => {
+      const me = getCurrentUser();
+      const allUsers = getAllUsers();
+      const lower = searchTerm.toLowerCase();
+      return allUsers
+        .filter(
+          (u) =>
+            u !== me &&
+            (u.toLowerCase().includes(lower) ||
+              getUserDisplayName(u).toLowerCase().includes(lower)),
+        )
+        .map((username) => ({
+          username,
+          displayName: getUserDisplayName(username),
+          avatarUrl: getUserAvatarUrl(username),
+        }))
+        .slice(0, 20);
     },
-    enabled: false, // Disabled until backend implements session auth
+    enabled: searchTerm.trim().length > 0,
   });
 }

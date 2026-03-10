@@ -1,86 +1,177 @@
-import type { Principal } from "@icp-sdk/core/principal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useActor } from "./useActor";
+import {
+  getAllUsers,
+  getCurrentUser,
+  getFriends,
+  getPendingIncoming,
+  getPendingOutgoing,
+  getUserAvatarUrl,
+  getUserDisplayName,
+  getUserVisibility,
+  hasPendingRequestTo,
+  isFriendWith,
+  respondToRequest,
+  sendFriendRequest,
+  unfriend,
+} from "../utils/socialStorage";
 
-export function useGetFriendsList() {
-  const { actor, isFetching: actorFetching } = useActor();
+export interface FriendInfo {
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isOnline: boolean;
+}
 
-  return useQuery<Principal[]>({
-    queryKey: ["friends"],
-    queryFn: async () => {
-      if (!actor) return [];
-      // TODO: Backend method not yet implemented
-      return [];
+export interface UserSearchResult {
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  status: "none" | "pending_outgoing" | "pending_incoming" | "friends";
+}
+
+export function useGetFriends() {
+  return useQuery<FriendInfo[]>({
+    queryKey: ["social", "friends"],
+    queryFn: () => {
+      const me = getCurrentUser();
+      if (!me) return [];
+      return getFriends(me).map((username) => ({
+        username,
+        displayName: getUserDisplayName(username),
+        avatarUrl: getUserAvatarUrl(username),
+        isOnline: getUserVisibility(username) === "online",
+      }));
     },
-    enabled: !!actor && !actorFetching,
+    refetchInterval: 5000,
   });
 }
 
-export function useGetPendingFriendRequests() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<Principal[]>({
-    queryKey: ["friendRequests", "pending"],
-    queryFn: async () => {
-      if (!actor) return [];
-      // TODO: Backend method not yet implemented
-      return [];
+export function useGetIncomingRequests() {
+  return useQuery({
+    queryKey: ["social", "requests", "incoming"],
+    queryFn: () => {
+      const me = getCurrentUser();
+      if (!me) return [];
+      return getPendingIncoming(me).map((r) => ({
+        ...r,
+        fromDisplayName: getUserDisplayName(r.from),
+        fromAvatarUrl: getUserAvatarUrl(r.from),
+      }));
     },
-    enabled: !!actor && !actorFetching,
+    refetchInterval: 5000,
+  });
+}
+
+export function useGetOutgoingRequests() {
+  return useQuery({
+    queryKey: ["social", "requests", "outgoing"],
+    queryFn: () => {
+      const me = getCurrentUser();
+      if (!me) return [];
+      return getPendingOutgoing(me).map((r) => ({
+        ...r,
+        toDisplayName: getUserDisplayName(r.to),
+        toAvatarUrl: getUserAvatarUrl(r.to),
+      }));
+    },
+    refetchInterval: 5000,
   });
 }
 
 export function useSendFriendRequest() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (_target: Principal) => {
-      if (!actor) throw new Error("Actor not available");
-      // TODO: Backend method not yet implemented
-      throw new Error("sendFriendRequest not yet implemented in backend");
+    mutationFn: async (targetUsername: string) => {
+      const me = getCurrentUser();
+      if (!me) throw new Error("Not authenticated");
+      if (targetUsername === me)
+        throw new Error("Cannot send friend request to yourself");
+      if (isFriendWith(me, targetUsername)) throw new Error("Already friends");
+      if (hasPendingRequestTo(me, targetUsername))
+        throw new Error("Friend request already sent");
+      sendFriendRequest(me, targetUsername);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["social"] });
     },
   });
 }
 
 export function useRespondToFriendRequest() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      from: _from,
-      action: _action,
+      from,
+      action,
     }: {
-      from: Principal;
+      from: string;
       action: "accept" | "decline";
     }) => {
-      if (!actor) throw new Error("Actor not available");
-      // TODO: Backend method not yet implemented
-      throw new Error("respondToFriendRequest not yet implemented in backend");
+      const me = getCurrentUser();
+      if (!me) throw new Error("Not authenticated");
+      respondToRequest(from, me, action);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
-      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["social"] });
     },
   });
 }
 
 export function useUnfriend() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (_target: Principal) => {
-      if (!actor) throw new Error("Actor not available");
-      // TODO: Backend method not yet implemented
-      throw new Error("unfriend not yet implemented in backend");
+    mutationFn: async (targetUsername: string) => {
+      const me = getCurrentUser();
+      if (!me) throw new Error("Not authenticated");
+      unfriend(me, targetUsername);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["social"] });
     },
+  });
+}
+
+export function useSearchUsers(searchTerm: string) {
+  return useQuery<UserSearchResult[]>({
+    queryKey: ["social", "search", searchTerm],
+    queryFn: () => {
+      const me = getCurrentUser();
+      if (!me || !searchTerm.trim()) return [];
+      const allUsers = getAllUsers();
+      const lower = searchTerm.toLowerCase();
+      return allUsers
+        .filter(
+          (u) =>
+            u !== me &&
+            (u.toLowerCase().includes(lower) ||
+              getUserDisplayName(u).toLowerCase().includes(lower)),
+        )
+        .map((username) => {
+          let status: UserSearchResult["status"] = "none";
+          if (isFriendWith(me, username)) {
+            status = "friends";
+          } else if (hasPendingRequestTo(me, username)) {
+            status = "pending_outgoing";
+          } else {
+            // check if they sent to me
+            const incoming = getPendingIncoming(me);
+            if (incoming.some((r) => r.from === username)) {
+              status = "pending_incoming";
+            }
+          }
+          return {
+            username,
+            displayName: getUserDisplayName(username),
+            avatarUrl: getUserAvatarUrl(username),
+            status,
+          };
+        })
+        .slice(0, 20);
+    },
+    enabled: searchTerm.trim().length > 0,
+    refetchInterval: 3000,
   });
 }
