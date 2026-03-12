@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getNotificationPrefs } from "../../utils/socialStorage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -139,7 +140,31 @@ export default function NotificationsPanel({ username }: Props) {
   // Refresh every time panel opens or periodically
   useEffect(() => {
     if (!username) return;
-    const refresh = () => setNotifications(getNotifications(username));
+    const refresh = () => {
+      const all = getNotifications(username);
+      const prefs = getNotificationPrefs(username);
+      const filtered = all.filter((n) => {
+        if (
+          (n.type === "friend_request" || n.type === "friend_accepted") &&
+          !prefs.friendRequests
+        )
+          return false;
+        if (
+          (n.type === "group_join_request" ||
+            n.type === "group_join_accepted" ||
+            n.type === "group_join_declined" ||
+            n.type === "group_role_changed" ||
+            n.type === "group_ally" ||
+            n.type === "group_enemy") &&
+          !prefs.groupUpdates
+        )
+          return false;
+        if (n.type === "game_published" && !prefs.experienceInvitations)
+          return false;
+        return true;
+      });
+      setNotifications(filtered);
+    };
     refresh();
     const interval = setInterval(refresh, 5000);
     return () => clearInterval(interval);

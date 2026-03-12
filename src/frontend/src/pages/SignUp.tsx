@@ -17,13 +17,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2, Loader2, UserPlus, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  RefreshCw,
+  UserPlus,
+  XCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   getLocalSettings,
   saveLocalSettings,
 } from "../hooks/useAccountSettings";
 import { useSessionAuth } from "../hooks/useSessionAuth";
+import { saveNotificationPrefs } from "../utils/socialStorage";
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken";
 
@@ -39,6 +46,12 @@ function getStoredUsers(): Record<
   }
 }
 
+function generateCaptcha() {
+  const a = Math.floor(Math.random() * 10) + 1;
+  const b = Math.floor(Math.random() * 10) + 1;
+  return { a, b, answer: a + b };
+}
+
 export default function SignUp() {
   const navigate = useNavigate();
   const { signup, isLoading } = useSessionAuth();
@@ -52,6 +65,17 @@ export default function SignUp() {
   const [error, setError] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
 
+  // CAPTCHA
+  const [captcha, setCaptcha] = useState(generateCaptcha);
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [captchaError, setCaptchaError] = useState("");
+
+  const regenerateCaptcha = () => {
+    setCaptcha(generateCaptcha());
+    setCaptchaInput("");
+    setCaptchaError("");
+  };
+
   // Debounced username availability check
   useEffect(() => {
     if (username.trim().length < 3) {
@@ -59,7 +83,6 @@ export default function SignUp() {
       return;
     }
 
-    // While typing — set to checking
     setUsernameStatus("checking");
 
     const timer = setTimeout(() => {
@@ -77,6 +100,7 @@ export default function SignUp() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setCaptchaError("");
 
     if (!username.trim()) {
       setError("Username is required");
@@ -103,6 +127,14 @@ export default function SignUp() {
       return;
     }
 
+    // CAPTCHA check
+    const userAnswer = Number.parseInt(captchaInput.trim(), 10);
+    if (Number.isNaN(userAnswer) || userAnswer !== captcha.answer) {
+      setCaptchaError("Incorrect answer. Please try again.");
+      regenerateCaptcha();
+      return;
+    }
+
     try {
       await signup({
         username: username.trim(),
@@ -110,13 +142,21 @@ export default function SignUp() {
         password,
       });
 
-      // Save gender and language to localStorage settings
       const uname = username.trim();
+
+      // Save gender and language
       const existing = getLocalSettings(uname);
       saveLocalSettings(uname, {
         ...existing,
         gender: gender as "female" | "male" | "other",
         language,
+      });
+
+      // Set default notification prefs
+      saveNotificationPrefs(uname, {
+        friendRequests: true,
+        groupUpdates: true,
+        experienceInvitations: true,
       });
 
       navigate({ to: "/" });
@@ -165,7 +205,6 @@ export default function SignUp() {
                 disabled={isLoading}
                 data-ocid="signup.username.input"
               />
-              {/* Username availability status */}
               {username.trim().length >= 3 && usernameStatus !== "idle" && (
                 <div
                   className="flex items-center gap-1.5 text-xs"
@@ -280,6 +319,45 @@ export default function SignUp() {
                   <SelectItem value="nl">Nederlands</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* CAPTCHA */}
+            <div className="space-y-2">
+              <Label htmlFor="captcha">Human Verification</Label>
+              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                <span className="font-semibold text-sm flex-1">
+                  What is {captcha.a} + {captcha.b}?
+                </span>
+                <button
+                  type="button"
+                  onClick={regenerateCaptcha}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  title="Regenerate question"
+                  data-ocid="signup.captcha.toggle"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              </div>
+              <Input
+                id="captcha"
+                type="number"
+                placeholder="Your answer"
+                value={captchaInput}
+                onChange={(e) => {
+                  setCaptchaInput(e.target.value);
+                  setCaptchaError("");
+                }}
+                disabled={isLoading}
+                data-ocid="signup.captcha.input"
+              />
+              {captchaError && (
+                <p
+                  className="text-xs text-destructive"
+                  data-ocid="signup.captcha.error_state"
+                >
+                  {captchaError}
+                </p>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">

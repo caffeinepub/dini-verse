@@ -19,13 +19,21 @@ function getAllUsers(): UserRecord[] {
     if (!raw) return [];
     const users: Record<string, { displayName: string; passwordHash: string }> =
       JSON.parse(raw);
+    const now = Date.now();
     return Object.entries(users).map(([username, data]) => {
       const settings = getLocalSettings(username);
+      const lastSeen = Number(
+        localStorage.getItem(`diniverse_lastseen_${username}`) ?? 0,
+      );
+      const isOnline =
+        settings.visibility === "online" &&
+        lastSeen > 0 &&
+        now - lastSeen < 180000;
       return {
         username,
         displayName: data.displayName || username,
         avatarDataUrl: settings.avatarDataUrl ?? null,
-        visibility: settings.visibility ?? "online",
+        visibility: isOnline ? "online" : "offline",
       };
     });
   } catch {
@@ -56,9 +64,13 @@ export default function People() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [allUsers, setAllUsers] = useState<UserRecord[]>([]);
 
-  // Load users on mount
+  // Load users on mount and refresh every 30s for live online status
   useEffect(() => {
     setAllUsers(getAllUsers());
+    const interval = setInterval(() => {
+      setAllUsers(getAllUsers());
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Debounce search query

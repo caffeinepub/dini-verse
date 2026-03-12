@@ -21,7 +21,11 @@ import {
   useSendMedia,
   useSendMessage,
 } from "../../hooks/useSocialMessages";
-import { getCurrentUser } from "../../utils/socialStorage";
+import {
+  getCurrentUser,
+  getPrivacySettings,
+  isFriendWith,
+} from "../../utils/socialStorage";
 
 const GIPHY_KEY = "dc6zaTOxFJmzC";
 
@@ -37,6 +41,21 @@ interface GiphyResult {
 interface MessagesPanelProps {
   friends: FriendInfo[];
   friendsLoading?: boolean;
+}
+
+function formatMessageTime(timestamp: number): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const msgDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.floor((today.getTime() - msgDay.getTime()) / 86400000);
+  const timeStr = date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  if (diffDays === 0) return `Today ${timeStr}`;
+  if (diffDays === 1) return `Yesterday ${timeStr}`;
+  return `${date.toLocaleDateString([], { month: "short", day: "numeric" })} ${timeStr}`;
 }
 
 export default function MessagesPanel({
@@ -69,6 +88,20 @@ export default function MessagesPanel({
 
   const handleSendText = async () => {
     if (!selectedFriend || !text.trim()) return;
+    // Privacy check
+    const privacy = getPrivacySettings(selectedFriend);
+    if (privacy.whoCanMessage === "nobody") {
+      toast.error("This user does not accept messages.");
+      return;
+    }
+    if (
+      privacy.whoCanMessage === "friends" &&
+      me &&
+      !isFriendWith(me, selectedFriend)
+    ) {
+      toast.error("This user only accepts messages from friends.");
+      return;
+    }
     try {
       await sendMsg.mutateAsync({ to: selectedFriend, content: text.trim() });
       setText("");
@@ -392,16 +425,13 @@ export default function MessagesPanel({
                           )}
                           <div className="flex items-center gap-1">
                             <span className="text-[10px] text-muted-foreground">
-                              {new Date(msg.timestamp).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                              {formatMessageTime(msg.timestamp)}
                             </span>
                             {isOwn && (
                               <button
                                 type="button"
                                 onClick={() => handleDelete(msg.id)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                                className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                                 title="Delete message"
                               >
                                 <Trash2 className="h-3 w-3" />

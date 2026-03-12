@@ -76,12 +76,32 @@ export function getUserAvatarUrl(username: string): string | null {
   }
 }
 
+export function updateHeartbeat(username: string): void {
+  try {
+    localStorage.setItem(`diniverse_lastseen_${username}`, String(Date.now()));
+  } catch {
+    // ignore
+  }
+}
+
+export function getLastSeen(username: string): number {
+  try {
+    const raw = localStorage.getItem(`diniverse_lastseen_${username}`);
+    return raw ? Number(raw) : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function getUserVisibility(username: string): "online" | "offline" {
   try {
     const settings = getLocalSettings(username);
-    return settings.visibility || "online";
+    if (settings.visibility !== "online") return "offline";
+    const lastSeen = getLastSeen(username);
+    if (!lastSeen) return "offline";
+    return Date.now() - lastSeen < 180000 ? "online" : "offline";
   } catch {
-    return "online";
+    return "offline";
   }
 }
 
@@ -297,4 +317,90 @@ export function redeemPromoCode(
   addDiniBucks(username, amount);
 
   return { success: true, amount };
+}
+
+// ─── Social Networks ─────────────────────────────────────────────────────────
+
+export interface SocialLink {
+  platform: string;
+  url: string;
+  username: string;
+}
+
+export function getSocialLinks(username: string): SocialLink[] {
+  try {
+    const raw = localStorage.getItem(`diniverse_social_links_${username}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveSocialLinks(username: string, links: SocialLink[]): void {
+  localStorage.setItem(
+    `diniverse_social_links_${username}`,
+    JSON.stringify(links),
+  );
+}
+
+// ─── Privacy Settings ────────────────────────────────────────────────────────
+
+export interface PrivacySettings {
+  whoCanMessage: "everyone" | "friends" | "nobody";
+}
+
+export function getPrivacySettings(username: string): PrivacySettings {
+  try {
+    const raw = localStorage.getItem(`diniverse_privacy_${username}`);
+    return raw ? JSON.parse(raw) : { whoCanMessage: "everyone" };
+  } catch {
+    return { whoCanMessage: "everyone" };
+  }
+}
+
+export function savePrivacySettings(
+  username: string,
+  settings: PrivacySettings,
+): void {
+  localStorage.setItem(
+    `diniverse_privacy_${username}`,
+    JSON.stringify(settings),
+  );
+}
+
+// ─── Notification Preferences ────────────────────────────────────────────────
+
+export interface NotificationPrefs {
+  friendRequests: boolean;
+  groupUpdates: boolean;
+  experienceInvitations: boolean;
+}
+
+export function getNotificationPrefs(username: string): NotificationPrefs {
+  try {
+    const raw = localStorage.getItem(`diniverse_notif_prefs_${username}`);
+    return raw
+      ? JSON.parse(raw)
+      : {
+          friendRequests: true,
+          groupUpdates: true,
+          experienceInvitations: true,
+        };
+  } catch {
+    return {
+      friendRequests: true,
+      groupUpdates: true,
+      experienceInvitations: true,
+    };
+  }
+}
+
+export function saveNotificationPrefs(
+  username: string,
+  prefs: NotificationPrefs,
+): void {
+  localStorage.setItem(
+    `diniverse_notif_prefs_${username}`,
+    JSON.stringify(prefs),
+  );
 }

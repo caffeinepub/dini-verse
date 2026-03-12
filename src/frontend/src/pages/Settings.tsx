@@ -33,6 +33,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   AlertTriangle,
+  Bell,
   Camera,
   Eye,
   Gift,
@@ -41,13 +42,15 @@ import {
   Lock,
   LogIn,
   Moon,
+  Share2,
+  Shield,
   Sun,
   Trash2,
   User,
   X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Gender,
@@ -70,12 +73,33 @@ import {
 import { useSessionAuth } from "../hooks/useSessionAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import {
+  type NotificationPrefs,
+  type PrivacySettings,
+  type SocialLink,
   getDiniBucks,
+  getNotificationPrefs,
+  getPrivacySettings,
+  getSocialLinks,
   getCurrentUser as getSocialUser,
   redeemPromoCode,
+  saveNotificationPrefs,
+  savePrivacySettings,
+  saveSocialLinks,
 } from "../utils/socialStorage";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+const SOCIAL_PLATFORMS = [
+  { id: "youtube", label: "YouTube", color: "#FF0000" },
+  { id: "tiktok", label: "TikTok", color: "#000000" },
+  { id: "discord", label: "Discord", color: "#5865F2" },
+  { id: "twitch", label: "Twitch", color: "#9146FF" },
+  { id: "instagram", label: "Instagram", color: "#E1306C" },
+  { id: "twitter", label: "Twitter/X", color: "#000000" },
+  { id: "facebook", label: "Facebook", color: "#1877F2" },
+  { id: "spotify", label: "Spotify", color: "#1DB954" },
+  { id: "other", label: "Other", color: "#6b7280" },
+] as const;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 function formatCooldown(remainingMs: number): string {
@@ -133,6 +157,28 @@ export default function Settings() {
 
   const username = getCurrentUsername();
   const rawSettings = username ? getLocalSettings(username) : null;
+
+  // Social Networks state
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(() =>
+    username ? getSocialLinks(username) : [],
+  );
+  const [isSavingSocial, setIsSavingSocial] = useState(false);
+
+  // Privacy state
+  const [privacySettings, setPrivacySettings] = useState<PrivacySettings>(() =>
+    username ? getPrivacySettings(username) : { whoCanMessage: "everyone" },
+  );
+
+  // Notification prefs state
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(() =>
+    username
+      ? getNotificationPrefs(username)
+      : {
+          friendRequests: true,
+          groupUpdates: true,
+          experienceInvitations: true,
+        },
+  );
 
   // Load Dini Bucks balance
   const loadBalance = () => {
@@ -913,6 +959,216 @@ export default function Settings() {
                 "Redeem"
               )}
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Social Networks */}
+      <Card data-ocid="settings.social.card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Share2 className="w-5 h-5" />
+            Social Networks
+          </CardTitle>
+          <CardDescription>
+            Link your social profiles to show on your public profile
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {SOCIAL_PLATFORMS.map((platform) => {
+            const existing = socialLinks.find(
+              (l) => l.platform === platform.id,
+            );
+            return (
+              <div key={platform.id} className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                  style={{ background: platform.color }}
+                >
+                  {platform.label.charAt(0)}
+                </div>
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input
+                    placeholder={`${platform.label} URL`}
+                    value={existing?.url ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSocialLinks((prev) => {
+                        const filtered = prev.filter(
+                          (l) => l.platform !== platform.id,
+                        );
+                        if (val || existing?.username) {
+                          return [
+                            ...filtered,
+                            {
+                              platform: platform.id,
+                              url: val,
+                              username: existing?.username ?? "",
+                            },
+                          ];
+                        }
+                        return filtered;
+                      });
+                    }}
+                    data-ocid={`settings.social.${platform.id}.input`}
+                  />
+                  <Input
+                    placeholder={`${platform.label} username`}
+                    value={existing?.username ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSocialLinks((prev) => {
+                        const filtered = prev.filter(
+                          (l) => l.platform !== platform.id,
+                        );
+                        if (val || existing?.url) {
+                          return [
+                            ...filtered,
+                            {
+                              platform: platform.id,
+                              url: existing?.url ?? "",
+                              username: val,
+                            },
+                          ];
+                        }
+                        return filtered;
+                      });
+                    }}
+                    data-ocid={`settings.social.${platform.id}.username.input`}
+                  />
+                </div>
+              </div>
+            );
+          })}
+          <Button
+            onClick={() => {
+              if (!username) return;
+              setIsSavingSocial(true);
+              saveSocialLinks(username, socialLinks);
+              setTimeout(() => {
+                setIsSavingSocial(false);
+                toast.success("Social links saved!");
+              }, 300);
+            }}
+            disabled={isSavingSocial || !username}
+            className="mt-2"
+            data-ocid="settings.social.save_button"
+          >
+            {isSavingSocial ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : null}
+            Save Social Links
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Privacy */}
+      <Card data-ocid="settings.privacy.card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Privacy
+          </CardTitle>
+          <CardDescription>Control who can interact with you</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Who can message me</Label>
+            <Select
+              value={privacySettings.whoCanMessage}
+              onValueChange={(val) => {
+                if (!username) return;
+                const newPrivacy = {
+                  whoCanMessage: val as PrivacySettings["whoCanMessage"],
+                };
+                setPrivacySettings(newPrivacy);
+                savePrivacySettings(username, newPrivacy);
+                toast.success("Privacy settings saved");
+              }}
+            >
+              <SelectTrigger data-ocid="settings.privacy.message.select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="everyone">Everyone</SelectItem>
+                <SelectItem value="friends">Friends Only</SelectItem>
+                <SelectItem value="nobody">Nobody</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notifications */}
+      <Card data-ocid="settings.notifications.card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            Notifications
+          </CardTitle>
+          <CardDescription>
+            Choose which notifications you receive
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-sm">Friend Requests</p>
+              <p className="text-xs text-muted-foreground">
+                Get notified when someone sends you a friend request
+              </p>
+            </div>
+            <Switch
+              checked={notifPrefs.friendRequests}
+              onCheckedChange={(checked) => {
+                if (!username) return;
+                const updated = { ...notifPrefs, friendRequests: checked };
+                setNotifPrefs(updated);
+                saveNotificationPrefs(username, updated);
+              }}
+              data-ocid="settings.notifications.friends.switch"
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-sm">Group Updates</p>
+              <p className="text-xs text-muted-foreground">
+                Get notified about group activity and announcements
+              </p>
+            </div>
+            <Switch
+              checked={notifPrefs.groupUpdates}
+              onCheckedChange={(checked) => {
+                if (!username) return;
+                const updated = { ...notifPrefs, groupUpdates: checked };
+                setNotifPrefs(updated);
+                saveNotificationPrefs(username, updated);
+              }}
+              data-ocid="settings.notifications.groups.switch"
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-sm">Experience Invitations</p>
+              <p className="text-xs text-muted-foreground">
+                Get notified when someone invites you to an experience
+              </p>
+            </div>
+            <Switch
+              checked={notifPrefs.experienceInvitations}
+              onCheckedChange={(checked) => {
+                if (!username) return;
+                const updated = {
+                  ...notifPrefs,
+                  experienceInvitations: checked,
+                };
+                setNotifPrefs(updated);
+                saveNotificationPrefs(username, updated);
+              }}
+              data-ocid="settings.notifications.experiences.switch"
+            />
           </div>
         </CardContent>
       </Card>

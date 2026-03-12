@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  Camera,
   Compass,
   GamepadIcon,
   Heart,
@@ -16,13 +17,28 @@ import {
   Star,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import RequireProfile from "../components/auth/RequireProfile";
 import {
   getCurrentUsername,
   getLocalSettings,
 } from "../hooks/useAccountSettings";
 import { useSessionAuth } from "../hooks/useSessionAuth";
+import { getFriends, getSocialLinks } from "../utils/socialStorage";
+
+// ─── Social Platforms ──────────────────────────────────────────────────────
+
+const SOCIAL_PLATFORMS: Record<string, { label: string; color: string }> = {
+  youtube: { label: "YouTube", color: "#FF0000" },
+  tiktok: { label: "TikTok", color: "#000000" },
+  discord: { label: "Discord", color: "#5865F2" },
+  twitch: { label: "Twitch", color: "#9146FF" },
+  instagram: { label: "Instagram", color: "#E1306C" },
+  twitter: { label: "Twitter/X", color: "#000000" },
+  facebook: { label: "Facebook", color: "#1877F2" },
+  spotify: { label: "Spotify", color: "#1DB954" },
+  other: { label: "Other", color: "#6b7280" },
+};
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -72,6 +88,14 @@ function getBio(username: string): string {
 
 function saveBio(username: string, bio: string): void {
   localStorage.setItem(`diniverse_bio_${username}`, bio);
+}
+
+function getBanner(username: string): string | null {
+  return localStorage.getItem(`diniverse_banner_${username}`);
+}
+
+function saveBanner(username: string, dataUrl: string): void {
+  localStorage.setItem(`diniverse_banner_${username}`, dataUrl);
 }
 
 // ─── Official Badges ───────────────────────────────────────────────────────
@@ -138,8 +162,13 @@ export default function Profile() {
   const [bio, setBio] = useState(() => getBio(username));
   const [editingBio, setEditingBio] = useState(false);
   const [bioInput, setBioInput] = useState(bio);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(() =>
+    username ? getBanner(username) : null,
+  );
 
-  const friends = getLocalList<string>(`diniverse_friends_${username}`);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  const friends = username ? getFriends(username) : [];
   const followers = getLocalList<string>(`diniverse_followers_${username}`);
   const following = getLocalList<string>(`diniverse_following_${username}`);
 
@@ -161,10 +190,26 @@ export default function Profile() {
     `diniverse_badges_${username}`,
   ).filter((b) => b.type === "player");
 
+  const socialLinks = getSocialLinks(username).filter((l) => l.url);
+
   const handleSaveBio = () => {
     saveBio(username, bioInput);
     setBio(bioInput);
     setEditingBio(false);
+  };
+
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      saveBanner(username, dataUrl);
+      setBannerUrl(dataUrl);
+    };
+    reader.readAsDataURL(file);
+    // Reset so same file can be re-selected
+    e.target.value = "";
   };
 
   return (
@@ -172,7 +217,39 @@ export default function Profile() {
       <div className="container max-w-3xl py-8 space-y-6">
         {/* ── Profile Header Card ── */}
         <Card className="overflow-hidden">
-          <div className="h-20 w-full" style={{ background: "#cde5aa" }} />
+          {/* Banner */}
+          <div
+            className="h-40 w-full relative group"
+            style={{
+              background: bannerUrl ? undefined : "#cde5aa",
+            }}
+          >
+            {bannerUrl && (
+              <img
+                src={bannerUrl}
+                alt="Profile banner"
+                className="w-full h-full object-cover"
+              />
+            )}
+            {/* Edit banner overlay */}
+            <button
+              type="button"
+              className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+              onClick={() => bannerInputRef.current?.click()}
+              data-ocid="profile.upload_button"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              Edit Banner
+            </button>
+            <input
+              ref={bannerInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleBannerChange}
+            />
+          </div>
+
           <CardContent className="pt-0 pb-6 px-6">
             <div className="flex flex-col sm:flex-row gap-4 -mt-10">
               {/* Avatar */}
@@ -292,7 +369,47 @@ export default function Profile() {
           </Card>
         </div>
 
-        {/* ── Tabs ── */}
+        {/* Social Networks */}
+        {socialLinks.length > 0 && (
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <div className="flex flex-wrap gap-3">
+                {socialLinks.map((link) => {
+                  const platform = SOCIAL_PLATFORMS[link.platform] ?? {
+                    label: link.platform,
+                    color: "#6b7280",
+                  };
+                  return (
+                    <a
+                      key={link.platform}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full border hover:bg-muted/50 transition-colors text-sm"
+                      data-ocid="profile.card"
+                    >
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                        style={{ background: platform.color }}
+                      >
+                        {platform.label.charAt(0)}
+                      </div>
+                      <span className="font-medium text-foreground">
+                        {platform.label}
+                      </span>
+                      {link.username && (
+                        <span className="text-muted-foreground">
+                          @{link.username}
+                        </span>
+                      )}
+                    </a>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Tabs defaultValue="created">
           <TabsList className="w-full grid grid-cols-4">
             <TabsTrigger value="created" data-ocid="profile.tab">

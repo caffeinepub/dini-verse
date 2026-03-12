@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { pushNotification } from "../components/notifications/NotificationsPanel";
 import {
   getAllUsers,
   getCurrentUser,
@@ -91,8 +92,18 @@ export function useSendFriendRequest() {
       if (hasPendingRequestTo(me, targetUsername))
         throw new Error("Friend request already sent");
       sendFriendRequest(me, targetUsername);
+      return { me, targetUsername };
     },
-    onSuccess: () => {
+    onSuccess: (_data, targetUsername) => {
+      const me = getCurrentUser();
+      if (me) {
+        const myDisplayName = getUserDisplayName(me);
+        pushNotification(targetUsername, {
+          type: "friend_request",
+          title: "Friend Request",
+          message: `${myDisplayName} sent you a friend request!`,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["social"] });
     },
   });
@@ -112,8 +123,17 @@ export function useRespondToFriendRequest() {
       const me = getCurrentUser();
       if (!me) throw new Error("Not authenticated");
       respondToRequest(from, me, action);
+      return { from, action, me };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data && data.action === "accept") {
+        const myDisplayName = getUserDisplayName(data.me);
+        pushNotification(data.from, {
+          type: "friend_accepted",
+          title: "Friend Request Accepted",
+          message: `${myDisplayName} accepted your friend request!`,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["social"] });
     },
   });
