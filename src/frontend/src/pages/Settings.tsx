@@ -50,7 +50,7 @@ import {
   X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Gender,
@@ -62,6 +62,7 @@ import { useTranslationContext } from "../contexts/TranslationContext";
 import {
   getCurrentUsername,
   getLocalSettings,
+  saveLocalSettings,
   useDeleteAccount,
   useGetCallerSettings,
   useSetGender,
@@ -102,6 +103,127 @@ const SOCIAL_PLATFORMS = [
 ] as const;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const COUNTRIES = [
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Argentina",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bangladesh",
+  "Belarus",
+  "Belgium",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Brazil",
+  "Bulgaria",
+  "Cambodia",
+  "Canada",
+  "Chile",
+  "China",
+  "Colombia",
+  "Costa Rica",
+  "Croatia",
+  "Cuba",
+  "Czech Republic",
+  "Denmark",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "El Salvador",
+  "Estonia",
+  "Ethiopia",
+  "Finland",
+  "France",
+  "Georgia",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Guatemala",
+  "Honduras",
+  "Hungary",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Jamaica",
+  "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kuwait",
+  "Latvia",
+  "Lebanon",
+  "Lithuania",
+  "Malaysia",
+  "Mexico",
+  "Morocco",
+  "Myanmar",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nigeria",
+  "North Korea",
+  "Norway",
+  "Pakistan",
+  "Panama",
+  "Paraguay",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Puerto Rico",
+  "Qatar",
+  "Romania",
+  "Russia",
+  "Saudi Arabia",
+  "Serbia",
+  "Singapore",
+  "Slovakia",
+  "Slovenia",
+  "South Africa",
+  "South Korea",
+  "Spain",
+  "Sri Lanka",
+  "Sudan",
+  "Sweden",
+  "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Thailand",
+  "Tunisia",
+  "Turkey",
+  "Ukraine",
+  "United Arab Emirates",
+  "United Kingdom",
+  "United States",
+  "Uruguay",
+  "Uzbekistan",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zimbabwe",
+];
+
 function formatCooldown(remainingMs: number): string {
   const hours = Math.ceil(remainingMs / (60 * 60 * 1000));
   if (hours >= 24) {
@@ -135,10 +257,31 @@ export default function Settings() {
   const [newUsername, setNewUsername] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [isChangingUsername, setIsChangingUsername] = useState(false);
+  const [showUsernameEdit, setShowUsernameEdit] = useState(false);
+  const [showPasswordEdit, setShowPasswordEdit] = useState(false);
 
   // Display name state
   const [newDisplayName, setNewDisplayName] = useState("");
   const [displayNameError, setDisplayNameError] = useState("");
+  const [showDisplayNameEdit, setShowDisplayNameEdit] = useState(false);
+
+  // Birthday state — lazy-initialized from localStorage
+  const [birthday, setBirthday] = useState(() => {
+    const uname = getCurrentUsername();
+    const saved = uname ? getLocalSettings(uname) : null;
+    if (saved?.birthday) {
+      const parts = saved.birthday.split("-");
+      if (parts.length === 3) {
+        const [yr, mo, dy] = parts;
+        return {
+          year: yr,
+          month: String(Number.parseInt(mo, 10)),
+          day: String(Number.parseInt(dy, 10)),
+        };
+      }
+    }
+    return { month: "", day: "", year: "" };
+  });
 
   // Change password state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -344,6 +487,7 @@ export default function Settings() {
       localStorage.setItem("diniverse_session_token", token);
 
       setNewUsername("");
+      setShowUsernameEdit(false);
       toast.success("Username updated — please log in again");
       await logout();
       navigate({ to: "/login" });
@@ -369,6 +513,7 @@ export default function Settings() {
     try {
       await updateDisplayNameMutation.mutateAsync(newDisplayName.trim());
       setNewDisplayName("");
+      setShowDisplayNameEdit(false);
       toast.success(t("settings.displayName.success"));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Update failed";
@@ -419,6 +564,29 @@ export default function Settings() {
     }
   };
 
+  const handleBirthdayChange = (
+    field: "month" | "day" | "year",
+    value: string,
+  ) => {
+    const updated = { ...birthday, [field]: value };
+    setBirthday(updated);
+    if (updated.month && updated.day && updated.year && username) {
+      const month = updated.month.padStart(2, "0");
+      const day = updated.day.padStart(2, "0");
+      const isoDate = `${updated.year}-${month}-${day}`;
+      const settings = getLocalSettings(username);
+      saveLocalSettings(username, { ...settings, birthday: isoDate });
+      toast.success("Birthday saved");
+    }
+  };
+
+  const handleLocationChange = (country: string) => {
+    if (!username) return;
+    const settings = getLocalSettings(username);
+    saveLocalSettings(username, { ...settings, location: country });
+    toast.success("Location saved");
+  };
+
   const handleChangePassword = async () => {
     setPasswordError("");
     if (!currentPassword) {
@@ -443,6 +611,7 @@ export default function Settings() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setShowPasswordEdit(false);
       toast.success("Password changed successfully");
     } catch (err: unknown) {
       const msg =
@@ -502,6 +671,7 @@ export default function Settings() {
   const currentVisibilityIsOffline = rawSettings?.visibility === "offline";
   const currentLanguage = rawSettings?.language || Language.en;
   const currentGender = rawSettings?.gender || "other";
+  const currentLocation = rawSettings?.location || "";
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6" data-ocid="settings.page">
@@ -509,6 +679,391 @@ export default function Settings() {
         <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
         <p className="text-muted-foreground mt-1">{t("settings.subtitle")}</p>
       </div>
+
+      {/* ─── Account Info ──────────────────────────────────────────────── */}
+      <Card data-ocid="settings.accountinfo.card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Account Info
+          </CardTitle>
+          <CardDescription>Your personal account information</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Display Name row */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Display Name
+            </Label>
+            {showDisplayNameEdit ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Input
+                    value={newDisplayName}
+                    onChange={(e) => setNewDisplayName(e.target.value)}
+                    placeholder={currentDisplayName}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleUpdateDisplayName()
+                    }
+                    data-ocid="settings.accountinfo.displayname.input"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleUpdateDisplayName}
+                    disabled={updateDisplayNameMutation.isPending}
+                    data-ocid="settings.accountinfo.displayname.save_button"
+                  >
+                    {updateDisplayNameMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Save"
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowDisplayNameEdit(false);
+                      setNewDisplayName("");
+                      setDisplayNameError("");
+                    }}
+                    data-ocid="settings.accountinfo.displayname.cancel_button"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                {displayNameError && (
+                  <p
+                    className="text-sm text-destructive"
+                    data-ocid="settings.accountinfo.displayname.error_state"
+                  >
+                    {displayNameError}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  {currentDisplayName}
+                </span>
+                {canChangeDisplayName ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowDisplayNameEdit(true)}
+                    data-ocid="settings.accountinfo.displayname.edit_button"
+                  >
+                    Edit
+                  </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Change in {formatCooldown(displayNameCooldownRemaining)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Username row */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Username
+            </Label>
+            {showUsernameEdit ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Input
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    placeholder="New username"
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleUsernameChange()
+                    }
+                    data-ocid="settings.accountinfo.username.input"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleUsernameChange}
+                    disabled={isChangingUsername}
+                    data-ocid="settings.accountinfo.username.save_button"
+                  >
+                    {isChangingUsername ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Save"
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowUsernameEdit(false);
+                      setNewUsername("");
+                      setUsernameError("");
+                    }}
+                    data-ocid="settings.accountinfo.username.cancel_button"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                {usernameError && (
+                  <p
+                    className="text-sm text-destructive"
+                    data-ocid="settings.accountinfo.username.error_state"
+                  >
+                    {usernameError}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded">
+                  @{username}
+                </span>
+                {canChangeUsername ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowUsernameEdit(true)}
+                    data-ocid="settings.accountinfo.username.edit_button"
+                  >
+                    Change
+                  </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Change in {formatCooldown(usernameCooldownRemaining)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Password row */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Password
+            </Label>
+            {showPasswordEdit ? (
+              <div className="space-y-3">
+                <Input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Current password"
+                  autoComplete="current-password"
+                  data-ocid="settings.accountinfo.password.input"
+                />
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New password"
+                  autoComplete="new-password"
+                />
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  autoComplete="new-password"
+                  onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
+                />
+                {passwordError && (
+                  <p
+                    className="text-sm text-destructive"
+                    data-ocid="settings.accountinfo.password.error_state"
+                  >
+                    {passwordError}
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleChangePassword}
+                    disabled={isChangingPassword}
+                    data-ocid="settings.accountinfo.password.save_button"
+                  >
+                    {isChangingPassword ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      "Save"
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowPasswordEdit(false);
+                      setPasswordError("");
+                      setCurrentPassword("");
+                      setNewPassword("");
+                      setConfirmPassword("");
+                    }}
+                    data-ocid="settings.accountinfo.password.cancel_button"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-mono text-muted-foreground">
+                  ••••••••
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowPasswordEdit(true)}
+                  data-ocid="settings.accountinfo.password.edit_button"
+                >
+                  Change
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Gender row */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Gender
+            </Label>
+            <Select
+              value={currentGender}
+              onValueChange={handleGenderChange}
+              disabled={setGenderMutation.isPending}
+            >
+              <SelectTrigger data-ocid="settings.accountinfo.gender.select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={Gender.female}>
+                  {t("settings.gender.female")}
+                </SelectItem>
+                <SelectItem value={Gender.male}>
+                  {t("settings.gender.male")}
+                </SelectItem>
+                <SelectItem value={Gender.other}>Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Separator />
+
+          {/* Birthday row */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Birthday
+            </Label>
+            <div className="grid grid-cols-3 gap-2">
+              <Select
+                value={birthday.month}
+                onValueChange={(v) => handleBirthdayChange("month", v)}
+              >
+                <SelectTrigger data-ocid="settings.accountinfo.birthday.month.select">
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m, i) => (
+                    <SelectItem key={m} value={String(i + 1)}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={birthday.day}
+                onValueChange={(v) => handleBirthdayChange("day", v)}
+              >
+                <SelectTrigger data-ocid="settings.accountinfo.birthday.day.select">
+                  <SelectValue placeholder="Day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <SelectItem key={d} value={String(d)}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={birthday.year}
+                onValueChange={(v) => handleBirthdayChange("year", v)}
+              >
+                <SelectTrigger data-ocid="settings.accountinfo.birthday.year.select">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 31 }, (_, i) => 2020 - i).map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Language row */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Language
+            </Label>
+            <Select
+              value={currentLanguage}
+              onValueChange={handleLanguageChange}
+              disabled={setLanguageMutation.isPending}
+            >
+              <SelectTrigger data-ocid="settings.accountinfo.language.select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={Language.en}>English</SelectItem>
+                <SelectItem value={Language.es}>Español</SelectItem>
+                <SelectItem value={Language.fr}>Français</SelectItem>
+                <SelectItem value={Language.pt}>Português</SelectItem>
+                <SelectItem value={Language.de}>Deutsch</SelectItem>
+                <SelectItem value={Language.tr}>Türkçe</SelectItem>
+                <SelectItem value={Language.ru}>Русский</SelectItem>
+                <SelectItem value={Language.vi}>Tiếng Việt</SelectItem>
+                <SelectItem value={Language.ko}>한국어</SelectItem>
+                <SelectItem value={Language.nl}>Nederlands</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Separator />
+
+          {/* Location row */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Location
+            </Label>
+            <Select
+              value={currentLocation || ""}
+              onValueChange={handleLocationChange}
+            >
+              <SelectTrigger data-ocid="settings.accountinfo.location.select">
+                <SelectValue placeholder="Select your country" />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((country) => (
+                  <SelectItem key={country} value={country}>
+                    {country}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Profile Picture */}
       <Card data-ocid="settings.avatar.card">
@@ -591,128 +1146,6 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Username */}
-      <Card data-ocid="settings.username.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
-            {t("settings.username.title")}
-          </CardTitle>
-          <CardDescription>
-            {t("settings.username.description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1">
-            <Label>{t("settings.username.label")}</Label>
-            <p className="text-sm font-mono bg-muted px-3 py-1.5 rounded">
-              @{username}
-            </p>
-          </div>
-          {canChangeUsername ? (
-            <div className="space-y-2">
-              <Label htmlFor="newUsername">New Username</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="newUsername"
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  placeholder="Enter new username"
-                  onKeyDown={(e) => e.key === "Enter" && handleUsernameChange()}
-                  data-ocid="settings.username.input"
-                />
-                <Button
-                  onClick={handleUsernameChange}
-                  disabled={isChangingUsername}
-                  data-ocid="settings.username.save_button"
-                >
-                  {isChangingUsername ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    "Save"
-                  )}
-                </Button>
-              </div>
-              {usernameError && (
-                <p
-                  className="text-sm text-destructive"
-                  data-ocid="settings.username.error_state"
-                >
-                  {usernameError}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {t("settings.username.cooldown")}{" "}
-              {formatCooldown(usernameCooldownRemaining)}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Display Name */}
-      <Card data-ocid="settings.displayname.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
-            {t("settings.displayName.title")}
-          </CardTitle>
-          <CardDescription>
-            {t("settings.displayName.description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1">
-            <Label>Current Display Name</Label>
-            <p className="text-sm font-medium">{currentDisplayName}</p>
-          </div>
-          {canChangeDisplayName ? (
-            <div className="space-y-2">
-              <Label htmlFor="displayName">
-                {t("settings.displayName.label")}
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="displayName"
-                  value={newDisplayName}
-                  onChange={(e) => setNewDisplayName(e.target.value)}
-                  placeholder={currentDisplayName}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && handleUpdateDisplayName()
-                  }
-                  data-ocid="settings.displayname.input"
-                />
-                <Button
-                  onClick={handleUpdateDisplayName}
-                  disabled={updateDisplayNameMutation.isPending}
-                  data-ocid="settings.displayname.save_button"
-                >
-                  {updateDisplayNameMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    "Save"
-                  )}
-                </Button>
-              </div>
-              {displayNameError && (
-                <p
-                  className="text-sm text-destructive"
-                  data-ocid="settings.displayname.error_state"
-                >
-                  {displayNameError}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {t("settings.displayName.cooldown")}{" "}
-              {formatCooldown(displayNameCooldownRemaining)}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Offline Mode */}
       <Card data-ocid="settings.visibility.card">
         <CardHeader>
@@ -740,66 +1173,6 @@ export default function Settings() {
               disabled={updateVisibilityMutation.isPending}
               data-ocid="settings.visibility.switch"
             />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Language & Gender */}
-      <Card data-ocid="settings.preferences.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="w-5 h-5" />
-            {t("settings.language.title")} &amp; {t("settings.gender.title")}
-          </CardTitle>
-          <CardDescription>
-            {t("settings.language.description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>{t("settings.language.label")}</Label>
-            <Select
-              value={currentLanguage}
-              onValueChange={handleLanguageChange}
-              disabled={setLanguageMutation.isPending}
-            >
-              <SelectTrigger data-ocid="settings.language.select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={Language.en}>English</SelectItem>
-                <SelectItem value={Language.es}>Español</SelectItem>
-                <SelectItem value={Language.fr}>Français</SelectItem>
-                <SelectItem value={Language.pt}>Português</SelectItem>
-                <SelectItem value={Language.de}>Deutsch</SelectItem>
-                <SelectItem value={Language.tr}>Türkçe</SelectItem>
-                <SelectItem value={Language.ru}>Русский</SelectItem>
-                <SelectItem value={Language.vi}>Tiếng Việt</SelectItem>
-                <SelectItem value={Language.ko}>한국어</SelectItem>
-                <SelectItem value={Language.nl}>Nederlands</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>{t("settings.gender.label")}</Label>
-            <Select
-              value={currentGender}
-              onValueChange={handleGenderChange}
-              disabled={setGenderMutation.isPending}
-            >
-              <SelectTrigger data-ocid="settings.gender.select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={Gender.female}>
-                  {t("settings.gender.female")}
-                </SelectItem>
-                <SelectItem value={Gender.male}>
-                  {t("settings.gender.male")}
-                </SelectItem>
-                <SelectItem value={Gender.other}>Other</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
@@ -833,88 +1206,6 @@ export default function Settings() {
               data-ocid="settings.theme.switch"
             />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Change Password */}
-      <Card data-ocid="settings.password.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5" />
-            {t("settings.password.title")}
-          </CardTitle>
-          <CardDescription>
-            {t("settings.password.description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-3 flex gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-            <div className="text-sm text-amber-800 dark:text-amber-300">
-              <span className="font-semibold">
-                {t("settings.password.warning.title")}
-              </span>{" "}
-              {t("settings.password.warning.message")}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="currentPassword">Current Password</Label>
-            <Input
-              id="currentPassword"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Enter current password"
-              autoComplete="current-password"
-              data-ocid="settings.password.input"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="newPassword">New Password</Label>
-            <Input
-              id="newPassword"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Enter new password"
-              autoComplete="new-password"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm New Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm new password"
-              autoComplete="new-password"
-              onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
-            />
-          </div>
-          {passwordError && (
-            <p
-              className="text-sm text-destructive"
-              data-ocid="settings.password.error_state"
-            >
-              {passwordError}
-            </p>
-          )}
-          <Button
-            onClick={handleChangePassword}
-            disabled={isChangingPassword}
-            className="w-full"
-            data-ocid="settings.password.save_button"
-          >
-            {isChangingPassword ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Changing Password...
-              </>
-            ) : (
-              "Change Password"
-            )}
-          </Button>
         </CardContent>
       </Card>
 

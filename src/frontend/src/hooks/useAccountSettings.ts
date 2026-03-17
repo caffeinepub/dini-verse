@@ -17,6 +17,8 @@ export interface LocalUserSettings {
   gender: "female" | "male" | "other";
   language: string;
   theme: "light" | "dark";
+  birthday: string | null;
+  location: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -39,7 +41,13 @@ export function getLocalSettings(username: string): LocalUserSettings {
   try {
     const raw = localStorage.getItem(settingsKey(username));
     if (raw) {
-      return JSON.parse(raw) as LocalUserSettings;
+      const parsed = JSON.parse(raw) as LocalUserSettings;
+      // Ensure new fields exist for existing users
+      return {
+        ...parsed,
+        birthday: parsed.birthday ?? null,
+        location: parsed.location ?? "",
+      };
     }
   } catch {
     // fall through to defaults
@@ -57,6 +65,8 @@ export function getLocalSettings(username: string): LocalUserSettings {
     gender: "other",
     language: "en",
     theme: "light",
+    birthday: null,
+    location: "",
   };
 }
 
@@ -89,6 +99,8 @@ function toPublicSettings(s: LocalUserSettings) {
     language: (s.language as Language) || Language.en,
     avatarDataUrl: s.avatarDataUrl,
     theme: s.theme,
+    birthday: s.birthday,
+    location: s.location,
     // Extra fields for type compat
     createdAt: BigInt(s.createdAt),
     lastUsernameChange: BigInt(s.lastUsernameChange),
