@@ -690,6 +690,84 @@ export default function Settings() {
           <CardDescription>Your personal account information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
+          {/* Profile Picture row */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Profile Picture
+            </Label>
+            <div className="flex items-center gap-4">
+              <Avatar className="h-20 w-20 border-2 border-border">
+                {currentAvatarUrl ? (
+                  <AvatarImage
+                    src={currentAvatarUrl}
+                    alt={currentDisplayName}
+                  />
+                ) : null}
+                <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                  {currentDisplayName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  {currentAvatarUrl ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemoveAndReupload}
+                      disabled={
+                        updateAvatarMutation.isPending || isUploadingAvatar
+                      }
+                      data-ocid="settings.avatar.delete_button"
+                    >
+                      {updateAvatarMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                          Removing...
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-4 h-4 mr-1" />
+                          Remove
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingAvatar}
+                      data-ocid="settings.avatar.upload_button"
+                    >
+                      {isUploadingAvatar ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                          {t("settings.avatar.uploading")}
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="w-4 h-4 mr-1" />
+                          {t("settings.avatar.upload")}
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.avatar.recommendation")}
+                </p>
+              </div>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarUpload}
+              data-ocid="settings.avatar.dropzone"
+            />
+          </div>
+          <Separator />
           {/* Display Name row */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -941,7 +1019,7 @@ export default function Settings() {
               <SelectTrigger data-ocid="settings.accountinfo.gender.select">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-48 overflow-y-auto">
                 <SelectItem value={Gender.female}>
                   {t("settings.gender.female")}
                 </SelectItem>
@@ -968,7 +1046,7 @@ export default function Settings() {
                 <SelectTrigger data-ocid="settings.accountinfo.birthday.month.select">
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-48 overflow-y-auto">
                   {MONTHS.map((m, i) => (
                     <SelectItem key={m} value={String(i + 1)}>
                       {m}
@@ -983,7 +1061,7 @@ export default function Settings() {
                 <SelectTrigger data-ocid="settings.accountinfo.birthday.day.select">
                   <SelectValue placeholder="Day" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-48 overflow-y-auto">
                   {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
                     <SelectItem key={d} value={String(d)}>
                       {d}
@@ -998,7 +1076,7 @@ export default function Settings() {
                 <SelectTrigger data-ocid="settings.accountinfo.birthday.year.select">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-48 overflow-y-auto">
                   {Array.from({ length: 31 }, (_, i) => 2020 - i).map((y) => (
                     <SelectItem key={y} value={String(y)}>
                       {y}
@@ -1024,7 +1102,7 @@ export default function Settings() {
               <SelectTrigger data-ocid="settings.accountinfo.language.select">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-48 overflow-y-auto">
                 <SelectItem value={Language.en}>English</SelectItem>
                 <SelectItem value={Language.es}>Español</SelectItem>
                 <SelectItem value={Language.fr}>Français</SelectItem>
@@ -1053,7 +1131,7 @@ export default function Settings() {
               <SelectTrigger data-ocid="settings.accountinfo.location.select">
                 <SelectValue placeholder="Select your country" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-48 overflow-y-auto">
                 {COUNTRIES.map((country) => (
                   <SelectItem key={country} value={country}>
                     {country}
@@ -1062,87 +1140,6 @@ export default function Settings() {
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Profile Picture */}
-      <Card data-ocid="settings.avatar.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Camera className="w-5 h-5" />
-            {t("settings.avatar.title")}
-          </CardTitle>
-          <CardDescription>{t("settings.avatar.description")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20 border-2 border-border">
-              {currentAvatarUrl ? (
-                <AvatarImage src={currentAvatarUrl} alt={currentDisplayName} />
-              ) : null}
-              <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                {currentDisplayName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                {currentAvatarUrl ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRemoveAndReupload}
-                    disabled={
-                      updateAvatarMutation.isPending || isUploadingAvatar
-                    }
-                    data-ocid="settings.avatar.delete_button"
-                  >
-                    {updateAvatarMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                        Removing...
-                      </>
-                    ) : (
-                      <>
-                        <X className="w-4 h-4 mr-1" />
-                        Remove
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingAvatar}
-                    data-ocid="settings.avatar.upload_button"
-                  >
-                    {isUploadingAvatar ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                        {t("settings.avatar.uploading")}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-4 h-4 mr-1" />
-                        {t("settings.avatar.upload")}
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.avatar.recommendation")}
-              </p>
-            </div>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleAvatarUpload}
-            data-ocid="settings.avatar.dropzone"
-          />
         </CardContent>
       </Card>
 
@@ -1380,7 +1377,7 @@ export default function Settings() {
               <SelectTrigger data-ocid="settings.privacy.message.select">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-48 overflow-y-auto">
                 <SelectItem value="everyone">Everyone</SelectItem>
                 <SelectItem value="friends">Friends Only</SelectItem>
                 <SelectItem value="nobody">Nobody</SelectItem>
