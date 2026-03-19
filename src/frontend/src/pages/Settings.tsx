@@ -482,6 +482,111 @@ export default function Settings() {
       );
       localStorage.removeItem(`diniverse_settings_${uname}`);
 
+      // Migrate ALL per-username data keys
+      const keysToMigrate = [
+        "diniverse_dinibucks_",
+        "diniverse_friend_requests_",
+        "diniverse_social_links_",
+        "diniverse_privacy_",
+        "diniverse_notif_prefs_",
+        "diniverse_redeemed_codes_",
+        "diniverse_lastseen_",
+      ];
+      for (const prefix of keysToMigrate) {
+        const oldKey = `${prefix}${uname}`;
+        const newKey = `${prefix}${newUname}`;
+        const val = localStorage.getItem(oldKey);
+        if (val !== null) {
+          localStorage.setItem(newKey, val);
+          localStorage.removeItem(oldKey);
+        }
+      }
+
+      // Migrate message threads: keys like diniverse_messages_A_B
+      const allKeys = Object.keys(localStorage);
+      for (const key of allKeys) {
+        if (key.startsWith("diniverse_messages_")) {
+          const parts = key.replace("diniverse_messages_", "").split("_");
+          if (parts.includes(uname)) {
+            const newParts = parts.map((p: string) =>
+              p === uname ? newUname : p,
+            );
+            const newKey = `diniverse_messages_${newParts.join("_")}`;
+            const val = localStorage.getItem(key);
+            if (val !== null) {
+              localStorage.setItem(newKey, val);
+              localStorage.removeItem(key);
+            }
+          }
+        }
+      }
+
+      // Migrate groups: update ownedBy and member usernames in the shared groups array
+      const groupsRaw = localStorage.getItem("diniverse_groups");
+      if (groupsRaw) {
+        try {
+          const groups = JSON.parse(groupsRaw);
+          const updatedGroups = groups.map((g: Record<string, unknown>) => {
+            const updated = { ...g };
+            if (updated.ownedBy === uname) updated.ownedBy = newUname;
+            if (Array.isArray(updated.members)) {
+              updated.members = (
+                updated.members as Array<Record<string, unknown>>
+              ).map((m) =>
+                m.username === uname ? { ...m, username: newUname } : m,
+              );
+            }
+            // Update social wall posts authored by old username
+            if (Array.isArray(updated.socialPosts)) {
+              updated.socialPosts = (
+                updated.socialPosts as Array<Record<string, unknown>>
+              ).map((post) => {
+                const updatedPost = { ...post };
+                if (updatedPost.author === uname) updatedPost.author = newUname;
+                if (Array.isArray(updatedPost.replies)) {
+                  updatedPost.replies = (
+                    updatedPost.replies as Array<Record<string, unknown>>
+                  ).map((r) =>
+                    r.author === uname ? { ...r, author: newUname } : r,
+                  );
+                }
+                return updatedPost;
+              });
+            }
+            return updated;
+          });
+          localStorage.setItem(
+            "diniverse_groups",
+            JSON.stringify(updatedGroups),
+          );
+        } catch {
+          /* ignore parse errors */
+        }
+      }
+
+      // Migrate friend requests inside other users' data to reference new username
+      const usersRaw2 = localStorage.getItem("diniverse_users");
+      const allUsers = usersRaw2 ? Object.keys(JSON.parse(usersRaw2)) : [];
+      for (const otherUser of allUsers) {
+        if (otherUser === newUname) continue;
+        const frKey = `diniverse_friend_requests_${otherUser}`;
+        const frRaw = localStorage.getItem(frKey);
+        if (frRaw) {
+          try {
+            const frs = JSON.parse(frRaw);
+            const updated = frs.map((fr: Record<string, unknown>) => {
+              const updatedFr = { ...fr };
+              if (updatedFr.from === uname) updatedFr.from = newUname;
+              if (updatedFr.to === uname) updatedFr.to = newUname;
+              return updatedFr;
+            });
+            localStorage.setItem(frKey, JSON.stringify(updated));
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+
       // Re-issue session token
       const token = `${newUname}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       localStorage.setItem("diniverse_session_token", token);
