@@ -1593,9 +1593,6 @@ export default function Settings() {
               <p className="font-medium">
                 {t("settings.deleteAccount.button")}
               </p>
-              <p className="text-sm text-muted-foreground">
-                {t("settings.deleteAccount.confirmMessage")}
-              </p>
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>

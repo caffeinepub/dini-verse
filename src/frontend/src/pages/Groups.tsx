@@ -2207,6 +2207,28 @@ function GroupDetail({
                 </>
               )}
             </Button>
+
+            {/* Disband Group */}
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Are you sure you want to disband this group? This cannot be undone.",
+                  )
+                ) {
+                  const allGroups = getGroups();
+                  const updated = allGroups.filter((g) => g.id !== group.id);
+                  saveGroups(updated);
+                  onBack();
+                }
+              }}
+              data-ocid="groups.disband.delete_button"
+            >
+              <Trash2 className="w-3 h-3 mr-1" />
+              Disband Group
+            </Button>
           </div>
         )}
       </div>
