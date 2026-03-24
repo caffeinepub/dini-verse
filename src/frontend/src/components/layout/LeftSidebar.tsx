@@ -25,8 +25,8 @@ export default function LeftSidebar() {
     { to: "/profile", label: t("nav.profile") },
     { to: "/social", label: t("nav.social"), icon: MessageCircle },
     { to: "/people", label: "People", icon: UserSearch },
+    { to: "/groups", label: "Groups", icon: Users },
     { to: "/inventory", label: t("nav.inventory"), icon: Package },
-    { to: "/groups", label: t("nav.groups"), icon: Users },
     { to: "/settings", label: t("nav.settings"), icon: Settings },
   ];
 

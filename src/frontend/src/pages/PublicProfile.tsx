@@ -52,22 +52,6 @@ import { getSocialLinks } from "../utils/socialStorage";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-interface GroupMember {
-  username: string;
-  role: string;
-  rank: number;
-  status: string;
-}
-
-interface Group {
-  id: string;
-  name: string;
-  thumbnailDataUrl: string | null;
-  ownedBy: string;
-  members: GroupMember[];
-  [key: string]: unknown;
-}
-
 interface PublishedGame {
   id: string;
   title: string;
@@ -94,15 +78,6 @@ function getStoredUsers(): Record<
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
-  }
-}
-
-function getStoredGroups(): Group[] {
-  try {
-    const raw = localStorage.getItem("diniverse_groups");
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
   }
 }
 
@@ -227,15 +202,6 @@ export default function PublicProfile() {
     () => (userData ? getSocialLinks(username).filter((l) => l.url) : []),
     [username, userData],
   );
-
-  const userGroups = useMemo(() => {
-    if (!userData) return [];
-    return getStoredGroups().filter(
-      (g) =>
-        g.ownedBy === username ||
-        g.members.some((m) => m.username === username),
-    );
-  }, [username, userData]);
 
   const publishedGames = useMemo(
     () =>
@@ -521,7 +487,7 @@ export default function PublicProfile() {
 
       {/* Tabs: Games, Badges, Groups */}
       <Tabs defaultValue="games">
-        <TabsList className="w-full grid grid-cols-3">
+        <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="games" data-ocid="publicprofile.tab">
             <GamepadIcon className="w-3.5 h-3.5 mr-1" />
             Games
@@ -529,10 +495,6 @@ export default function PublicProfile() {
           <TabsTrigger value="badges" data-ocid="publicprofile.tab">
             <Shield className="w-3.5 h-3.5 mr-1" />
             Badges
-          </TabsTrigger>
-          <TabsTrigger value="groups" data-ocid="publicprofile.tab">
-            <Users className="w-3.5 h-3.5 mr-1" />
-            Groups
           </TabsTrigger>
         </TabsList>
 
@@ -662,64 +624,6 @@ export default function PublicProfile() {
               </div>
             )}
           </div>
-        </TabsContent>
-
-        {/* Groups tab */}
-        <TabsContent value="groups" className="mt-4">
-          {userGroups.length === 0 ? (
-            <div
-              className="flex flex-col items-center justify-center py-10 text-center border border-dashed border-border rounded-xl"
-              data-ocid="publicprofile.empty_state"
-            >
-              <Users className="w-8 h-8 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">
-                This user hasn&apos;t joined any groups yet.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {userGroups.map((group, index) => (
-                <Card
-                  key={group.id}
-                  className="overflow-hidden"
-                  data-ocid={`publicprofile.item.${index + 1}`}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-[#cde5aa] flex items-center justify-center overflow-hidden shrink-0">
-                        {group.thumbnailDataUrl ? (
-                          <img
-                            src={group.thumbnailDataUrl}
-                            alt={group.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <Users className="w-6 h-6 text-green-800" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground truncate">
-                          {group.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {group.members.length} member
-                          {group.members.length !== 1 ? "s" : ""}
-                        </p>
-                      </div>
-                      {group.ownedBy === username && (
-                        <Badge
-                          variant="outline"
-                          className="text-xs shrink-0 border-green-400 text-green-700"
-                        >
-                          Owner
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
         </TabsContent>
       </Tabs>
 

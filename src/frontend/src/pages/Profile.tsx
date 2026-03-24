@@ -55,14 +55,6 @@ interface FavoriteItem {
   imageUrl?: string;
 }
 
-interface Group {
-  id: string;
-  name: string;
-  thumbnailDataUrl: string | null;
-  ownedBy: string;
-  members: { username: string }[];
-}
-
 interface PlayerBadge {
   id: string;
   name: string;
@@ -171,12 +163,6 @@ export default function Profile() {
   const friends = username ? getFriends(username) : [];
   const followers = getLocalList<string>(`diniverse_followers_${username}`);
   const following = getLocalList<string>(`diniverse_following_${username}`);
-
-  const allGroups = getLocalList<Group>("diniverse_groups");
-  const myGroups = allGroups.filter(
-    (g) =>
-      g.ownedBy === username || g.members.some((m) => m.username === username),
-  );
 
   const publishedGames = getLocalList<PublishedGame>(
     "diniverse_published_games",
@@ -411,7 +397,7 @@ export default function Profile() {
         )}
 
         <Tabs defaultValue="created">
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="created" data-ocid="profile.tab">
               <GamepadIcon className="w-3.5 h-3.5 mr-1" />
               Created
@@ -419,10 +405,6 @@ export default function Profile() {
             <TabsTrigger value="favorites" data-ocid="profile.tab">
               <Heart className="w-3.5 h-3.5 mr-1" />
               Favorites
-            </TabsTrigger>
-            <TabsTrigger value="groups" data-ocid="profile.tab">
-              <Users className="w-3.5 h-3.5 mr-1" />
-              Groups
             </TabsTrigger>
             <TabsTrigger value="badges" data-ocid="profile.tab">
               <Shield className="w-3.5 h-3.5 mr-1" />
@@ -507,53 +489,6 @@ export default function Profile() {
                       <p className="text-sm font-medium truncate">
                         {item.name}
                       </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Groups tab */}
-          <TabsContent value="groups" className="mt-4">
-            {myGroups.length === 0 ? (
-              <div
-                className="py-12 flex flex-col items-center justify-center text-center rounded-xl border border-dashed"
-                data-ocid="profile.empty_state"
-              >
-                <Users className="h-10 w-10 text-muted-foreground/40 mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Not in any groups yet.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {myGroups.map((group, i) => (
-                  <div
-                    key={group.id}
-                    className="rounded-xl border overflow-hidden bg-card"
-                    data-ocid={`profile.item.${i + 1}`}
-                  >
-                    {group.thumbnailDataUrl ? (
-                      <img
-                        src={group.thumbnailDataUrl}
-                        alt={group.name}
-                        className="w-full h-28 object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-28 bg-muted flex items-center justify-center">
-                        <Users className="h-8 w-8 text-muted-foreground/40" />
-                      </div>
-                    )}
-                    <div className="p-2 flex items-center justify-between gap-1">
-                      <p className="text-sm font-medium truncate">
-                        {group.name}
-                      </p>
-                      {group.ownedBy === username && (
-                        <Badge variant="secondary" className="text-xs shrink-0">
-                          Owner
-                        </Badge>
-                      )}
                     </div>
                   </div>
                 ))}

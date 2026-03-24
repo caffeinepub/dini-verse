@@ -90,12 +90,6 @@ const inventoryRoute = createRoute({
   component: Inventory,
 });
 
-const groupsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/groups",
-  component: Groups,
-});
-
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/settings",
@@ -106,6 +100,12 @@ const socialRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/social",
   component: Social,
+});
+
+const groupsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/groups",
+  component: Groups,
 });
 
 const createGamesBuilder2DRoute = createRoute({
@@ -143,9 +143,9 @@ const routeTree = rootRoute.addChildren([
   createRoute_,
   diniBucksRoute,
   inventoryRoute,
-  groupsRoute,
   settingsRoute,
   socialRoute,
+  groupsRoute,
   createGamesBuilder2DRoute,
   createUGCAccessoriesRoute,
   peopleRoute,
