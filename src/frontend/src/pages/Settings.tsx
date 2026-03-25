@@ -250,6 +250,7 @@ export default function Settings() {
   const deleteAccountMutation = useDeleteAccount();
   const updateAvatarMutation = useUpdateAvatar();
 
+  const username = getCurrentUsername();
   // Profile picture state
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
@@ -293,12 +294,27 @@ export default function Settings() {
   // Delete account confirmation
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
+  // Security state
+  const [iiTwoFA, setIiTwoFA] = useState<boolean>(() => {
+    if (!username) return false;
+    return localStorage.getItem(`diniverse_ii2fa_${username}`) === "true";
+  });
+  const [pinTwoFA, setPinTwoFA] = useState<boolean>(() => {
+    if (!username) return false;
+    return !!localStorage.getItem(`diniverse_pin2fa_${username}`);
+  });
+  const [pin, setPin] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [showSetPin, setShowSetPin] = useState(false);
+  const [showRemovePin, setShowRemovePin] = useState(false);
+  const [removePinInput, setRemovePinInput] = useState("");
+
   // Promo code state
   const [promoCode, setPromoCode] = useState("");
   const [isRedeemingPromo, setIsRedeemingPromo] = useState(false);
   const [diniBucksBalance, setDiniBucksBalance] = useState<number | null>(null);
 
-  const username = getCurrentUsername();
   const rawSettings = username ? getLocalSettings(username) : null;
 
   // Social Networks state
@@ -1562,6 +1578,230 @@ export default function Settings() {
               }}
               data-ocid="settings.notifications.experiences.switch"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Security */}
+      <Card data-ocid="settings.security.card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Security
+          </CardTitle>
+          <CardDescription>
+            Manage two-step verification for your account (optional)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Internet Identity 2FA */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-sm">
+                Internet Identity Verification
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Use Internet Identity as an extra verification step when logging
+                in
+              </p>
+            </div>
+            <Switch
+              checked={iiTwoFA}
+              onCheckedChange={(checked) => {
+                if (!username) return;
+                setIiTwoFA(checked);
+                if (checked) {
+                  localStorage.setItem(`diniverse_ii2fa_${username}`, "true");
+                  toast.success(
+                    "Internet Identity 2-step verification enabled",
+                  );
+                } else {
+                  localStorage.removeItem(`diniverse_ii2fa_${username}`);
+                  toast.success(
+                    "Internet Identity 2-step verification disabled",
+                  );
+                }
+              }}
+              data-ocid="settings.security.ii2fa.switch"
+            />
+          </div>
+          <Separator />
+          {/* PIN 2FA */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">PIN Verification</p>
+                <p className="text-xs text-muted-foreground">
+                  Set a 4 to 6 digit PIN as an extra verification step when
+                  logging in
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {pinTwoFA && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowRemovePin(true);
+                      setShowSetPin(false);
+                    }}
+                    data-ocid="settings.security.pin.remove_button"
+                  >
+                    Remove PIN
+                  </Button>
+                )}
+                <Button
+                  variant={pinTwoFA ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setShowSetPin(!showSetPin);
+                    setShowRemovePin(false);
+                    setPinError("");
+                    setPin("");
+                    setPinConfirm("");
+                  }}
+                  data-ocid="settings.security.pin.set_button"
+                >
+                  {pinTwoFA ? "Change PIN" : "Set PIN"}
+                </Button>
+              </div>
+            </div>
+            {pinTwoFA && !showSetPin && !showRemovePin && (
+              <div className="text-xs text-green-600 flex items-center gap-1">
+                <Lock className="w-3 h-3" /> PIN verification is active
+              </div>
+            )}
+            {showSetPin && (
+              <div className="space-y-2 border rounded-md p-3 bg-muted/30">
+                <Label htmlFor="newPin">New PIN (4–6 digits)</Label>
+                <Input
+                  id="newPin"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pin}
+                  onChange={(e) =>
+                    setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
+                  placeholder="Enter 4–6 digit PIN"
+                  data-ocid="settings.security.pin.new_input"
+                />
+                <Label htmlFor="confirmPin">Confirm PIN</Label>
+                <Input
+                  id="confirmPin"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pinConfirm}
+                  onChange={(e) =>
+                    setPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
+                  placeholder="Confirm PIN"
+                  data-ocid="settings.security.pin.confirm_input"
+                />
+                {pinError && (
+                  <p className="text-xs text-destructive">{pinError}</p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (!username) return;
+                      if (pin.length < 4 || pin.length > 6) {
+                        setPinError("PIN must be 4 to 6 digits");
+                        return;
+                      }
+                      if (pin !== pinConfirm) {
+                        setPinError("PINs do not match");
+                        return;
+                      }
+                      localStorage.setItem(`diniverse_pin2fa_${username}`, pin);
+                      setPinTwoFA(true);
+                      setShowSetPin(false);
+                      setPin("");
+                      setPinConfirm("");
+                      setPinError("");
+                      toast.success("PIN verification enabled");
+                    }}
+                    data-ocid="settings.security.pin.save_button"
+                  >
+                    Save PIN
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowSetPin(false);
+                      setPin("");
+                      setPinConfirm("");
+                      setPinError("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+            {showRemovePin && (
+              <div className="space-y-2 border rounded-md p-3 bg-muted/30">
+                <Label htmlFor="removePinInput">
+                  Enter your current PIN to remove it
+                </Label>
+                <Input
+                  id="removePinInput"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={removePinInput}
+                  onChange={(e) =>
+                    setRemovePinInput(
+                      e.target.value.replace(/\D/g, "").slice(0, 6),
+                    )
+                  }
+                  placeholder="Current PIN"
+                  data-ocid="settings.security.pin.remove_input"
+                />
+                {pinError && (
+                  <p className="text-xs text-destructive">{pinError}</p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      if (!username) return;
+                      const stored = localStorage.getItem(
+                        `diniverse_pin2fa_${username}`,
+                      );
+                      if (removePinInput !== stored) {
+                        setPinError("Incorrect PIN");
+                        return;
+                      }
+                      localStorage.removeItem(`diniverse_pin2fa_${username}`);
+                      setPinTwoFA(false);
+                      setShowRemovePin(false);
+                      setRemovePinInput("");
+                      setPinError("");
+                      toast.success("PIN verification removed");
+                    }}
+                    data-ocid="settings.security.pin.remove_confirm_button"
+                  >
+                    Remove PIN
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowRemovePin(false);
+                      setRemovePinInput("");
+                      setPinError("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
