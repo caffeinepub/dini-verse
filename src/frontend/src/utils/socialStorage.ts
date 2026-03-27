@@ -347,6 +347,8 @@ export function saveSocialLinks(username: string, links: SocialLink[]): void {
 
 export interface PrivacySettings {
   whoCanMessage: "everyone" | "friends" | "nobody";
+  offlineMode?: boolean;
+  recentlyPlayedVisibility?: "everyone" | "friends" | "no-one";
 }
 
 export function getPrivacySettings(username: string): PrivacySettings {
@@ -401,6 +403,31 @@ export function saveNotificationPrefs(
 ): void {
   localStorage.setItem(
     `diniverse_notif_prefs_${username}`,
+    JSON.stringify(prefs),
+  );
+}
+
+// ─── User Preferences ────────────────────────────────────────────────────────
+
+export interface UserPreferences {
+  publicProfileVisibility: "everyone" | "friends" | "no-one";
+}
+
+export function getPreferences(username: string): UserPreferences {
+  try {
+    const raw = localStorage.getItem(`diniverse_preferences_${username}`);
+    return raw ? JSON.parse(raw) : { publicProfileVisibility: "everyone" };
+  } catch {
+    return { publicProfileVisibility: "everyone" };
+  }
+}
+
+export function savePreferences(
+  username: string,
+  prefs: UserPreferences,
+): void {
+  localStorage.setItem(
+    `diniverse_preferences_${username}`,
     JSON.stringify(prefs),
   );
 }

@@ -42,6 +42,7 @@ import {
   Lock,
   LogIn,
   Moon,
+  Settings2,
   Share2,
   Shield,
   Sun,
@@ -77,13 +78,16 @@ import {
   type NotificationPrefs,
   type PrivacySettings,
   type SocialLink,
+  type UserPreferences,
   getDiniBucks,
   getNotificationPrefs,
+  getPreferences,
   getPrivacySettings,
   getSocialLinks,
   getCurrentUser as getSocialUser,
   redeemPromoCode,
   saveNotificationPrefs,
+  savePreferences,
   savePrivacySettings,
   saveSocialLinks,
 } from "../utils/socialStorage";
@@ -337,6 +341,13 @@ export default function Settings() {
           groupUpdates: true,
           experienceInvitations: true,
         },
+  );
+
+  // Preferences state
+  const [preferences, setPreferences] = useState<UserPreferences>(() =>
+    username
+      ? getPreferences(username)
+      : { publicProfileVisibility: "everyone" },
   );
 
   // Load Dini Bucks balance
@@ -1264,51 +1275,19 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Offline Mode */}
-      <Card data-ocid="settings.visibility.card">
+      {/* Preferences */}
+      <Card data-ocid="settings.preferences.card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Eye className="w-5 h-5" />
-            {t("settings.visibility.title")}
+            <Settings2 className="w-5 h-5" />
+            Preferences
           </CardTitle>
           <CardDescription>
-            {t("settings.visibility.description")}
+            Customize your Dini.Verse experience
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">
-                {t("settings.visibility.offlineMode")}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {t("settings.visibility.offlineModeDescription")}
-              </p>
-            </div>
-            <Switch
-              checked={currentVisibilityIsOffline}
-              onCheckedChange={handleVisibilityChange}
-              disabled={updateVisibilityMutation.isPending}
-              data-ocid="settings.visibility.switch"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Theme */}
-      <Card data-ocid="settings.theme.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {theme === "dark" ? (
-              <Moon className="w-5 h-5" />
-            ) : (
-              <Sun className="w-5 h-5" />
-            )}
-            {t("settings.theme.title")}
-          </CardTitle>
-          <CardDescription>{t("settings.theme.description")}</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Dark Mode */}
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">{t("settings.theme.darkMode")}</p>
@@ -1321,8 +1300,39 @@ export default function Settings() {
               onCheckedChange={(checked) =>
                 setTheme(checked ? "dark" : "light")
               }
-              data-ocid="settings.theme.switch"
+              data-ocid="settings.preferences.darkmode.switch"
             />
+          </div>
+          <Separator />
+          {/* Public Profile Visibility */}
+          <div className="space-y-2">
+            <Label>Public Profile</Label>
+            <p className="text-sm text-muted-foreground">
+              Choose who can view your full profile details
+            </p>
+            <Select
+              value={preferences.publicProfileVisibility}
+              onValueChange={(val) => {
+                if (!username) return;
+                const newPrefs: UserPreferences = {
+                  ...preferences,
+                  publicProfileVisibility:
+                    val as UserPreferences["publicProfileVisibility"],
+                };
+                setPreferences(newPrefs);
+                savePreferences(username, newPrefs);
+                toast.success("Preferences saved");
+              }}
+            >
+              <SelectTrigger data-ocid="settings.preferences.profile_visibility.select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-48 overflow-y-auto">
+                <SelectItem value="everyone">Everyone</SelectItem>
+                <SelectItem value="friends">Friends</SelectItem>
+                <SelectItem value="no-one">No one</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -1488,6 +1498,7 @@ export default function Settings() {
               onValueChange={(val) => {
                 if (!username) return;
                 const newPrivacy = {
+                  ...privacySettings,
                   whoCanMessage: val as PrivacySettings["whoCanMessage"],
                 };
                 setPrivacySettings(newPrivacy);
@@ -1502,6 +1513,55 @@ export default function Settings() {
                 <SelectItem value="everyone">Everyone</SelectItem>
                 <SelectItem value="friends">Friends Only</SelectItem>
                 <SelectItem value="nobody">Nobody</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Separator />
+          {/* Offline Mode */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Offline Mode</p>
+              <p className="text-sm text-muted-foreground">
+                Appear offline to other users
+              </p>
+            </div>
+            <Switch
+              checked={currentVisibilityIsOffline}
+              onCheckedChange={handleVisibilityChange}
+              disabled={updateVisibilityMutation.isPending}
+              data-ocid="settings.privacy.offline.switch"
+            />
+          </div>
+          <Separator />
+          {/* Recently Played Visibility */}
+          <div className="space-y-2">
+            <Label>Recently Played</Label>
+            <p className="text-sm text-muted-foreground">
+              Who can see your recently played games
+            </p>
+            <Select
+              value={privacySettings.recentlyPlayedVisibility ?? "everyone"}
+              onValueChange={(val) => {
+                if (!username) return;
+                const newPrivacy = {
+                  ...privacySettings,
+                  recentlyPlayedVisibility: val as
+                    | "everyone"
+                    | "friends"
+                    | "no-one",
+                };
+                setPrivacySettings(newPrivacy);
+                savePrivacySettings(username, newPrivacy);
+                toast.success("Privacy settings saved");
+              }}
+            >
+              <SelectTrigger data-ocid="settings.privacy.recently_played.select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-48 overflow-y-auto">
+                <SelectItem value="everyone">Everyone</SelectItem>
+                <SelectItem value="friends">Friends Only</SelectItem>
+                <SelectItem value="no-one">No one</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1612,6 +1672,7 @@ export default function Settings() {
                 setIiTwoFA(checked);
                 if (checked) {
                   localStorage.setItem(`diniverse_ii2fa_${username}`, "true");
+                  window.open("https://identity.ic0.app", "_blank");
                   toast.success(
                     "Internet Identity 2-step verification enabled",
                   );

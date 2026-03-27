@@ -48,7 +48,11 @@ import {
   getCurrentUsername,
   getLocalSettings,
 } from "../hooks/useAccountSettings";
-import { getSocialLinks } from "../utils/socialStorage";
+import {
+  getPreferences,
+  getSocialLinks,
+  isFriendWith,
+} from "../utils/socialStorage";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -189,6 +193,20 @@ export default function PublicProfile() {
   const currentUser = getCurrentUsername();
   const isOwnProfile = currentUser === username;
   const isLoggedIn = !!currentUser;
+
+  const profileVisibility = useMemo(
+    () => getPreferences(username).publicProfileVisibility,
+    [username],
+  );
+
+  const isRestricted = useMemo(() => {
+    if (isOwnProfile) return false;
+    if (profileVisibility === "no-one") return true;
+    if (profileVisibility === "friends") {
+      return !currentUser || !isFriendWith(currentUser, username);
+    }
+    return false;
+  }, [profileVisibility, currentUser, username, isOwnProfile]);
 
   const users = useMemo(() => getStoredUsers(), []);
   const userData = users[username];
@@ -430,14 +448,16 @@ export default function PublicProfile() {
                 {displayName}
               </h1>
               <p className="text-muted-foreground text-sm mb-2">@{username}</p>
-              <OnlineBadge visibility={visibility} />
+              {!isRestricted && <OnlineBadge visibility={visibility} />}
 
               {/* Stats row */}
-              <div className="flex flex-wrap gap-2 mt-3">
-                <StatPill label="Friends" value={friends.length} />
-                <StatPill label="Followers" value={followers.length} />
-                <StatPill label="Following" value={following.length} />
-              </div>
+              {!isRestricted && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <StatPill label="Friends" value={friends.length} />
+                  <StatPill label="Followers" value={followers.length} />
+                  <StatPill label="Following" value={following.length} />
+                </div>
+              )}
             </div>
           </div>
 
@@ -487,15 +507,19 @@ export default function PublicProfile() {
 
       {/* Tabs: Games, Badges, Groups */}
       <Tabs defaultValue="games">
-        <TabsList className="w-full grid grid-cols-2">
+        <TabsList
+          className={`w-full grid ${isRestricted ? "grid-cols-1" : "grid-cols-2"}`}
+        >
           <TabsTrigger value="games" data-ocid="publicprofile.tab">
             <GamepadIcon className="w-3.5 h-3.5 mr-1" />
             Games
           </TabsTrigger>
-          <TabsTrigger value="badges" data-ocid="publicprofile.tab">
-            <Shield className="w-3.5 h-3.5 mr-1" />
-            Badges
-          </TabsTrigger>
+          {!isRestricted && (
+            <TabsTrigger value="badges" data-ocid="publicprofile.tab">
+              <Shield className="w-3.5 h-3.5 mr-1" />
+              Badges
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Games tab */}
@@ -539,79 +563,31 @@ export default function PublicProfile() {
         </TabsContent>
 
         {/* Badges tab */}
-        <TabsContent value="badges" className="mt-4 space-y-6">
-          {/* Official badges */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div
-                className="h-0.5 flex-1 rounded"
-                style={{ background: "#cde5aa" }}
-              />
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Dini.Verse Official
-              </span>
-              <div
-                className="h-0.5 flex-1 rounded"
-                style={{ background: "#cde5aa" }}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {OFFICIAL_BADGES.map((badge) => (
+        {!isRestricted && (
+          <TabsContent value="badges" className="mt-4 space-y-6">
+            {/* Official badges */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
                 <div
-                  key={badge.id}
-                  className="flex items-start gap-3 p-3 rounded-xl border bg-card"
-                >
-                  <div className="shrink-0 p-2 rounded-lg bg-muted">
-                    <OfficialBadgeIcon icon={badge.icon} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">{badge.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {badge.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Player badges */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div
-                className="h-0.5 flex-1 rounded"
-                style={{ background: "#cde5aa" }}
-              />
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Player Badges
-              </span>
-              <div
-                className="h-0.5 flex-1 rounded"
-                style={{ background: "#cde5aa" }}
-              />
-            </div>
-            {playerBadges.length === 0 ? (
-              <div
-                className="py-8 flex flex-col items-center justify-center text-center rounded-xl border border-dashed"
-                data-ocid="publicprofile.empty_state"
-              >
-                <Shield className="h-8 w-8 text-muted-foreground/40 mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  No player badges earned yet.
-                </p>
+                  className="h-0.5 flex-1 rounded"
+                  style={{ background: "#cde5aa" }}
+                />
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Dini.Verse Official
+                </span>
+                <div
+                  className="h-0.5 flex-1 rounded"
+                  style={{ background: "#cde5aa" }}
+                />
               </div>
-            ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {playerBadges.map((badge, i) => (
+                {OFFICIAL_BADGES.map((badge) => (
                   <div
                     key={badge.id}
                     className="flex items-start gap-3 p-3 rounded-xl border bg-card"
-                    data-ocid={`publicprofile.item.${i + 1}`}
                   >
                     <div className="shrink-0 p-2 rounded-lg bg-muted">
-                      <Shield className="w-5 h-5 text-primary" />
+                      <OfficialBadgeIcon icon={badge.icon} />
                     </div>
                     <div>
                       <p className="text-sm font-semibold">{badge.name}</p>
@@ -622,9 +598,59 @@ export default function PublicProfile() {
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </TabsContent>
+            </div>
+
+            <Separator />
+
+            {/* Player badges */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-0.5 flex-1 rounded"
+                  style={{ background: "#cde5aa" }}
+                />
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Player Badges
+                </span>
+                <div
+                  className="h-0.5 flex-1 rounded"
+                  style={{ background: "#cde5aa" }}
+                />
+              </div>
+              {playerBadges.length === 0 ? (
+                <div
+                  className="py-8 flex flex-col items-center justify-center text-center rounded-xl border border-dashed"
+                  data-ocid="publicprofile.empty_state"
+                >
+                  <Shield className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    No player badges earned yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {playerBadges.map((badge, i) => (
+                    <div
+                      key={badge.id}
+                      className="flex items-start gap-3 p-3 rounded-xl border bg-card"
+                      data-ocid={`publicprofile.item.${i + 1}`}
+                    >
+                      <div className="shrink-0 p-2 rounded-lg bg-muted">
+                        <Shield className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">{badge.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {badge.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Block User Confirmation Dialog */}
