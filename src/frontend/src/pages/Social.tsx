@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import AccountsDisabledNotice from "../components/auth/AccountsDisabledNotice";
@@ -26,9 +27,21 @@ export default function Social() {
     <div className="container py-8">
       <div className="space-y-6">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">
-            {t("social.title")}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-4xl font-bold tracking-tight">
+              {t("social.title")}
+            </h1>
+            <Badge
+              variant="secondary"
+              className="flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 border border-green-300 dark:border-green-700"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+              </span>
+              Live
+            </Badge>
+          </div>
           <p className="text-muted-foreground mt-2">{t("social.subtitle")}</p>
         </div>
 

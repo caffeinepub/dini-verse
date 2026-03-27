@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Check, UserMinus, UserX, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   useGetFriends,
@@ -18,6 +19,7 @@ import {
   useRespondToFriendRequest,
   useUnfriend,
 } from "../../hooks/useSocialFriends";
+import { getUserVisibility } from "../../utils/socialStorage";
 
 export default function FriendsPanel() {
   const { data: friends, isLoading: friendsLoading } = useGetFriends();
@@ -26,6 +28,19 @@ export default function FriendsPanel() {
   const { data: outgoing } = useGetOutgoingRequests();
   const respondMutation = useRespondToFriendRequest();
   const unfriendMutation = useUnfriend();
+
+  // Tick every second so online/offline status re-evaluates without a prop change
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Derive live online status using tick as a dependency
+  const friendsWithLiveStatus = (friends ?? []).map((f) => ({
+    ...f,
+    isOnline: tick >= 0 && getUserVisibility(f.username) === "online",
+  }));
 
   const handleAccept = async (from: string) => {
     try {
@@ -186,8 +201,8 @@ export default function FriendsPanel() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             Friends
-            {(friends?.length ?? 0) > 0 && (
-              <Badge variant="secondary">{friends?.length}</Badge>
+            {(friendsWithLiveStatus.length ?? 0) > 0 && (
+              <Badge variant="secondary">{friendsWithLiveStatus.length}</Badge>
             )}
           </CardTitle>
           <CardDescription>
@@ -201,9 +216,9 @@ export default function FriendsPanel() {
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
-          ) : friends && friends.length > 0 ? (
+          ) : friendsWithLiveStatus.length > 0 ? (
             <div className="space-y-2">
-              {friends.map((friend, idx) => (
+              {friendsWithLiveStatus.map((friend, idx) => (
                 <div
                   key={friend.username}
                   data-ocid={`social.friends.item.${idx + 1}`}
@@ -223,7 +238,7 @@ export default function FriendsPanel() {
                         </AvatarFallback>
                       </Avatar>
                       <span
-                        className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card ${
+                        className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card transition-colors duration-500 ${
                           friend.isOnline ? "bg-green-500" : "bg-gray-400"
                         }`}
                       />

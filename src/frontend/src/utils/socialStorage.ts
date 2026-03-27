@@ -28,6 +28,19 @@ const PROMO_CODES: Record<string, number> = {
   "DINI-VERSE": 500,
 };
 
+// ─── Real-time Sync ─────────────────────────────────────────────────────────
+
+export function emitSocialSync(key?: string): void {
+  try {
+    localStorage.setItem("diniverse_social_sync_ts", String(Date.now()));
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: key ?? "diniverse_social_sync" }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
 // ─── Session ────────────────────────────────────────────────────────────────
 
 export function getCurrentUser(): string | null {
@@ -187,6 +200,8 @@ export function sendFriendRequest(from: string, to: string): void {
   const receiverReqs = loadRequests(to);
   receiverReqs.push(newRequest);
   saveRequests(to, receiverReqs);
+
+  emitSocialSync("diniverse_social_sync");
 }
 
 export function respondToRequest(
@@ -207,6 +222,8 @@ export function respondToRequest(
     });
     saveRequests(username, updated);
   }
+
+  emitSocialSync("diniverse_social_sync");
 }
 
 export function unfriend(userA: string, userB: string): void {
@@ -222,6 +239,8 @@ export function unfriend(userA: string, userB: string): void {
     );
     saveRequests(username, updated);
   }
+
+  emitSocialSync("diniverse_social_sync");
 }
 
 // ─── Messages ───────────────────────────────────────────────────────────────
@@ -245,7 +264,9 @@ export function saveMessages(
   userB: string,
   msgs: ChatMessage[],
 ): void {
-  localStorage.setItem(getMessagesKey(userA, userB), JSON.stringify(msgs));
+  const key = getMessagesKey(userA, userB);
+  localStorage.setItem(key, JSON.stringify(msgs));
+  emitSocialSync(key);
 }
 
 // ─── Dini Bucks ─────────────────────────────────────────────────────────────

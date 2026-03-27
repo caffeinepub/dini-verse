@@ -24,6 +24,7 @@ import {
 import {
   getCurrentUser,
   getPrivacySettings,
+  getUserVisibility,
   isFriendWith,
 } from "../../utils/socialStorage";
 
@@ -73,6 +74,19 @@ export default function MessagesPanel({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const me = getCurrentUser();
 
+  // Tick every second to re-evaluate online status in sidebar
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Derive live online status
+  const friendsWithLiveStatus = friends.map((f) => ({
+    ...f,
+    isOnline: tick >= 0 && getUserVisibility(f.username) === "online",
+  }));
+
   const { data: messages, isLoading: msgsLoading } =
     useGetMessages(selectedFriend);
   const sendMsg = useSendMessage();
@@ -102,11 +116,14 @@ export default function MessagesPanel({
       toast.error("This user only accepts messages from friends.");
       return;
     }
+    // Clear input immediately for snappy UX
+    const content = text.trim();
+    setText("");
     try {
-      await sendMsg.mutateAsync({ to: selectedFriend, content: text.trim() });
-      setText("");
+      await sendMsg.mutateAsync({ to: selectedFriend, content });
     } catch {
       toast.error("Failed to send message");
+      setText(content);
     }
   };
 
@@ -121,6 +138,8 @@ export default function MessagesPanel({
       toast.error("Image must be smaller than 10MB");
       return;
     }
+    // Clear input immediately
+    if (imageInputRef.current) imageInputRef.current.value = "";
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
@@ -134,7 +153,6 @@ export default function MessagesPanel({
       }
     };
     reader.readAsDataURL(file);
-    if (imageInputRef.current) imageInputRef.current.value = "";
   };
 
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,6 +166,8 @@ export default function MessagesPanel({
       toast.error("Video must be smaller than 10MB");
       return;
     }
+    // Clear input immediately
+    if (videoInputRef.current) videoInputRef.current.value = "";
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
@@ -161,7 +181,6 @@ export default function MessagesPanel({
       }
     };
     reader.readAsDataURL(file);
-    if (videoInputRef.current) videoInputRef.current.value = "";
   };
 
   const searchGiphy = async (query: string) => {
@@ -182,14 +201,15 @@ export default function MessagesPanel({
 
   const handleSendGif = async (gif: GiphyResult) => {
     if (!selectedFriend) return;
+    // Clear GIF UI immediately
+    setShowGiphy(false);
+    setGifSearch("");
+    setGifResults([]);
     try {
       await sendGif.mutateAsync({
         to: selectedFriend,
         gifUrl: gif.images.fixed_height_small.url,
       });
-      setShowGiphy(false);
-      setGifSearch("");
-      setGifResults([]);
     } catch {
       toast.error("Failed to send GIF");
     }
@@ -207,7 +227,9 @@ export default function MessagesPanel({
     }
   };
 
-  const selectedFriendInfo = friends.find((f) => f.username === selectedFriend);
+  const selectedFriendInfo = friendsWithLiveStatus.find(
+    (f) => f.username === selectedFriend,
+  );
 
   return (
     <div className="flex h-[600px] rounded-2xl border overflow-hidden bg-card">
@@ -228,7 +250,7 @@ export default function MessagesPanel({
                 </div>
               ))}
             </div>
-          ) : friends.length === 0 ? (
+          ) : friendsWithLiveStatus.length === 0 ? (
             <div
               data-ocid="social.messages.empty_state"
               className="p-6 text-center text-muted-foreground text-sm"
@@ -238,7 +260,7 @@ export default function MessagesPanel({
             </div>
           ) : (
             <div className="p-2 space-y-1">
-              {friends.map((friend, idx) => (
+              {friendsWithLiveStatus.map((friend, idx) => (
                 <button
                   key={friend.username}
                   type="button"
@@ -263,7 +285,7 @@ export default function MessagesPanel({
                       </AvatarFallback>
                     </Avatar>
                     <span
-                      className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card ${
+                      className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card transition-colors duration-500 ${
                         friend.isOnline ? "bg-green-500" : "bg-gray-400"
                       }`}
                     />
@@ -311,7 +333,7 @@ export default function MessagesPanel({
                   </AvatarFallback>
                 </Avatar>
                 <span
-                  className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card ${
+                  className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card transition-colors duration-500 ${
                     selectedFriendInfo?.isOnline
                       ? "bg-green-500"
                       : "bg-gray-400"

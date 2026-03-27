@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { pushNotification } from "../components/notifications/NotificationsPanel";
 import {
   getAllUsers,
@@ -30,7 +31,34 @@ export interface UserSearchResult {
   status: "none" | "pending_outgoing" | "pending_incoming" | "friends";
 }
 
+/** Registers a storage-event listener + 1s interval to keep a query fresh. */
+function useSyncedQuery(queryKey: unknown[]) {
+  const queryClient = useQueryClient();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: queryKey is intentionally excluded to avoid infinite re-registration
+  useEffect(() => {
+    const invalidate = () => queryClient.invalidateQueries({ queryKey });
+    const handler = (e: StorageEvent) => {
+      if (
+        e.key === "diniverse_social_sync" ||
+        e.key === "diniverse_social_sync_ts" ||
+        e.key?.startsWith("diniverse_friend_requests_")
+      ) {
+        invalidate();
+      }
+    };
+    window.addEventListener("storage", handler);
+    const id = setInterval(invalidate, 1000);
+    return () => {
+      window.removeEventListener("storage", handler);
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient]);
+}
+
 export function useGetFriends() {
+  useSyncedQuery(["social", "friends"]);
   return useQuery<FriendInfo[]>({
     queryKey: ["social", "friends"],
     queryFn: () => {
@@ -43,11 +71,11 @@ export function useGetFriends() {
         isOnline: getUserVisibility(username) === "online",
       }));
     },
-    refetchInterval: 5000,
   });
 }
 
 export function useGetIncomingRequests() {
+  useSyncedQuery(["social", "requests", "incoming"]);
   return useQuery({
     queryKey: ["social", "requests", "incoming"],
     queryFn: () => {
@@ -59,11 +87,11 @@ export function useGetIncomingRequests() {
         fromAvatarUrl: getUserAvatarUrl(r.from),
       }));
     },
-    refetchInterval: 5000,
   });
 }
 
 export function useGetOutgoingRequests() {
+  useSyncedQuery(["social", "requests", "outgoing"]);
   return useQuery({
     queryKey: ["social", "requests", "outgoing"],
     queryFn: () => {
@@ -75,7 +103,6 @@ export function useGetOutgoingRequests() {
         toAvatarUrl: getUserAvatarUrl(r.to),
       }));
     },
-    refetchInterval: 5000,
   });
 }
 
@@ -105,6 +132,9 @@ export function useSendFriendRequest() {
         });
       }
       queryClient.invalidateQueries({ queryKey: ["social"] });
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "diniverse_social_sync" }),
+      );
     },
   });
 }
@@ -125,6 +155,46 @@ export function useRespondToFriendRequest() {
       respondToRequest(from, me, action);
       return { from, action, me };
     },
+    onMutate: async ({ from, action }) => {
+      await queryClient.cancelQueries({ queryKey: ["social"] });
+      const prevIncoming = queryClient.getQueryData([
+        "social",
+        "requests",
+        "incoming",
+      ]);
+      const prevFriends = queryClient.getQueryData(["social", "friends"]);
+      // Optimistically remove from incoming
+      queryClient.setQueryData(
+        ["social", "requests", "incoming"],
+        (old: { from: string }[] | undefined) =>
+          (old ?? []).filter((r) => r.from !== from),
+      );
+      if (action === "accept") {
+        const me = getCurrentUser();
+        queryClient.setQueryData(
+          ["social", "friends"],
+          (old: FriendInfo[] | undefined) => [
+            ...(old ?? []),
+            {
+              username: from,
+              displayName: getUserDisplayName(from),
+              avatarUrl: getUserAvatarUrl(from),
+              isOnline: me ? getUserVisibility(from) === "online" : false,
+            },
+          ],
+        );
+      }
+      return { prevIncoming, prevFriends };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prevIncoming)
+        queryClient.setQueryData(
+          ["social", "requests", "incoming"],
+          ctx.prevIncoming,
+        );
+      if (ctx?.prevFriends)
+        queryClient.setQueryData(["social", "friends"], ctx.prevFriends);
+    },
     onSuccess: (data) => {
       if (data && data.action === "accept") {
         const myDisplayName = getUserDisplayName(data.me);
@@ -135,6 +205,9 @@ export function useRespondToFriendRequest() {
         });
       }
       queryClient.invalidateQueries({ queryKey: ["social"] });
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "diniverse_social_sync" }),
+      );
     },
   });
 }
@@ -148,13 +221,31 @@ export function useUnfriend() {
       if (!me) throw new Error("Not authenticated");
       unfriend(me, targetUsername);
     },
+    onMutate: async (targetUsername) => {
+      await queryClient.cancelQueries({ queryKey: ["social", "friends"] });
+      const prevFriends = queryClient.getQueryData(["social", "friends"]);
+      queryClient.setQueryData(
+        ["social", "friends"],
+        (old: FriendInfo[] | undefined) =>
+          (old ?? []).filter((f) => f.username !== targetUsername),
+      );
+      return { prevFriends };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prevFriends)
+        queryClient.setQueryData(["social", "friends"], ctx.prevFriends);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["social"] });
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "diniverse_social_sync" }),
+      );
     },
   });
 }
 
 export function useSearchUsers(searchTerm: string) {
+  useSyncedQuery(["social", "search", searchTerm]);
   return useQuery<UserSearchResult[]>({
     queryKey: ["social", "search", searchTerm],
     queryFn: () => {
@@ -192,6 +283,5 @@ export function useSearchUsers(searchTerm: string) {
         .slice(0, 20);
     },
     enabled: searchTerm.trim().length > 0,
-    refetchInterval: 3000,
   });
 }
