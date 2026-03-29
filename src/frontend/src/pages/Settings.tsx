@@ -35,17 +35,26 @@ import {
   AlertTriangle,
   Bell,
   Camera,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
   Eye,
+  Fingerprint,
   Gift,
   Globe,
+  Key,
+  Laptop,
   Loader2,
   Lock,
   LogIn,
+  Monitor,
   Moon,
   Settings2,
   Share2,
   Shield,
+  Smartphone,
   Sun,
+  Trash,
   Trash2,
   User,
   X,
@@ -237,6 +246,17 @@ function formatCooldown(remainingMs: number): string {
   return `${hours} hour(s)`;
 }
 
+function detectDeviceName(): string {
+  const ua = navigator.userAgent;
+  if (/iPhone/i.test(ua)) return "iPhone";
+  if (/iPad/i.test(ua)) return "iPad";
+  if (/Android/i.test(ua)) return "Android Device";
+  if (/Mac/i.test(ua)) return "Mac";
+  if (/Windows/i.test(ua)) return "Windows PC";
+  if (/Linux/i.test(ua)) return "Linux PC";
+  return "Unknown Device";
+}
+
 export default function Settings() {
   const { isAuthenticated, logout, changePassword } = useSessionAuth();
   const navigate = useNavigate();
@@ -256,6 +276,11 @@ export default function Settings() {
 
   const username = getCurrentUsername();
   // Profile picture state
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const isOpen = (key: string) => openSections[key] !== false;
+  const toggleSection = (key: string) =>
+    setOpenSections((prev) => ({ ...prev, [key]: !isOpen(key) }));
+
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Username state
@@ -288,6 +313,12 @@ export default function Settings() {
     return { month: "", day: "", year: "" };
   });
 
+  const [locationState, setLocationState] = useState<string>(() => {
+    const uname = getCurrentUsername();
+    const saved = uname ? getLocalSettings(uname) : null;
+    return saved?.location || "";
+  });
+
   // Change password state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -305,7 +336,7 @@ export default function Settings() {
   });
   const [pinTwoFA, setPinTwoFA] = useState<boolean>(() => {
     if (!username) return false;
-    return !!localStorage.getItem(`diniverse_pin2fa_${username}`);
+    return !!localStorage.getItem(`diniverse_pin2fa_hash_${username}`);
   });
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
@@ -313,6 +344,53 @@ export default function Settings() {
   const [showSetPin, setShowSetPin] = useState(false);
   const [showRemovePin, setShowRemovePin] = useState(false);
   const [removePinInput, setRemovePinInput] = useState("");
+
+  // Linked devices state
+  interface LinkedDevice {
+    id: string;
+    name: string;
+    type: "desktop" | "mobile" | "hardware";
+    addedAt: string;
+    sessionId?: string;
+  }
+  const getLinkedDevices = (): LinkedDevice[] => {
+    if (!username) return [];
+    try {
+      return JSON.parse(
+        localStorage.getItem(`diniverse_devices_${username}`) || "[]",
+      );
+    } catch {
+      return [];
+    }
+  };
+  const [linkedDevices, setLinkedDevices] = useState<LinkedDevice[]>(() => {
+    if (!username) return [];
+    const stored = getLinkedDevices();
+    if (stored.length === 0) {
+      // Seed current device
+      const deviceSessionId = (() => {
+        let sid = sessionStorage.getItem("diniverse_device_session_id");
+        if (!sid) {
+          sid = crypto.randomUUID();
+          sessionStorage.setItem("diniverse_device_session_id", sid);
+        }
+        return sid;
+      })();
+      const device: LinkedDevice = {
+        id: crypto.randomUUID(),
+        name: detectDeviceName(),
+        type: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
+        addedAt: new Date().toLocaleDateString(),
+        sessionId: deviceSessionId,
+      };
+      localStorage.setItem(
+        `diniverse_devices_${username}`,
+        JSON.stringify([device]),
+      );
+      return [device];
+    }
+    return stored;
+  });
 
   // Promo code state
   const [promoCode, setPromoCode] = useState("");
@@ -716,6 +794,7 @@ export default function Settings() {
     if (!username) return;
     const settings = getLocalSettings(username);
     saveLocalSettings(username, { ...settings, location: country });
+    setLocationState(country);
     toast.success("Location saved");
   };
 
@@ -803,7 +882,6 @@ export default function Settings() {
   const currentVisibilityIsOffline = rawSettings?.visibility === "offline";
   const currentLanguage = rawSettings?.language || Language.en;
   const currentGender = rawSettings?.gender || "other";
-  const currentLocation = rawSettings?.location || "";
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6" data-ocid="settings.page">
@@ -814,1148 +892,1341 @@ export default function Settings() {
 
       {/* ─── Account Info ──────────────────────────────────────────────── */}
       <Card data-ocid="settings.accountinfo.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
-            Account Info
-          </CardTitle>
-          <CardDescription>Your personal account information</CardDescription>
+        <CardHeader
+          className="flex flex-row items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("accountInfo")}
+        >
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Account Info
+            </CardTitle>
+            <CardDescription>Your personal account information</CardDescription>
+          </div>
+          {isOpen("accountInfo") ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+          )}
         </CardHeader>
-        <CardContent className="space-y-5">
-          {/* Profile Picture row */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Profile Picture
-            </Label>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20 border-2 border-border">
-                {currentAvatarUrl ? (
-                  <AvatarImage
-                    src={currentAvatarUrl}
-                    alt={currentDisplayName}
-                  />
-                ) : null}
-                <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                  {currentDisplayName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
+        {isOpen("accountInfo") && (
+          <CardContent className="space-y-5">
+            {/* Profile Picture row */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Profile Picture
+              </Label>
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20 border-2 border-border">
                   {currentAvatarUrl ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRemoveAndReupload}
-                      disabled={
-                        updateAvatarMutation.isPending || isUploadingAvatar
+                    <AvatarImage
+                      src={currentAvatarUrl}
+                      alt={currentDisplayName}
+                    />
+                  ) : null}
+                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                    {currentDisplayName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    {currentAvatarUrl ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRemoveAndReupload}
+                        disabled={
+                          updateAvatarMutation.isPending || isUploadingAvatar
+                        }
+                        data-ocid="settings.avatar.delete_button"
+                      >
+                        {updateAvatarMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            Removing...
+                          </>
+                        ) : (
+                          <>
+                            <X className="w-4 h-4 mr-1" />
+                            Remove
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingAvatar}
+                        data-ocid="settings.avatar.upload_button"
+                      >
+                        {isUploadingAvatar ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            {t("settings.avatar.uploading")}
+                          </>
+                        ) : (
+                          <>
+                            <Camera className="w-4 h-4 mr-1" />
+                            {t("settings.avatar.upload")}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.avatar.recommendation")}
+                  </p>
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+                data-ocid="settings.avatar.dropzone"
+              />
+            </div>
+            <Separator />
+            {/* Display Name row */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Display Name
+              </Label>
+              {showDisplayNameEdit ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={newDisplayName}
+                      onChange={(e) => setNewDisplayName(e.target.value)}
+                      placeholder={currentDisplayName}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleUpdateDisplayName()
                       }
-                      data-ocid="settings.avatar.delete_button"
-                    >
-                      {updateAvatarMutation.isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                          Removing...
-                        </>
-                      ) : (
-                        <>
-                          <X className="w-4 h-4 mr-1" />
-                          Remove
-                        </>
-                      )}
-                    </Button>
-                  ) : (
+                      data-ocid="settings.accountinfo.displayname.input"
+                    />
                     <Button
-                      variant="outline"
                       size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingAvatar}
-                      data-ocid="settings.avatar.upload_button"
+                      onClick={handleUpdateDisplayName}
+                      disabled={updateDisplayNameMutation.isPending}
+                      data-ocid="settings.accountinfo.displayname.save_button"
                     >
-                      {isUploadingAvatar ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                          {t("settings.avatar.uploading")}
-                        </>
+                      {updateDisplayNameMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <>
-                          <Camera className="w-4 h-4 mr-1" />
-                          {t("settings.avatar.upload")}
-                        </>
+                        "Save"
                       )}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowDisplayNameEdit(false);
+                        setNewDisplayName("");
+                        setDisplayNameError("");
+                      }}
+                      data-ocid="settings.accountinfo.displayname.cancel_button"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                  {displayNameError && (
+                    <p
+                      className="text-sm text-destructive"
+                      data-ocid="settings.accountinfo.displayname.error_state"
+                    >
+                      {displayNameError}
+                    </p>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {t("settings.avatar.recommendation")}
-                </p>
-              </div>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarUpload}
-              data-ocid="settings.avatar.dropzone"
-            />
-          </div>
-          <Separator />
-          {/* Display Name row */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Display Name
-            </Label>
-            {showDisplayNameEdit ? (
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                  <Input
-                    value={newDisplayName}
-                    onChange={(e) => setNewDisplayName(e.target.value)}
-                    placeholder={currentDisplayName}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && handleUpdateDisplayName()
-                    }
-                    data-ocid="settings.accountinfo.displayname.input"
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handleUpdateDisplayName}
-                    disabled={updateDisplayNameMutation.isPending}
-                    data-ocid="settings.accountinfo.displayname.save_button"
-                  >
-                    {updateDisplayNameMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      "Save"
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowDisplayNameEdit(false);
-                      setNewDisplayName("");
-                      setDisplayNameError("");
-                    }}
-                    data-ocid="settings.accountinfo.displayname.cancel_button"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-                {displayNameError && (
-                  <p
-                    className="text-sm text-destructive"
-                    data-ocid="settings.accountinfo.displayname.error_state"
-                  >
-                    {displayNameError}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {currentDisplayName}
-                </span>
-                {canChangeDisplayName ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowDisplayNameEdit(true)}
-                    data-ocid="settings.accountinfo.displayname.edit_button"
-                  >
-                    Edit
-                  </Button>
-                ) : (
-                  <span className="text-xs text-muted-foreground">
-                    Change in {formatCooldown(displayNameCooldownRemaining)}
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    {currentDisplayName}
                   </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Username row */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Username
-            </Label>
-            {showUsernameEdit ? (
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                  <Input
-                    value={newUsername}
-                    onChange={(e) => setNewUsername(e.target.value)}
-                    placeholder="New username"
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && handleUsernameChange()
-                    }
-                    data-ocid="settings.accountinfo.username.input"
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handleUsernameChange}
-                    disabled={isChangingUsername}
-                    data-ocid="settings.accountinfo.username.save_button"
-                  >
-                    {isChangingUsername ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      "Save"
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowUsernameEdit(false);
-                      setNewUsername("");
-                      setUsernameError("");
-                    }}
-                    data-ocid="settings.accountinfo.username.cancel_button"
-                  >
-                    Cancel
-                  </Button>
+                  {canChangeDisplayName ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowDisplayNameEdit(true)}
+                      data-ocid="settings.accountinfo.displayname.edit_button"
+                    >
+                      Edit
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      Change in {formatCooldown(displayNameCooldownRemaining)}
+                    </span>
+                  )}
                 </div>
-                {usernameError && (
-                  <p
-                    className="text-sm text-destructive"
-                    data-ocid="settings.accountinfo.username.error_state"
-                  >
-                    {usernameError}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded">
-                  @{username}
-                </span>
-                {canChangeUsername ? (
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Username row */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Username
+              </Label>
+              {showUsernameEdit ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      placeholder="New username"
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleUsernameChange()
+                      }
+                      data-ocid="settings.accountinfo.username.input"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleUsernameChange}
+                      disabled={isChangingUsername}
+                      data-ocid="settings.accountinfo.username.save_button"
+                    >
+                      {isChangingUsername ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Save"
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowUsernameEdit(false);
+                        setNewUsername("");
+                        setUsernameError("");
+                      }}
+                      data-ocid="settings.accountinfo.username.cancel_button"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                  {usernameError && (
+                    <p
+                      className="text-sm text-destructive"
+                      data-ocid="settings.accountinfo.username.error_state"
+                    >
+                      {usernameError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded">
+                    @{username}
+                  </span>
+                  {canChangeUsername ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowUsernameEdit(true)}
+                      data-ocid="settings.accountinfo.username.edit_button"
+                    >
+                      Change
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      Change in {formatCooldown(usernameCooldownRemaining)}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Password row */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Password
+              </Label>
+              {showPasswordEdit ? (
+                <div className="space-y-3">
+                  <Input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Current password"
+                    autoComplete="current-password"
+                    data-ocid="settings.accountinfo.password.input"
+                  />
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="New password"
+                    autoComplete="new-password"
+                  />
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    autoComplete="new-password"
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleChangePassword()
+                    }
+                  />
+                  {passwordError && (
+                    <p
+                      className="text-sm text-destructive"
+                      data-ocid="settings.accountinfo.password.error_state"
+                    >
+                      {passwordError}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={handleChangePassword}
+                      disabled={isChangingPassword}
+                      data-ocid="settings.accountinfo.password.save_button"
+                    >
+                      {isChangingPassword ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        "Save"
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowPasswordEdit(false);
+                        setPasswordError("");
+                        setCurrentPassword("");
+                        setNewPassword("");
+                        setConfirmPassword("");
+                      }}
+                      data-ocid="settings.accountinfo.password.cancel_button"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-mono text-muted-foreground">
+                    ••••••••
+                  </span>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setShowUsernameEdit(true)}
-                    data-ocid="settings.accountinfo.username.edit_button"
+                    onClick={() => setShowPasswordEdit(true)}
+                    data-ocid="settings.accountinfo.password.edit_button"
                   >
                     Change
                   </Button>
-                ) : (
-                  <span className="text-xs text-muted-foreground">
-                    Change in {formatCooldown(usernameCooldownRemaining)}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Password row */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Password
-            </Label>
-            {showPasswordEdit ? (
-              <div className="space-y-3">
-                <Input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Current password"
-                  autoComplete="current-password"
-                  data-ocid="settings.accountinfo.password.input"
-                />
-                <Input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="New password"
-                  autoComplete="new-password"
-                />
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                  autoComplete="new-password"
-                  onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
-                />
-                {passwordError && (
-                  <p
-                    className="text-sm text-destructive"
-                    data-ocid="settings.accountinfo.password.error_state"
-                  >
-                    {passwordError}
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={handleChangePassword}
-                    disabled={isChangingPassword}
-                    data-ocid="settings.accountinfo.password.save_button"
-                  >
-                    {isChangingPassword ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      "Save"
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowPasswordEdit(false);
-                      setPasswordError("");
-                      setCurrentPassword("");
-                      setNewPassword("");
-                      setConfirmPassword("");
-                    }}
-                    data-ocid="settings.accountinfo.password.cancel_button"
-                  >
-                    Cancel
-                  </Button>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-mono text-muted-foreground">
-                  ••••••••
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowPasswordEdit(true)}
-                  data-ocid="settings.accountinfo.password.edit_button"
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Gender row */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Gender
+              </Label>
+              <Select
+                value={currentGender}
+                onValueChange={handleGenderChange}
+                disabled={setGenderMutation.isPending}
+              >
+                <SelectTrigger data-ocid="settings.accountinfo.gender.select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-48 overflow-y-auto">
+                  <SelectItem value={Gender.female}>
+                    {t("settings.gender.female")}
+                  </SelectItem>
+                  <SelectItem value={Gender.male}>
+                    {t("settings.gender.male")}
+                  </SelectItem>
+                  <SelectItem value={Gender.other}>Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Separator />
+
+            {/* Birthday row */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Birthday
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
+                <Select
+                  value={birthday.month}
+                  onValueChange={(v) => handleBirthdayChange("month", v)}
                 >
-                  Change
-                </Button>
+                  <SelectTrigger data-ocid="settings.accountinfo.birthday.month.select">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-48 overflow-y-auto">
+                    {MONTHS.map((m, i) => (
+                      <SelectItem key={m} value={String(i + 1)}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={birthday.day}
+                  onValueChange={(v) => handleBirthdayChange("day", v)}
+                >
+                  <SelectTrigger data-ocid="settings.accountinfo.birthday.day.select">
+                    <SelectValue placeholder="Day" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-48 overflow-y-auto">
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                      <SelectItem key={d} value={String(d)}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={birthday.year}
+                  onValueChange={(v) => handleBirthdayChange("year", v)}
+                >
+                  <SelectTrigger data-ocid="settings.accountinfo.birthday.year.select">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-48 overflow-y-auto">
+                    {Array.from({ length: 31 }, (_, i) => 2020 - i).map((y) => (
+                      <SelectItem key={y} value={String(y)}>
+                        {y}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
-          </div>
+            </div>
 
-          <Separator />
+            <Separator />
 
-          {/* Gender row */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Gender
-            </Label>
-            <Select
-              value={currentGender}
-              onValueChange={handleGenderChange}
-              disabled={setGenderMutation.isPending}
-            >
-              <SelectTrigger data-ocid="settings.accountinfo.gender.select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-48 overflow-y-auto">
-                <SelectItem value={Gender.female}>
-                  {t("settings.gender.female")}
-                </SelectItem>
-                <SelectItem value={Gender.male}>
-                  {t("settings.gender.male")}
-                </SelectItem>
-                <SelectItem value={Gender.other}>Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Separator />
-
-          {/* Birthday row */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Birthday
-            </Label>
-            <div className="grid grid-cols-3 gap-2">
+            {/* Language row */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Language
+              </Label>
               <Select
-                value={birthday.month}
-                onValueChange={(v) => handleBirthdayChange("month", v)}
+                value={currentLanguage}
+                onValueChange={handleLanguageChange}
+                disabled={setLanguageMutation.isPending}
               >
-                <SelectTrigger data-ocid="settings.accountinfo.birthday.month.select">
-                  <SelectValue placeholder="Month" />
+                <SelectTrigger data-ocid="settings.accountinfo.language.select">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-48 overflow-y-auto">
-                  {MONTHS.map((m, i) => (
-                    <SelectItem key={m} value={String(i + 1)}>
-                      {m}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value={Language.en}>English</SelectItem>
+                  <SelectItem value={Language.es}>Español</SelectItem>
+                  <SelectItem value={Language.fr}>Français</SelectItem>
+                  <SelectItem value={Language.pt}>Português</SelectItem>
+                  <SelectItem value={Language.de}>Deutsch</SelectItem>
+                  <SelectItem value={Language.tr}>Türkçe</SelectItem>
+                  <SelectItem value={Language.ru}>Русский</SelectItem>
+                  <SelectItem value={Language.vi}>Tiếng Việt</SelectItem>
+                  <SelectItem value={Language.ko}>한국어</SelectItem>
+                  <SelectItem value={Language.nl}>Nederlands</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <Separator />
+
+            {/* Location row */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Location
+              </Label>
               <Select
-                value={birthday.day}
-                onValueChange={(v) => handleBirthdayChange("day", v)}
+                value={locationState}
+                onValueChange={handleLocationChange}
               >
-                <SelectTrigger data-ocid="settings.accountinfo.birthday.day.select">
-                  <SelectValue placeholder="Day" />
+                <SelectTrigger data-ocid="settings.accountinfo.location.select">
+                  <SelectValue placeholder="Select your country" />
                 </SelectTrigger>
                 <SelectContent className="max-h-48 overflow-y-auto">
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                    <SelectItem key={d} value={String(d)}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={birthday.year}
-                onValueChange={(v) => handleBirthdayChange("year", v)}
-              >
-                <SelectTrigger data-ocid="settings.accountinfo.birthday.year.select">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-48 overflow-y-auto">
-                  {Array.from({ length: 31 }, (_, i) => 2020 - i).map((y) => (
-                    <SelectItem key={y} value={String(y)}>
-                      {y}
+                  {COUNTRIES.map((country) => (
+                    <SelectItem key={country} value={country}>
+                      {country}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <Separator />
-
-          {/* Language row */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Language
-            </Label>
-            <Select
-              value={currentLanguage}
-              onValueChange={handleLanguageChange}
-              disabled={setLanguageMutation.isPending}
-            >
-              <SelectTrigger data-ocid="settings.accountinfo.language.select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-48 overflow-y-auto">
-                <SelectItem value={Language.en}>English</SelectItem>
-                <SelectItem value={Language.es}>Español</SelectItem>
-                <SelectItem value={Language.fr}>Français</SelectItem>
-                <SelectItem value={Language.pt}>Português</SelectItem>
-                <SelectItem value={Language.de}>Deutsch</SelectItem>
-                <SelectItem value={Language.tr}>Türkçe</SelectItem>
-                <SelectItem value={Language.ru}>Русский</SelectItem>
-                <SelectItem value={Language.vi}>Tiếng Việt</SelectItem>
-                <SelectItem value={Language.ko}>한국어</SelectItem>
-                <SelectItem value={Language.nl}>Nederlands</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Separator />
-
-          {/* Location row */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Location
-            </Label>
-            <Select
-              value={currentLocation || ""}
-              onValueChange={handleLocationChange}
-            >
-              <SelectTrigger data-ocid="settings.accountinfo.location.select">
-                <SelectValue placeholder="Select your country" />
-              </SelectTrigger>
-              <SelectContent className="max-h-48 overflow-y-auto">
-                {COUNTRIES.map((country) => (
-                  <SelectItem key={country} value={country}>
-                    {country}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* Preferences */}
       <Card data-ocid="settings.preferences.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings2 className="w-5 h-5" />
-            Preferences
-          </CardTitle>
-          <CardDescription>
-            Customize your Dini.Verse experience
-          </CardDescription>
+        <CardHeader
+          className="flex flex-row items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("preferences")}
+        >
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Settings2 className="w-5 h-5" />
+              Preferences
+            </CardTitle>
+            <CardDescription>
+              Customize your Dini.Verse experience
+            </CardDescription>
+          </div>
+          {isOpen("preferences") ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+          )}
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Dark Mode */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">{t("settings.theme.darkMode")}</p>
-              <p className="text-sm text-muted-foreground">
-                {t("settings.theme.darkModeDescription")}
-              </p>
+        {isOpen("preferences") && (
+          <CardContent className="space-y-4">
+            {/* Dark Mode */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">{t("settings.theme.darkMode")}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("settings.theme.darkModeDescription")}
+                </p>
+              </div>
+              <Switch
+                checked={theme === "dark"}
+                onCheckedChange={(checked) =>
+                  setTheme(checked ? "dark" : "light")
+                }
+                data-ocid="settings.preferences.darkmode.switch"
+              />
             </div>
-            <Switch
-              checked={theme === "dark"}
-              onCheckedChange={(checked) =>
-                setTheme(checked ? "dark" : "light")
-              }
-              data-ocid="settings.preferences.darkmode.switch"
-            />
-          </div>
-          <Separator />
-          {/* Public Profile Visibility */}
-          <div className="space-y-2">
-            <Label>Public Profile</Label>
-            <p className="text-sm text-muted-foreground">
-              Choose who can view your full profile details
-            </p>
-            <Select
-              value={preferences.publicProfileVisibility}
-              onValueChange={(val) => {
-                if (!username) return;
-                const newPrefs: UserPreferences = {
-                  ...preferences,
-                  publicProfileVisibility:
-                    val as UserPreferences["publicProfileVisibility"],
-                };
-                setPreferences(newPrefs);
-                savePreferences(username, newPrefs);
-                toast.success("Preferences saved");
-              }}
-            >
-              <SelectTrigger data-ocid="settings.preferences.profile_visibility.select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-48 overflow-y-auto">
-                <SelectItem value="everyone">Everyone</SelectItem>
-                <SelectItem value="friends">Friends</SelectItem>
-                <SelectItem value="no-one">No one</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
+            <Separator />
+            {/* Public Profile Visibility */}
+            <div className="space-y-2">
+              <Label>Public Profile</Label>
+              <p className="text-sm text-muted-foreground">
+                Choose who can view your full profile details
+              </p>
+              <Select
+                value={preferences.publicProfileVisibility}
+                onValueChange={(val) => {
+                  if (!username) return;
+                  const newPrefs: UserPreferences = {
+                    ...preferences,
+                    publicProfileVisibility:
+                      val as UserPreferences["publicProfileVisibility"],
+                  };
+                  setPreferences(newPrefs);
+                  savePreferences(username, newPrefs);
+                  toast.success("Preferences saved");
+                }}
+              >
+                <SelectTrigger data-ocid="settings.preferences.profile_visibility.select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-48 overflow-y-auto">
+                  <SelectItem value="everyone">Everyone</SelectItem>
+                  <SelectItem value="friends">Friends</SelectItem>
+                  <SelectItem value="no-one">No one</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {/* Promo Codes */}
       <Card data-ocid="settings.promo.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Gift className="w-5 h-5" />
-            Promo Codes
-          </CardTitle>
-          <CardDescription>
-            Redeem a promo code to earn Dini Bucks
-          </CardDescription>
+        <CardHeader
+          className="flex flex-row items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("promoCodes")}
+        >
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Gift className="w-5 h-5" />
+              Promo Codes
+            </CardTitle>
+            <CardDescription>
+              Redeem a promo code to earn Dini Bucks
+            </CardDescription>
+          </div>
+          {isOpen("promoCodes") ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+          )}
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-md bg-muted/50 border px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Your balance</span>
-            <span className="font-bold text-lg text-primary">
-              {diniBucksBalance !== null
-                ? diniBucksBalance.toLocaleString()
-                : "—"}{" "}
-              Dini Bucks
-            </span>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-              placeholder="Enter promo code (e.g. WELCOME)"
-              onKeyDown={(e) => e.key === "Enter" && handleRedeemPromo()}
-              data-ocid="settings.promo.input"
-              className="uppercase"
-            />
-            <Button
-              onClick={handleRedeemPromo}
-              disabled={isRedeemingPromo || !promoCode.trim()}
-              data-ocid="settings.promo.submit_button"
-            >
-              {isRedeemingPromo ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "Redeem"
-              )}
-            </Button>
-          </div>
-        </CardContent>
+        {isOpen("promoCodes") && (
+          <CardContent className="space-y-4">
+            <div className="rounded-md bg-muted/50 border px-4 py-3 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">
+                Your balance
+              </span>
+              <span className="font-bold text-lg text-primary">
+                {diniBucksBalance !== null
+                  ? diniBucksBalance.toLocaleString()
+                  : "—"}{" "}
+                Dini Bucks
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                placeholder="Enter promo code (e.g. WELCOME)"
+                onKeyDown={(e) => e.key === "Enter" && handleRedeemPromo()}
+                data-ocid="settings.promo.input"
+                className="uppercase"
+              />
+              <Button
+                onClick={handleRedeemPromo}
+                disabled={isRedeemingPromo || !promoCode.trim()}
+                data-ocid="settings.promo.submit_button"
+              >
+                {isRedeemingPromo ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Redeem"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {/* Social Networks */}
       <Card data-ocid="settings.social.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Share2 className="w-5 h-5" />
-            Social Networks
-          </CardTitle>
-          <CardDescription>
-            Link your social profiles to show on your public profile
-          </CardDescription>
+        <CardHeader
+          className="flex flex-row items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("socialNetworks")}
+        >
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Share2 className="w-5 h-5" />
+              Social Networks
+            </CardTitle>
+            <CardDescription>
+              Link your social profiles to show on your public profile
+            </CardDescription>
+          </div>
+          {isOpen("socialNetworks") ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+          )}
         </CardHeader>
-        <CardContent className="space-y-4">
-          {SOCIAL_PLATFORMS.map((platform) => {
-            const existing = socialLinks.find(
-              (l) => l.platform === platform.id,
-            );
-            return (
-              <div key={platform.id} className="flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-                  style={{ background: platform.color }}
-                >
-                  {platform.label.charAt(0)}
+        {isOpen("socialNetworks") && (
+          <CardContent className="space-y-4">
+            {SOCIAL_PLATFORMS.map((platform) => {
+              const existing = socialLinks.find(
+                (l) => l.platform === platform.id,
+              );
+              return (
+                <div key={platform.id} className="flex items-center gap-3">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                    style={{ background: platform.color }}
+                  >
+                    {platform.label.charAt(0)}
+                  </div>
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Input
+                      placeholder={`${platform.label} URL`}
+                      value={existing?.url ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSocialLinks((prev) => {
+                          const filtered = prev.filter(
+                            (l) => l.platform !== platform.id,
+                          );
+                          if (val || existing?.username) {
+                            return [
+                              ...filtered,
+                              {
+                                platform: platform.id,
+                                url: val,
+                                username: existing?.username ?? "",
+                              },
+                            ];
+                          }
+                          return filtered;
+                        });
+                      }}
+                      data-ocid={`settings.social.${platform.id}.input`}
+                    />
+                    <Input
+                      placeholder={`${platform.label} username`}
+                      value={existing?.username ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSocialLinks((prev) => {
+                          const filtered = prev.filter(
+                            (l) => l.platform !== platform.id,
+                          );
+                          if (val || existing?.url) {
+                            return [
+                              ...filtered,
+                              {
+                                platform: platform.id,
+                                url: existing?.url ?? "",
+                                username: val,
+                              },
+                            ];
+                          }
+                          return filtered;
+                        });
+                      }}
+                      data-ocid={`settings.social.${platform.id}.username.input`}
+                    />
+                  </div>
                 </div>
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Input
-                    placeholder={`${platform.label} URL`}
-                    value={existing?.url ?? ""}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setSocialLinks((prev) => {
-                        const filtered = prev.filter(
-                          (l) => l.platform !== platform.id,
-                        );
-                        if (val || existing?.username) {
-                          return [
-                            ...filtered,
-                            {
-                              platform: platform.id,
-                              url: val,
-                              username: existing?.username ?? "",
-                            },
-                          ];
-                        }
-                        return filtered;
-                      });
-                    }}
-                    data-ocid={`settings.social.${platform.id}.input`}
-                  />
-                  <Input
-                    placeholder={`${platform.label} username`}
-                    value={existing?.username ?? ""}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setSocialLinks((prev) => {
-                        const filtered = prev.filter(
-                          (l) => l.platform !== platform.id,
-                        );
-                        if (val || existing?.url) {
-                          return [
-                            ...filtered,
-                            {
-                              platform: platform.id,
-                              url: existing?.url ?? "",
-                              username: val,
-                            },
-                          ];
-                        }
-                        return filtered;
-                      });
-                    }}
-                    data-ocid={`settings.social.${platform.id}.username.input`}
-                  />
-                </div>
-              </div>
-            );
-          })}
-          <Button
-            onClick={() => {
-              if (!username) return;
-              setIsSavingSocial(true);
-              saveSocialLinks(username, socialLinks);
-              setTimeout(() => {
-                setIsSavingSocial(false);
-                toast.success("Social links saved!");
-              }, 300);
-            }}
-            disabled={isSavingSocial || !username}
-            className="mt-2"
-            data-ocid="settings.social.save_button"
-          >
-            {isSavingSocial ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : null}
-            Save Social Links
-          </Button>
-        </CardContent>
+              );
+            })}
+            <Button
+              onClick={() => {
+                if (!username) return;
+                setIsSavingSocial(true);
+                saveSocialLinks(username, socialLinks);
+                setTimeout(() => {
+                  setIsSavingSocial(false);
+                  toast.success("Social links saved!");
+                }, 300);
+              }}
+              disabled={isSavingSocial || !username}
+              className="mt-2"
+              data-ocid="settings.social.save_button"
+            >
+              {isSavingSocial ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Save Social Links
+            </Button>
+          </CardContent>
+        )}
       </Card>
 
       {/* Privacy */}
       <Card data-ocid="settings.privacy.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Privacy
-          </CardTitle>
-          <CardDescription>Control who can interact with you</CardDescription>
+        <CardHeader
+          className="flex flex-row items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("privacy")}
+        >
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Privacy
+            </CardTitle>
+            <CardDescription>Control who can interact with you</CardDescription>
+          </div>
+          {isOpen("privacy") ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+          )}
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Who can message me</Label>
-            <Select
-              value={privacySettings.whoCanMessage}
-              onValueChange={(val) => {
-                if (!username) return;
-                const newPrivacy = {
-                  ...privacySettings,
-                  whoCanMessage: val as PrivacySettings["whoCanMessage"],
-                };
-                setPrivacySettings(newPrivacy);
-                savePrivacySettings(username, newPrivacy);
-                toast.success("Privacy settings saved");
-              }}
-            >
-              <SelectTrigger data-ocid="settings.privacy.message.select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-48 overflow-y-auto">
-                <SelectItem value="everyone">Everyone</SelectItem>
-                <SelectItem value="friends">Friends Only</SelectItem>
-                <SelectItem value="nobody">Nobody</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Separator />
-          {/* Offline Mode */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Offline Mode</p>
-              <p className="text-sm text-muted-foreground">
-                Appear offline to other users
-              </p>
+        {isOpen("privacy") && (
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Who can message me</Label>
+              <Select
+                value={privacySettings.whoCanMessage}
+                onValueChange={(val) => {
+                  if (!username) return;
+                  const newPrivacy = {
+                    ...privacySettings,
+                    whoCanMessage: val as PrivacySettings["whoCanMessage"],
+                  };
+                  setPrivacySettings(newPrivacy);
+                  savePrivacySettings(username, newPrivacy);
+                  toast.success("Privacy settings saved");
+                }}
+              >
+                <SelectTrigger data-ocid="settings.privacy.message.select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-48 overflow-y-auto">
+                  <SelectItem value="everyone">Everyone</SelectItem>
+                  <SelectItem value="friends">Friends Only</SelectItem>
+                  <SelectItem value="nobody">Nobody</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Switch
-              checked={currentVisibilityIsOffline}
-              onCheckedChange={handleVisibilityChange}
-              disabled={updateVisibilityMutation.isPending}
-              data-ocid="settings.privacy.offline.switch"
-            />
-          </div>
-          <Separator />
-          {/* Recently Played Visibility */}
-          <div className="space-y-2">
-            <Label>Recently Played</Label>
-            <p className="text-sm text-muted-foreground">
-              Who can see your recently played games
-            </p>
-            <Select
-              value={privacySettings.recentlyPlayedVisibility ?? "everyone"}
-              onValueChange={(val) => {
-                if (!username) return;
-                const newPrivacy = {
-                  ...privacySettings,
-                  recentlyPlayedVisibility: val as
-                    | "everyone"
-                    | "friends"
-                    | "no-one",
-                };
-                setPrivacySettings(newPrivacy);
-                savePrivacySettings(username, newPrivacy);
-                toast.success("Privacy settings saved");
-              }}
-            >
-              <SelectTrigger data-ocid="settings.privacy.recently_played.select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-48 overflow-y-auto">
-                <SelectItem value="everyone">Everyone</SelectItem>
-                <SelectItem value="friends">Friends Only</SelectItem>
-                <SelectItem value="no-one">No one</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
+            <Separator />
+            {/* Offline Mode */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Offline Mode</p>
+                <p className="text-sm text-muted-foreground">
+                  Appear offline to other users
+                </p>
+              </div>
+              <Switch
+                checked={currentVisibilityIsOffline}
+                onCheckedChange={handleVisibilityChange}
+                disabled={updateVisibilityMutation.isPending}
+                data-ocid="settings.privacy.offline.switch"
+              />
+            </div>
+            <Separator />
+            {/* Recently Played Visibility */}
+            <div className="space-y-2">
+              <Label>Recently Played</Label>
+              <p className="text-sm text-muted-foreground">
+                Who can see your recently played games
+              </p>
+              <Select
+                value={privacySettings.recentlyPlayedVisibility ?? "everyone"}
+                onValueChange={(val) => {
+                  if (!username) return;
+                  const newPrivacy = {
+                    ...privacySettings,
+                    recentlyPlayedVisibility: val as
+                      | "everyone"
+                      | "friends"
+                      | "no-one",
+                  };
+                  setPrivacySettings(newPrivacy);
+                  savePrivacySettings(username, newPrivacy);
+                  toast.success("Privacy settings saved");
+                }}
+              >
+                <SelectTrigger data-ocid="settings.privacy.recently_played.select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-48 overflow-y-auto">
+                  <SelectItem value="everyone">Everyone</SelectItem>
+                  <SelectItem value="friends">Friends Only</SelectItem>
+                  <SelectItem value="no-one">No one</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {/* Notifications */}
       <Card data-ocid="settings.notifications.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            Notifications
-          </CardTitle>
-          <CardDescription>
-            Choose which notifications you receive
-          </CardDescription>
+        <CardHeader
+          className="flex flex-row items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("notifications")}
+        >
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="w-5 h-5" />
+              Notifications
+            </CardTitle>
+            <CardDescription>
+              Choose which notifications you receive
+            </CardDescription>
+          </div>
+          {isOpen("notifications") ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+          )}
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-sm">Friend Requests</p>
-              <p className="text-xs text-muted-foreground">
-                Get notified when someone sends you a friend request
-              </p>
+        {isOpen("notifications") && (
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">Friend Requests</p>
+                <p className="text-xs text-muted-foreground">
+                  Get notified when someone sends you a friend request
+                </p>
+              </div>
+              <Switch
+                checked={notifPrefs.friendRequests}
+                onCheckedChange={(checked) => {
+                  if (!username) return;
+                  const updated = { ...notifPrefs, friendRequests: checked };
+                  setNotifPrefs(updated);
+                  saveNotificationPrefs(username, updated);
+                }}
+                data-ocid="settings.notifications.friends.switch"
+              />
             </div>
-            <Switch
-              checked={notifPrefs.friendRequests}
-              onCheckedChange={(checked) => {
-                if (!username) return;
-                const updated = { ...notifPrefs, friendRequests: checked };
-                setNotifPrefs(updated);
-                saveNotificationPrefs(username, updated);
-              }}
-              data-ocid="settings.notifications.friends.switch"
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-sm">Group Updates</p>
-              <p className="text-xs text-muted-foreground">
-                Get notified about group activity and announcements
-              </p>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">Group Updates</p>
+                <p className="text-xs text-muted-foreground">
+                  Get notified about group activity and announcements
+                </p>
+              </div>
+              <Switch
+                checked={notifPrefs.groupUpdates}
+                onCheckedChange={(checked) => {
+                  if (!username) return;
+                  const updated = { ...notifPrefs, groupUpdates: checked };
+                  setNotifPrefs(updated);
+                  saveNotificationPrefs(username, updated);
+                }}
+                data-ocid="settings.notifications.groups.switch"
+              />
             </div>
-            <Switch
-              checked={notifPrefs.groupUpdates}
-              onCheckedChange={(checked) => {
-                if (!username) return;
-                const updated = { ...notifPrefs, groupUpdates: checked };
-                setNotifPrefs(updated);
-                saveNotificationPrefs(username, updated);
-              }}
-              data-ocid="settings.notifications.groups.switch"
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-sm">Experience Invitations</p>
-              <p className="text-xs text-muted-foreground">
-                Get notified when someone invites you to an experience
-              </p>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">Experience Invitations</p>
+                <p className="text-xs text-muted-foreground">
+                  Get notified when someone invites you to an experience
+                </p>
+              </div>
+              <Switch
+                checked={notifPrefs.experienceInvitations}
+                onCheckedChange={(checked) => {
+                  if (!username) return;
+                  const updated = {
+                    ...notifPrefs,
+                    experienceInvitations: checked,
+                  };
+                  setNotifPrefs(updated);
+                  saveNotificationPrefs(username, updated);
+                }}
+                data-ocid="settings.notifications.experiences.switch"
+              />
             </div>
-            <Switch
-              checked={notifPrefs.experienceInvitations}
-              onCheckedChange={(checked) => {
-                if (!username) return;
-                const updated = {
-                  ...notifPrefs,
-                  experienceInvitations: checked,
-                };
-                setNotifPrefs(updated);
-                saveNotificationPrefs(username, updated);
-              }}
-              data-ocid="settings.notifications.experiences.switch"
-            />
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* Security */}
       <Card data-ocid="settings.security.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Security
-          </CardTitle>
-          <CardDescription>
-            Manage two-step verification for your account (optional)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Internet Identity 2FA */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-sm">
-                Internet Identity Verification
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Use Internet Identity as an extra verification step when logging
-                in
-              </p>
-            </div>
-            <Switch
-              checked={iiTwoFA}
-              onCheckedChange={(checked) => {
-                if (!username) return;
-                setIiTwoFA(checked);
-                if (checked) {
-                  localStorage.setItem(`diniverse_ii2fa_${username}`, "true");
-                  window.open("https://identity.ic0.app", "_blank");
-                  toast.success(
-                    "Internet Identity 2-step verification enabled",
-                  );
-                } else {
-                  localStorage.removeItem(`diniverse_ii2fa_${username}`);
-                  toast.success(
-                    "Internet Identity 2-step verification disabled",
-                  );
-                }
-              }}
-              data-ocid="settings.security.ii2fa.switch"
-            />
+        <CardHeader
+          className="flex flex-row items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("security")}
+        >
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Security
+            </CardTitle>
+            <CardDescription>
+              Manage two-step verification for your account (optional)
+            </CardDescription>
           </div>
-          <Separator />
-          {/* PIN 2FA */}
-          <div className="space-y-3">
+          {isOpen("security") ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+          )}
+        </CardHeader>
+        {isOpen("security") && (
+          <CardContent className="space-y-4">
+            {/* Internet Identity 2FA */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-sm">PIN Verification</p>
+                <p className="font-medium text-sm">
+                  Internet Identity Verification
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  Set a 4 to 6 digit PIN as an extra verification step when
+                  Use Internet Identity as an extra verification step when
                   logging in
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                {pinTwoFA && (
+              <Switch
+                checked={iiTwoFA}
+                onCheckedChange={(checked) => {
+                  if (!username) return;
+                  setIiTwoFA(checked);
+                  if (checked) {
+                    localStorage.setItem(`diniverse_ii2fa_${username}`, "true");
+                    window.open("https://identity.ic0.app", "_blank");
+                    toast.success(
+                      "Internet Identity 2-step verification enabled",
+                    );
+                  } else {
+                    localStorage.removeItem(`diniverse_ii2fa_${username}`);
+                    toast.success(
+                      "Internet Identity 2-step verification disabled",
+                    );
+                  }
+                }}
+                data-ocid="settings.security.ii2fa.switch"
+              />
+            </div>
+            <Separator />
+            {/* PIN 2FA */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm">PIN Verification</p>
+                  <p className="text-xs text-muted-foreground">
+                    Set a 6-digit PIN for account recovery and as an extra
+                    verification step
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {pinTwoFA && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setShowRemovePin(true);
+                        setShowSetPin(false);
+                      }}
+                      data-ocid="settings.security.pin.remove_button"
+                    >
+                      Remove PIN
+                    </Button>
+                  )}
                   <Button
-                    variant="outline"
+                    variant={pinTwoFA ? "secondary" : "outline"}
                     size="sm"
                     onClick={() => {
-                      setShowRemovePin(true);
-                      setShowSetPin(false);
+                      setShowSetPin(!showSetPin);
+                      setShowRemovePin(false);
+                      setPinError("");
+                      setPin("");
+                      setPinConfirm("");
                     }}
-                    data-ocid="settings.security.pin.remove_button"
+                    data-ocid="settings.security.pin.set_button"
                   >
-                    Remove PIN
+                    {pinTwoFA ? "Change PIN" : "Set PIN"}
                   </Button>
-                )}
+                </div>
+              </div>
+              {pinTwoFA && !showSetPin && !showRemovePin && (
+                <div className="text-xs text-green-600 flex items-center gap-1">
+                  <Lock className="w-3 h-3" /> PIN verification is active
+                </div>
+              )}
+              {showSetPin && (
+                <div className="space-y-2 border rounded-md p-3 bg-muted/30">
+                  <Label htmlFor="newPin">New PIN (exactly 6 digits)</Label>
+                  <Input
+                    id="newPin"
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={pin}
+                    onChange={(e) =>
+                      setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    placeholder="Enter 6-digit PIN"
+                    data-ocid="settings.security.pin.new_input"
+                  />
+                  <Label htmlFor="confirmPin">Confirm PIN</Label>
+                  <Input
+                    id="confirmPin"
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={pinConfirm}
+                    onChange={(e) =>
+                      setPinConfirm(
+                        e.target.value.replace(/\D/g, "").slice(0, 6),
+                      )
+                    }
+                    placeholder="Confirm PIN"
+                    data-ocid="settings.security.pin.confirm_input"
+                  />
+                  {pinError && (
+                    <p className="text-xs text-destructive">{pinError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (!username) return;
+                        if (pin.length !== 6) {
+                          setPinError("PIN must be exactly 6 digits");
+                          return;
+                        }
+                        if (pin !== pinConfirm) {
+                          setPinError("PINs do not match");
+                          return;
+                        }
+                        localStorage.setItem(
+                          `diniverse_pin2fa_hash_${username}`,
+                          btoa(pin),
+                        );
+                        setPinTwoFA(true);
+                        setShowSetPin(false);
+                        setPin("");
+                        setPinConfirm("");
+                        setPinError("");
+                        toast.success("PIN verification enabled");
+                      }}
+                      data-ocid="settings.security.pin.save_button"
+                    >
+                      Save PIN
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowSetPin(false);
+                        setPin("");
+                        setPinConfirm("");
+                        setPinError("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {showRemovePin && (
+                <div className="space-y-2 border rounded-md p-3 bg-muted/30">
+                  <Label htmlFor="removePinInput">
+                    Enter your current PIN to remove it
+                  </Label>
+                  <Input
+                    id="removePinInput"
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={removePinInput}
+                    onChange={(e) =>
+                      setRemovePinInput(
+                        e.target.value.replace(/\D/g, "").slice(0, 6),
+                      )
+                    }
+                    placeholder="Current PIN"
+                    data-ocid="settings.security.pin.remove_input"
+                  />
+                  {pinError && (
+                    <p className="text-xs text-destructive">{pinError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => {
+                        if (!username) return;
+                        const stored = localStorage.getItem(
+                          `diniverse_pin2fa_hash_${username}`,
+                        );
+                        if (btoa(removePinInput) !== stored) {
+                          setPinError("Incorrect PIN");
+                          return;
+                        }
+                        localStorage.removeItem(
+                          `diniverse_pin2fa_hash_${username}`,
+                        );
+                        setPinTwoFA(false);
+                        setShowRemovePin(false);
+                        setRemovePinInput("");
+                        setPinError("");
+                        toast.success("PIN verification removed");
+                      }}
+                      data-ocid="settings.security.pin.remove_confirm_button"
+                    >
+                      Remove PIN
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowRemovePin(false);
+                        setRemovePinInput("");
+                        setPinError("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <Separator />
+            {/* Linked Devices */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm">Linked Devices</p>
+                  <p className="text-xs text-muted-foreground">
+                    Devices that have accessed your account
+                  </p>
+                </div>
                 <Button
-                  variant={pinTwoFA ? "secondary" : "outline"}
+                  variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setShowSetPin(!showSetPin);
-                    setShowRemovePin(false);
-                    setPinError("");
-                    setPin("");
-                    setPinConfirm("");
-                  }}
-                  data-ocid="settings.security.pin.set_button"
+                  onClick={() =>
+                    window.open("https://identity.ic0.app", "_blank")
+                  }
+                  data-ocid="settings.security.manage_ii_button"
+                  className="flex items-center gap-1"
                 >
-                  {pinTwoFA ? "Change PIN" : "Set PIN"}
+                  <Fingerprint className="w-4 h-4" />
+                  Manage Internet Identity
+                  <ExternalLink className="w-3 h-3 ml-0.5" />
                 </Button>
               </div>
+              {linkedDevices.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No devices linked.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {linkedDevices.map((device) => (
+                    <div
+                      key={device.id}
+                      className="flex items-center justify-between border rounded-md px-3 py-2 bg-muted/20"
+                    >
+                      <div className="flex items-center gap-2">
+                        {device.type === "mobile" ? (
+                          <Smartphone className="w-4 h-4 text-muted-foreground" />
+                        ) : device.type === "hardware" ? (
+                          <Key className="w-4 h-4 text-muted-foreground" />
+                        ) : (
+                          <Monitor className="w-4 h-4 text-muted-foreground" />
+                        )}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium">{device.name}</p>
+                            {device.sessionId &&
+                              device.sessionId ===
+                                sessionStorage.getItem(
+                                  "diniverse_device_session_id",
+                                ) && (
+                                <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                                  Current
+                                </span>
+                              )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Added {device.addedAt}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          if (!username) return;
+                          const updated = linkedDevices.filter(
+                            (d) => d.id !== device.id,
+                          );
+                          setLinkedDevices(updated);
+                          localStorage.setItem(
+                            `diniverse_devices_${username}`,
+                            JSON.stringify(updated),
+                          );
+                          toast.success("Device removed");
+                        }}
+                        data-ocid="settings.security.remove_device_button"
+                      >
+                        <Trash className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                To add hardware keys or biometric devices, click{" "}
+                <span className="font-medium">Manage Internet Identity</span>{" "}
+                above.
+              </p>
             </div>
-            {pinTwoFA && !showSetPin && !showRemovePin && (
-              <div className="text-xs text-green-600 flex items-center gap-1">
-                <Lock className="w-3 h-3" /> PIN verification is active
-              </div>
-            )}
-            {showSetPin && (
-              <div className="space-y-2 border rounded-md p-3 bg-muted/30">
-                <Label htmlFor="newPin">New PIN (4–6 digits)</Label>
-                <Input
-                  id="newPin"
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={pin}
-                  onChange={(e) =>
-                    setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
-                  placeholder="Enter 4–6 digit PIN"
-                  data-ocid="settings.security.pin.new_input"
-                />
-                <Label htmlFor="confirmPin">Confirm PIN</Label>
-                <Input
-                  id="confirmPin"
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={pinConfirm}
-                  onChange={(e) =>
-                    setPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
-                  placeholder="Confirm PIN"
-                  data-ocid="settings.security.pin.confirm_input"
-                />
-                {pinError && (
-                  <p className="text-xs text-destructive">{pinError}</p>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (!username) return;
-                      if (pin.length < 4 || pin.length > 6) {
-                        setPinError("PIN must be 4 to 6 digits");
-                        return;
-                      }
-                      if (pin !== pinConfirm) {
-                        setPinError("PINs do not match");
-                        return;
-                      }
-                      localStorage.setItem(`diniverse_pin2fa_${username}`, pin);
-                      setPinTwoFA(true);
-                      setShowSetPin(false);
-                      setPin("");
-                      setPinConfirm("");
-                      setPinError("");
-                      toast.success("PIN verification enabled");
-                    }}
-                    data-ocid="settings.security.pin.save_button"
-                  >
-                    Save PIN
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowSetPin(false);
-                      setPin("");
-                      setPinConfirm("");
-                      setPinError("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
-            {showRemovePin && (
-              <div className="space-y-2 border rounded-md p-3 bg-muted/30">
-                <Label htmlFor="removePinInput">
-                  Enter your current PIN to remove it
-                </Label>
-                <Input
-                  id="removePinInput"
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={removePinInput}
-                  onChange={(e) =>
-                    setRemovePinInput(
-                      e.target.value.replace(/\D/g, "").slice(0, 6),
-                    )
-                  }
-                  placeholder="Current PIN"
-                  data-ocid="settings.security.pin.remove_input"
-                />
-                {pinError && (
-                  <p className="text-xs text-destructive">{pinError}</p>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => {
-                      if (!username) return;
-                      const stored = localStorage.getItem(
-                        `diniverse_pin2fa_${username}`,
-                      );
-                      if (removePinInput !== stored) {
-                        setPinError("Incorrect PIN");
-                        return;
-                      }
-                      localStorage.removeItem(`diniverse_pin2fa_${username}`);
-                      setPinTwoFA(false);
-                      setShowRemovePin(false);
-                      setRemovePinInput("");
-                      setPinError("");
-                      toast.success("PIN verification removed");
-                    }}
-                    data-ocid="settings.security.pin.remove_confirm_button"
-                  >
-                    Remove PIN
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowRemovePin(false);
-                      setRemovePinInput("");
-                      setPinError("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* Danger Zone */}
       <Card className="border-destructive/50" data-ocid="settings.danger.card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
-            <Trash2 className="w-5 h-5" />
-            {t("settings.deleteAccount.dangerZone")}
-          </CardTitle>
-          <CardDescription>
-            {t("settings.deleteAccount.dangerZoneDescription")}
-          </CardDescription>
+        <CardHeader
+          className="flex flex-row items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("dangerZone")}
+        >
+          <div>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" />
+              {t("settings.deleteAccount.dangerZone")}
+            </CardTitle>
+            <CardDescription>
+              {t("settings.deleteAccount.dangerZoneDescription")}
+            </CardDescription>
+          </div>
+          {isOpen("dangerZone") ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+          )}
         </CardHeader>
-        <CardContent>
-          <Separator className="mb-4" />
-          <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 mb-4 flex gap-2">
-            <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
-            <div className="text-sm text-destructive">
-              <span className="font-semibold">
-                {t("settings.deleteAccount.warning.title")}
-              </span>{" "}
-              {t("settings.deleteAccount.warning.message")}
+        {isOpen("dangerZone") && (
+          <CardContent>
+            <Separator className="mb-4" />
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 mb-4 flex gap-2">
+              <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+              <div className="text-sm text-destructive">
+                <span className="font-semibold">
+                  {t("settings.deleteAccount.warning.title")}
+                </span>{" "}
+                {t("settings.deleteAccount.warning.message")}
+              </div>
             </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">
-                {t("settings.deleteAccount.button")}
-              </p>
+            <div className="flex items-center justify-between">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    data-ocid="settings.delete.open_modal_button"
+                  >
+                    {t("settings.deleteAccount.button")}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent data-ocid="settings.delete.dialog">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {t("settings.deleteAccount.confirmTitle")}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("settings.deleteAccount.confirmMessage")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="space-y-2 py-2">
+                    <Label htmlFor="deleteConfirm">
+                      {t("settings.deleteAccount.typeDelete")}
+                    </Label>
+                    <Input
+                      id="deleteConfirm"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder="DELETE"
+                      data-ocid="settings.delete.input"
+                    />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel
+                      onClick={() => setDeleteConfirmText("")}
+                      data-ocid="settings.delete.cancel_button"
+                    >
+                      {t("settings.deleteAccount.cancel")}
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      disabled={
+                        deleteAccountMutation.isPending ||
+                        deleteConfirmText !== "DELETE"
+                      }
+                      data-ocid="settings.delete.confirm_button"
+                    >
+                      {deleteAccountMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          {t("settings.deleteAccount.deleting")}
+                        </>
+                      ) : (
+                        t("settings.deleteAccount.confirm")
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  data-ocid="settings.delete.open_modal_button"
-                >
-                  {t("settings.deleteAccount.button")}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent data-ocid="settings.delete.dialog">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t("settings.deleteAccount.confirmTitle")}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t("settings.deleteAccount.confirmMessage")}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="space-y-2 py-2">
-                  <Label htmlFor="deleteConfirm">
-                    {t("settings.deleteAccount.typeDelete")}
-                  </Label>
-                  <Input
-                    id="deleteConfirm"
-                    value={deleteConfirmText}
-                    onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    placeholder="DELETE"
-                    data-ocid="settings.delete.input"
-                  />
-                </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel
-                    onClick={() => setDeleteConfirmText("")}
-                    data-ocid="settings.delete.cancel_button"
-                  >
-                    {t("settings.deleteAccount.cancel")}
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    disabled={
-                      deleteAccountMutation.isPending ||
-                      deleteConfirmText !== "DELETE"
-                    }
-                    data-ocid="settings.delete.confirm_button"
-                  >
-                    {deleteAccountMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        {t("settings.deleteAccount.deleting")}
-                      </>
-                    ) : (
-                      t("settings.deleteAccount.confirm")
-                    )}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
     </div>
   );
