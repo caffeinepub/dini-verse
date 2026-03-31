@@ -8,6 +8,7 @@ import {
 import { ThemeProvider } from "next-themes";
 import AppLayout from "./components/layout/AppLayout";
 import { TranslationProvider } from "./contexts/TranslationContext";
+import AvatarEditor from "./pages/AvatarEditor";
 import AvatarShop from "./pages/AvatarShop";
 import Create from "./pages/Create";
 import CreateGamesBuilder2D from "./pages/CreateGamesBuilder2D";
@@ -70,6 +71,12 @@ const avatarShopRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/avatar-shop",
   component: AvatarShop,
+});
+
+const avatarRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/avatar",
+  component: AvatarEditor,
 });
 
 const createRoute_ = createRoute({
@@ -140,6 +147,7 @@ const routeTree = rootRoute.addChildren([
   signupRoute,
   loginRoute,
   avatarShopRoute,
+  avatarRoute,
   createRoute_,
   diniBucksRoute,
   inventoryRoute,

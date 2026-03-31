@@ -19,6 +19,8 @@ export interface LocalUserSettings {
   theme: "light" | "dark";
   birthday: string | null;
   location: string;
+  skinColor?: string;
+  bodyPartColors?: Record<string, string>;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -47,6 +49,8 @@ export function getLocalSettings(username: string): LocalUserSettings {
         ...parsed,
         birthday: parsed.birthday ?? null,
         location: parsed.location ?? "",
+        skinColor: parsed.skinColor ?? "#f5cba7",
+        bodyPartColors: parsed.bodyPartColors ?? {},
       };
     }
   } catch {
@@ -67,6 +71,8 @@ export function getLocalSettings(username: string): LocalUserSettings {
     theme: "light",
     birthday: null,
     location: "",
+    skinColor: "#f5cba7",
+    bodyPartColors: {},
   };
 }
 
@@ -101,6 +107,8 @@ function toPublicSettings(s: LocalUserSettings) {
     theme: s.theme,
     birthday: s.birthday,
     location: s.location,
+    skinColor: s.skinColor ?? "#f5cba7",
+    bodyPartColors: s.bodyPartColors ?? {},
     // Extra fields for type compat
     createdAt: BigInt(s.createdAt),
     lastUsernameChange: BigInt(s.lastUsernameChange),

@@ -4,6 +4,7 @@ import {
   MessageCircle,
   Package,
   Settings,
+  UserCircle2,
   UserSearch,
   Users,
 } from "lucide-react";
@@ -23,6 +24,7 @@ export default function LeftSidebar() {
 
   const navItems = [
     { to: "/profile", label: t("nav.profile") },
+    { to: "/avatar", label: "Avatar", icon: UserCircle2 },
     { to: "/social", label: t("nav.social"), icon: MessageCircle },
     { to: "/people", label: "People", icon: UserSearch },
     { to: "/groups", label: "Groups", icon: Users },
@@ -56,6 +58,7 @@ export default function LeftSidebar() {
         {navItems.slice(1).map((item) => {
           const Icon = item.icon;
           const isPeopleLink = item.to === "/people";
+          const isAvatarLink = item.to === "/avatar";
           return (
             <Link
               key={item.to}
@@ -64,7 +67,13 @@ export default function LeftSidebar() {
               activeProps={{
                 className: "bg-accent text-accent-foreground",
               }}
-              data-ocid={isPeopleLink ? "people.link" : undefined}
+              data-ocid={
+                isPeopleLink
+                  ? "people.link"
+                  : isAvatarLink
+                    ? "avatar.link"
+                    : undefined
+              }
             >
               {Icon && <Icon className="h-5 w-5" />}
               {item.label}

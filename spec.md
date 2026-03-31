@@ -1,43 +1,49 @@
-# Dini.Verse
+# Dini.Verse — Avatar Editor Feature
 
 ## Current State
-- Settings page has: Account Info, Offline Mode (in Visibility card), Theme (dark mode toggle), Promo Codes, Social Networks, Privacy (who can message), Notifications, Security (II 2FA + PIN)
-- No "Preferences" section exists yet
-- Dark mode toggle is in its own "Theme" card
-- Offline Mode is in its own "Visibility" card
-- Privacy card only has who-can-message control; no recently played toggle
-- Public profile visibility is not yet implemented anywhere in settings
-- Internet Identity 2FA in Security section currently just sets a localStorage flag (no actual II redirect/login)
+
+The app has a full left sidebar navigation with links: Profile, Social, People, Groups, Inventory, Settings. There is an existing `/avatar-shop` page (AvatarShop.tsx). User settings are stored in localStorage via `useAccountSettings.ts` (LocalUserSettings). The LocalUserSettings interface stores: username, displayName, visibility, avatarDataUrl, gender, language, theme, birthday, location.
+
+There is no dedicated Avatar Editor page. The sidebar does not include an "Avatar" link.
 
 ## Requested Changes (Diff)
 
 ### Add
-- New **Preferences** section in Settings containing:
-  - Dark Mode toggle (moved from the "Theme" card)
-  - Public Profile visibility selector: "No one", "Friends", "Everyone" (default: Everyone)
-    - When not "Everyone", the public profile page only shows: username, display name, profile picture, banner, games created, social medias, bio
-- Move **Offline Mode** from the "Visibility" card into the existing **Privacy** section
-- Move **Recently Played** visibility (who can see recently played games) also into Privacy section
-- Internet Identity 2-step authentication in the Security section should actually redirect the user to Internet Identity (https://identity.ic0.app) when enabled — i.e., it opens the II login in a new tab or redirects
-- Responsive UI improvements (already partially done, ensure breakpoints are solid)
+- New `/avatar` route in App.tsx + LeftSidebar.tsx link labeled "Avatar" with an appropriate icon (e.g., UserCircle)
+- New page `src/frontend/src/pages/AvatarEditor.tsx` with:
+  - 2D avatar preview built using inline SVG: Head (circle), Torso (rounded rect), Left Arm, Right Arm, Left Leg, Right Leg — all drawn as white/light-gray base shapes
+  - A global skin color picker (`<input type="color">`) that updates a `skinColor` state variable
+  - All body parts receive the selected skin color as their SVG fill, simulating a CSS tint/multiply effect
+  - "Advanced" toggle switch: when OFF, all parts use global `skinColor`; when ON, clicking any individual body part in the preview opens a color picker for that specific part (each part stores its own color independently)
+  - On color change (both global and per-part), save to localStorage under the user's settings key — add fields `skinColor: string` (hex, default "#f5cba7") and `bodyPartColors: { head, torso, leftArm, rightArm, leftLeg, rightLeg }` (all optional, fall back to skinColor)
+- Update `LocalUserSettings` interface in `useAccountSettings.ts` to add `skinColor?: string` and `bodyPartColors?: Record<string, string>`
+- Update `getLocalSettings()` defaults to include `skinColor: '#f5cba7'` and `bodyPartColors: {}`
 
 ### Modify
-- Remove the standalone "Theme" card (dark mode now lives in Preferences)
-- Remove the standalone "Visibility" card (Offline Mode now lives in Privacy)
-- Privacy card: add Offline Mode toggle and Recently Played visibility (who can see: Everyone, Friends, No one)
-- PublicProfile page: respect the publicProfile visibility setting — if set to "No one" or "Friends", only show username, display name, profile picture, banner, games created, social medias, bio (hide badges, groups, friends count, followers, following, favorited items, etc.)
-- socialStorage: extend PrivacySettings to include offlineMode, recentlyPlayedVisibility; add getPreferences/savePreferences for publicProfileVisibility and darkMode preference
+- `LeftSidebar.tsx`: Add "Avatar" nav item (with UserCircle icon, link to "/avatar") between Profile and Social or before Inventory
+- `App.tsx`: Import and register the `/avatar` route
+- `useAccountSettings.ts`: Add `skinColor` and `bodyPartColors` fields + defaults
 
 ### Remove
-- Standalone "Theme" card
-- Standalone "Visibility" card (Offline Mode moved to Privacy)
+- Nothing removed
 
 ## Implementation Plan
-1. Extend `socialStorage.ts`: add `getPreferences(username)` / `savePreferences(username, prefs)` storing `{ publicProfileVisibility: 'everyone' | 'friends' | 'no-one' }`. Extend `PrivacySettings` to include `offlineMode: boolean` and `recentlyPlayedVisibility: 'everyone' | 'friends' | 'no-one'`.
-2. Update `Settings.tsx`:
-   - Remove Theme card and Visibility card
-   - Add Preferences card with dark mode switch + public profile visibility select
-   - Add Offline Mode switch and Recently Played visibility select to the Privacy card
-3. Update `PublicProfile.tsx`: read publicProfileVisibility from prefs; if 'no-one' or 'friends', render restricted view (username, display name, pfp, banner, games created, social medias, bio only)
-4. Internet Identity 2FA toggle: when turned ON, open `https://identity.ic0.app` in a new tab (window.open) to indicate the external II authentication
-5. Ensure responsive classes on Settings layout (already using cards, verify mobile padding)
+
+1. Update `LocalUserSettings` in `useAccountSettings.ts` — add `skinColor?: string` and `bodyPartColors?: Record<string, string>` with defaults in `getLocalSettings()`
+2. Create `AvatarEditor.tsx`:
+   - Load current username, read `skinColor` and `bodyPartColors` from localStorage
+   - Render an SVG avatar (400x500 viewBox):
+     - Head: circle at top-center
+     - Torso: rounded rect below head
+     - Left Arm: rect to left of torso
+     - Right Arm: rect to right of torso  
+     - Left Leg: rect below-left of torso
+     - Right Leg: rect below-right of torso
+   - Each SVG shape gets fill from: Advanced mode ? bodyPartColors[part] ?? skinColor : skinColor
+   - Global color picker below preview
+   - "Advanced" toggle using shadcn Switch
+   - In Advanced mode: clicking a body part highlights it and shows a part-specific color picker
+   - On any color change: save to localStorage immediately (reactive, no save button needed — but optionally show a subtle toast)
+3. Update `LeftSidebar.tsx` — add Avatar link
+4. Update `App.tsx` — add avatarEditorRoute at path "/avatar"
+5. The app is client-side only (no backend calls needed) — localStorage IS the "persistent user profile" in this codebase
