@@ -150,8 +150,7 @@ export default function Profile() {
   const username = getCurrentUsername() ?? "";
   const localSettings = username ? getLocalSettings(username) : null;
   const avatarDataUrl = localSettings?.avatarDataUrl ?? null;
-  const skinColor = localSettings?.skinColor ?? "#f5cba7";
-  const bodyPartColors = localSettings?.bodyPartColors ?? {};
+  const avatarData = localSettings?.avatarData;
   const displayName = localSettings?.displayName || user?.displayName || "User";
 
   const [bio, setBio] = useState(() => getBio(username));
@@ -345,8 +344,8 @@ export default function Profile() {
             <CardContent className="py-6 flex items-center justify-center">
               <div className="w-32 h-44">
                 <AvatarDisplay
-                  skinColor={skinColor}
-                  bodyPartColors={bodyPartColors}
+                  avatarData={avatarData}
+                  skinColor={localSettings?.skinColor ?? "#f5cba7"}
                 />
               </div>
             </CardContent>

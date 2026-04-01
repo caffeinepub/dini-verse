@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Gender, Language, Variant_offline_online } from "../backend";
+import type { AvatarData, InventoryItem } from "../types/avatarTypes";
+import { DEFAULT_AVATAR_DATA } from "../types/avatarTypes";
 import { getSessionToken } from "../utils/sessionToken";
 import { useSessionAuth } from "./useSessionAuth";
 
@@ -21,6 +23,8 @@ export interface LocalUserSettings {
   location: string;
   skinColor?: string;
   bodyPartColors?: Record<string, string>;
+  avatarData?: AvatarData;
+  inventory?: InventoryItem[];
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -44,19 +48,37 @@ export function getLocalSettings(username: string): LocalUserSettings {
     const raw = localStorage.getItem(settingsKey(username));
     if (raw) {
       const parsed = JSON.parse(raw) as LocalUserSettings;
-      // Ensure new fields exist for existing users
       return {
         ...parsed,
         birthday: parsed.birthday ?? null,
         location: parsed.location ?? "",
         skinColor: parsed.skinColor ?? "#f5cba7",
         bodyPartColors: parsed.bodyPartColors ?? {},
+        avatarData: parsed.avatarData
+          ? {
+              ...DEFAULT_AVATAR_DATA,
+              ...parsed.avatarData,
+              faceFeatures: {
+                ...DEFAULT_AVATAR_DATA.faceFeatures,
+                ...(parsed.avatarData?.faceFeatures ?? {}),
+              },
+              equippedClothing: parsed.avatarData?.equippedClothing ?? {},
+              equippedAccessories: parsed.avatarData?.equippedAccessories ?? {},
+              accessoryPositions: parsed.avatarData?.accessoryPositions ?? {},
+              skinColor:
+                parsed.avatarData?.skinColor ?? parsed.skinColor ?? "#f5cba7",
+              hairColor: parsed.avatarData?.hairColor ?? "#5a3e2b",
+            }
+          : {
+              ...DEFAULT_AVATAR_DATA,
+              skinColor: parsed.skinColor ?? "#f5cba7",
+            },
+        inventory: parsed.inventory ?? [],
       };
     }
   } catch {
     // fall through to defaults
   }
-  // Default settings
   return {
     username,
     displayName: username,
@@ -73,6 +95,8 @@ export function getLocalSettings(username: string): LocalUserSettings {
     location: "",
     skinColor: "#f5cba7",
     bodyPartColors: {},
+    avatarData: { ...DEFAULT_AVATAR_DATA },
+    inventory: [],
   };
 }
 
@@ -87,7 +111,6 @@ function clearLocalSettings(username: string): void {
   localStorage.removeItem(settingsKey(username));
 }
 
-// Map LocalUserSettings to a shape that satisfies places expecting UserSettings-like objects
 function toPublicSettings(s: LocalUserSettings) {
   return {
     username: s.username,
@@ -109,7 +132,8 @@ function toPublicSettings(s: LocalUserSettings) {
     location: s.location,
     skinColor: s.skinColor ?? "#f5cba7",
     bodyPartColors: s.bodyPartColors ?? {},
-    // Extra fields for type compat
+    avatarData: s.avatarData ?? { ...DEFAULT_AVATAR_DATA },
+    inventory: s.inventory ?? [],
     createdAt: BigInt(s.createdAt),
     lastUsernameChange: BigInt(s.lastUsernameChange),
     lastDisplayNameChange: BigInt(s.lastDisplayNameChange),
@@ -127,7 +151,6 @@ function toPublicSettings(s: LocalUserSettings) {
 
 // ─── Hooks ───────────────────────────────────────────────────────────────────
 
-/** Get current user's settings from localStorage — never calls the backend */
 export function useGetCallerSettings() {
   const { isAuthenticated } = useSessionAuth();
 
@@ -150,7 +173,6 @@ export function useGetCallerSettings() {
   };
 }
 
-/** Update display name — localStorage only, 24h cooldown */
 export function useUpdateDisplayName() {
   const queryClient = useQueryClient();
 
@@ -177,7 +199,6 @@ export function useUpdateDisplayName() {
         lastDisplayNameChange: now,
       });
 
-      // Also update the diniverse_users record so login shows new display name
       try {
         const usersRaw = localStorage.getItem("diniverse_users");
         if (usersRaw) {
@@ -198,7 +219,6 @@ export function useUpdateDisplayName() {
   });
 }
 
-/** Update display name and avatar — localStorage only */
 export function useUpdateDisplayNameAndAvatar() {
   const queryClient = useQueryClient();
 
@@ -224,7 +244,6 @@ export function useUpdateDisplayNameAndAvatar() {
   });
 }
 
-/** Update visibility — localStorage only */
 export function useUpdateVisibility() {
   const queryClient = useQueryClient();
 
@@ -245,7 +264,6 @@ export function useUpdateVisibility() {
   });
 }
 
-/** Update avatar (base64 data URL) — localStorage only */
 export function useUpdateAvatar() {
   const queryClient = useQueryClient();
 
@@ -266,7 +284,6 @@ export function useUpdateAvatar() {
   });
 }
 
-/** Delete avatar — localStorage only */
 export function useDeleteAvatar() {
   const queryClient = useQueryClient();
 
@@ -284,7 +301,6 @@ export function useDeleteAvatar() {
   });
 }
 
-/** Delete account — clears all localStorage data for this user */
 export function useDeleteAccount() {
   const queryClient = useQueryClient();
 
@@ -293,10 +309,8 @@ export function useDeleteAccount() {
       const username = getCurrentUsername();
       if (!username) throw new Error("Not authenticated");
 
-      // Remove settings
       clearLocalSettings(username);
 
-      // Remove from users store
       try {
         const usersRaw = localStorage.getItem("diniverse_users");
         if (usersRaw) {
@@ -308,7 +322,6 @@ export function useDeleteAccount() {
         // non-critical
       }
 
-      // Clear session token
       localStorage.removeItem("diniverse_session_token");
     },
     onSuccess: () => {
@@ -317,7 +330,6 @@ export function useDeleteAccount() {
   });
 }
 
-/** Set gender — localStorage only */
 export function useSetGender() {
   const queryClient = useQueryClient();
 
@@ -340,7 +352,6 @@ export function useSetGender() {
   });
 }
 
-/** Set language — localStorage only */
 export function useSetLanguage() {
   const queryClient = useQueryClient();
 
@@ -366,7 +377,6 @@ export function useSetLanguage() {
   });
 }
 
-/** Set theme — localStorage only */
 export function useSetTheme() {
   const queryClient = useQueryClient();
 

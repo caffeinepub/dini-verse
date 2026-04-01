@@ -1,49 +1,40 @@
-# Dini.Verse — Avatar Editor Feature
+# Dini.Verse Avatar System Overhaul
 
 ## Current State
-
-The app has a full left sidebar navigation with links: Profile, Social, People, Groups, Inventory, Settings. There is an existing `/avatar-shop` page (AvatarShop.tsx). User settings are stored in localStorage via `useAccountSettings.ts` (LocalUserSettings). The LocalUserSettings interface stores: username, displayName, visibility, avatarDataUrl, gender, language, theme, birthday, location.
-
-There is no dedicated Avatar Editor page. The sidebar does not include an "Avatar" link.
+The Avatar tab has a basic 2D avatar preview with grayscale base sprites (Head, Torso, Arms, Legs), a color picker for skin tone, an Advanced toggle for per-body-part coloring, and skin hex code saved to localStorage. Avatars render on profile pages.
 
 ## Requested Changes (Diff)
 
 ### Add
-- New `/avatar` route in App.tsx + LeftSidebar.tsx link labeled "Avatar" with an appropriate icon (e.g., UserCircle)
-- New page `src/frontend/src/pages/AvatarEditor.tsx` with:
-  - 2D avatar preview built using inline SVG: Head (circle), Torso (rounded rect), Left Arm, Right Arm, Left Leg, Right Leg — all drawn as white/light-gray base shapes
-  - A global skin color picker (`<input type="color">`) that updates a `skinColor` state variable
-  - All body parts receive the selected skin color as their SVG fill, simulating a CSS tint/multiply effect
-  - "Advanced" toggle switch: when OFF, all parts use global `skinColor`; when ON, clicking any individual body part in the preview opens a color picker for that specific part (each part stores its own color independently)
-  - On color change (both global and per-part), save to localStorage under the user's settings key — add fields `skinColor: string` (hex, default "#f5cba7") and `bodyPartColors: { head, torso, leftArm, rightArm, leftLeg, rightLeg }` (all optional, fall back to skinColor)
-- Update `LocalUserSettings` interface in `useAccountSettings.ts` to add `skinColor?: string` and `bodyPartColors?: Record<string, string>`
-- Update `getLocalSettings()` defaults to include `skinColor: '#f5cba7'` and `bodyPartColors: {}`
+- Modular chibi body rig with layered sprite system: base skin body, ears, hair, eyes, nose, mouth — all rendered in z-order layers
+- Dynamic color picker for skin AND hair (separate controls)
+- Face customizer panel: multiple preset options for eyes, eyebrows, nose, mouth, ears — user can cycle through options per slot
+- Upload custom transparent PNG for eyes and mouth slots
+- Clothing system with categories: Shirts, T-Shirts, Pants — layered over body
+- Accessory system with slots: Hat, Face, Neck, Shoulder, Front, Back, Waist
+- Adjustment controls (arrow buttons + rotation buttons) for each equipped accessory to set XY offset and rotation
+- Persistent inventory grid showing all owned items (clothing + accessories)
+- Avatar Shop page: browse items for purchase with Dini Bucks
+- 'Create' button in Avatar Shop: upload transparent PNG, set title, description, price in Dini Bucks, optional limited-stock toggle; creator receives the item for free automatically
+- All avatar data (facial feature selections, color hex codes, equipped items, per-accessory XY+rotation) saved to localStorage under user profile key
+- Avatar renders identically on Avatar page, Profile page, and anywhere else it appears
 
 ### Modify
-- `LeftSidebar.tsx`: Add "Avatar" nav item (with UserCircle icon, link to "/avatar") between Profile and Social or before Inventory
-- `App.tsx`: Import and register the `/avatar` route
-- `useAccountSettings.ts`: Add `skinColor` and `bodyPartColors` fields + defaults
+- Avatar page: replace simple body sprites with full chibi rig renderer
+- Profile page: update avatar renderer to use new layered chibi system
+- Avatar Shop: add 'Create' button and item creation modal
+- User data schema: extend avatarData to include faceFeatures, hairColor, clothingSlots, accessorySlots with positions
 
 ### Remove
-- Nothing removed
+- Old simple grayscale sprite system (replaced by chibi rig)
+- Separate 'Advanced' per-body-part coloring (replaced by layered system with hair/skin color pickers)
 
 ## Implementation Plan
-
-1. Update `LocalUserSettings` in `useAccountSettings.ts` — add `skinColor?: string` and `bodyPartColors?: Record<string, string>` with defaults in `getLocalSettings()`
-2. Create `AvatarEditor.tsx`:
-   - Load current username, read `skinColor` and `bodyPartColors` from localStorage
-   - Render an SVG avatar (400x500 viewBox):
-     - Head: circle at top-center
-     - Torso: rounded rect below head
-     - Left Arm: rect to left of torso
-     - Right Arm: rect to right of torso  
-     - Left Leg: rect below-left of torso
-     - Right Leg: rect below-right of torso
-   - Each SVG shape gets fill from: Advanced mode ? bodyPartColors[part] ?? skinColor : skinColor
-   - Global color picker below preview
-   - "Advanced" toggle using shadcn Switch
-   - In Advanced mode: clicking a body part highlights it and shows a part-specific color picker
-   - On any color change: save to localStorage immediately (reactive, no save button needed — but optionally show a subtle toast)
-3. Update `LeftSidebar.tsx` — add Avatar link
-4. Update `App.tsx` — add avatarEditorRoute at path "/avatar"
-5. The app is client-side only (no backend calls needed) — localStorage IS the "persistent user profile" in this codebase
+1. Define avatarData schema: { skinColor, hairColor, faceFeatures: {eyes, eyebrows, nose, mouth, ears, customEyeImg, customMouthImg}, clothing: {shirt, tshirt, pants}, accessories: {hat, face, neck, shoulder, front, back, waist}, accessoryPositions: { [slotKey]: {x, y, rotation} }, inventory: [{id, type, name, img}] }
+2. Build ChibiAvatar React component that renders all layers in z-order using absolute positioned divs/images over a canvas-like container
+3. Build AvatarEditor panel: color pickers for skin+hair, face customizer with slot cycling + custom upload
+4. Build ClothingPanel and AccessoryPanel with category tabs and inventory grid
+5. Build AccessoryAdjuster: arrow pad + rotate buttons that update XY/rotation for selected accessory slot
+6. Build AvatarShop page: item grid, buy button (deducts Dini Bucks), Create modal (upload PNG, title, desc, price, limited stock toggle; auto-adds to creator inventory)
+7. Persist all avatarData to localStorage on every change, keyed by username
+8. Update Profile page to use ChibiAvatar component with user's saved avatarData
