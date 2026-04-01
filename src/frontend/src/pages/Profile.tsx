@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import RequireProfile from "../components/auth/RequireProfile";
+import AvatarDisplay from "../components/avatar/AvatarDisplay";
 import {
   getCurrentUsername,
   getLocalSettings,
@@ -149,6 +150,8 @@ export default function Profile() {
   const username = getCurrentUsername() ?? "";
   const localSettings = username ? getLocalSettings(username) : null;
   const avatarDataUrl = localSettings?.avatarDataUrl ?? null;
+  const skinColor = localSettings?.skinColor ?? "#f5cba7";
+  const bodyPartColors = localSettings?.bodyPartColors ?? {};
   const displayName = localSettings?.displayName || user?.displayName || "User";
 
   const [bio, setBio] = useState(() => getBio(username));
@@ -340,17 +343,12 @@ export default function Profile() {
           </h2>
           <Card>
             <CardContent className="py-6 flex items-center justify-center">
-              {avatarDataUrl ? (
-                <img
-                  src={avatarDataUrl}
-                  alt="Avatar"
-                  className="h-40 w-40 rounded-xl object-contain border bg-muted"
+              <div className="w-32 h-44">
+                <AvatarDisplay
+                  skinColor={skinColor}
+                  bodyPartColors={bodyPartColors}
                 />
-              ) : (
-                <div className="h-40 w-40 rounded-xl bg-muted flex items-center justify-center">
-                  <Users className="h-16 w-16 text-muted-foreground/40" />
-                </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         </div>

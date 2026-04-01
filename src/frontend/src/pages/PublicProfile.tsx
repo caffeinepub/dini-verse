@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import AvatarDisplay from "../components/avatar/AvatarDisplay";
 import {
   getCurrentUsername,
   getLocalSettings,
@@ -345,6 +346,8 @@ export default function PublicProfile() {
 
   const displayName = userData.displayName || username;
   const avatarDataUrl = settings?.avatarDataUrl ?? null;
+  const skinColor = settings?.skinColor ?? "#f5cba7";
+  const bodyPartColors = settings?.bodyPartColors ?? {};
   const visibility = settings?.visibility ?? "online";
 
   return (
@@ -467,6 +470,21 @@ export default function PublicProfile() {
               {bio}
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* 2D Avatar */}
+      <Card className="mb-6">
+        <CardContent className="py-6 flex flex-col items-center gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+            Avatar
+          </p>
+          <div className="w-32 h-44">
+            <AvatarDisplay
+              skinColor={skinColor}
+              bodyPartColors={bodyPartColors}
+            />
+          </div>
         </CardContent>
       </Card>
 
