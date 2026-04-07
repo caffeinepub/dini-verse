@@ -9,6 +9,8 @@ interface AvatarDisplayProps {
   className?: string;
   width?: number;
   height?: number;
+  view?: "front" | "side";
+  walking?: boolean;
 }
 
 export default function AvatarDisplay({
@@ -18,6 +20,8 @@ export default function AvatarDisplay({
   className = "",
   width,
   height,
+  view = "front",
+  walking = false,
 }: AvatarDisplayProps) {
   const resolvedData: AvatarData = avatarData ?? {
     ...DEFAULT_AVATAR_DATA,
@@ -27,7 +31,13 @@ export default function AvatarDisplay({
 
   return (
     <div className={`flex items-center justify-center ${className}`}>
-      <ChibiAvatar avatarData={resolvedData} width={width} height={height} />
+      <ChibiAvatar
+        avatarData={resolvedData}
+        width={width}
+        height={height}
+        view={view}
+        walking={walking}
+      />
     </div>
   );
 }

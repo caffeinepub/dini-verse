@@ -432,14 +432,17 @@ export function saveNotificationPrefs(
 
 export interface UserPreferences {
   publicProfileVisibility: "everyone" | "friends" | "no-one";
+  nameTagColor?: string;
 }
 
 export function getPreferences(username: string): UserPreferences {
   try {
     const raw = localStorage.getItem(`diniverse_preferences_${username}`);
-    return raw ? JSON.parse(raw) : { publicProfileVisibility: "everyone" };
+    return raw
+      ? JSON.parse(raw)
+      : { publicProfileVisibility: "everyone", nameTagColor: "#22c55e" };
   } catch {
-    return { publicProfileVisibility: "everyone" };
+    return { publicProfileVisibility: "everyone", nameTagColor: "#22c55e" };
   }
 }
 
@@ -451,4 +454,9 @@ export function savePreferences(
     `diniverse_preferences_${username}`,
     JSON.stringify(prefs),
   );
+}
+
+export function getNameTagColor(username: string): string {
+  const prefs = getPreferences(username);
+  return prefs.nameTagColor ?? "#22c55e";
 }

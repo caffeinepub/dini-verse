@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "motion/react";
 import { useCallback, useRef, useState } from "react";
@@ -17,10 +18,14 @@ import {
 import type {
   AccessoryPosition,
   AvatarData,
+  BodyPartColors,
   FaceFeatures,
   InventoryItem,
 } from "../types/avatarTypes";
-import { DEFAULT_AVATAR_DATA } from "../types/avatarTypes";
+import {
+  DEFAULT_AVATAR_DATA,
+  DEFAULT_BODY_PART_COLORS,
+} from "../types/avatarTypes";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -285,6 +290,7 @@ export default function AvatarEditor() {
     loadInventory(),
   );
   const [selectedAccSlot, setSelectedAccSlot] = useState<string | null>(null);
+  const [advancedMode, setAdvancedMode] = useState(false);
 
   const update = useCallback((data: AvatarData) => {
     setAvatarData(data);
@@ -322,6 +328,34 @@ export default function AvatarEditor() {
   function updateAccPosition(itemId: string, pos: AccessoryPosition) {
     const newPositions = { ...avatarData.accessoryPositions, [itemId]: pos };
     update({ ...avatarData, accessoryPositions: newPositions });
+  }
+
+  function updateBodyPartColor(key: keyof BodyPartColors, color: string) {
+    const current = avatarData.bodyPartColors ?? {
+      ...DEFAULT_BODY_PART_COLORS,
+    };
+    const updated = { ...current, [key]: color };
+    // Also sync skinColor to headColor for profile backwards compat
+    update({
+      ...avatarData,
+      skinColor: key === "headColor" ? color : avatarData.skinColor,
+      bodyPartColors: updated,
+    });
+  }
+
+  function updateAllBodyColors(color: string) {
+    update({
+      ...avatarData,
+      skinColor: color,
+      bodyPartColors: {
+        headColor: color,
+        torsoColor: color,
+        leftArmColor: color,
+        rightArmColor: color,
+        leftLegColor: color,
+        rightLegColor: color,
+      },
+    });
   }
 
   const selectedItemId = selectedAccSlot
@@ -769,26 +803,22 @@ export default function AvatarEditor() {
             >
               <Card>
                 <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="text-sm">Colors</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 pb-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Skin Color</Label>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm">Colors</CardTitle>
                     <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={avatarData.skinColor}
-                        onChange={(e) =>
-                          update({ ...avatarData, skinColor: e.target.value })
-                        }
-                        className="w-8 h-8 rounded cursor-pointer border-0"
-                        data-ocid="avatar.input"
+                      <Label className="text-xs text-muted-foreground">
+                        Advanced
+                      </Label>
+                      <Switch
+                        checked={advancedMode}
+                        onCheckedChange={setAdvancedMode}
+                        data-ocid="avatar.switch"
                       />
-                      <code className="text-xs bg-muted px-2 py-1 rounded">
-                        {avatarData.skinColor}
-                      </code>
                     </div>
                   </div>
+                </CardHeader>
+                <CardContent className="space-y-4 pb-4">
+                  {/* Hair color always visible */}
                   <div className="space-y-1.5">
                     <Label className="text-xs">Hair Color</Label>
                     <div className="flex items-center gap-2">
@@ -807,39 +837,107 @@ export default function AvatarEditor() {
                     </div>
                   </div>
 
-                  {/* Skin tone presets */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">
-                      Skin Presets
-                    </Label>
-                    <div className="grid grid-cols-4 gap-1">
-                      {[
-                        "#FFDFC4",
-                        "#F0D5BE",
-                        "#EECEB3",
-                        "#E1B899",
-                        "#C68642",
-                        "#8D5524",
-                        "#5D3316",
-                        "#3B1F11",
-                      ].map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          className={`w-full aspect-square rounded border-2 transition-all ${
-                            avatarData.skinColor === c
-                              ? "border-primary"
-                              : "border-transparent"
-                          }`}
-                          style={{ backgroundColor: c }}
-                          onClick={() =>
-                            update({ ...avatarData, skinColor: c })
-                          }
-                          data-ocid="avatar.toggle"
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  {!advancedMode ? (
+                    <>
+                      {/* Simple mode: one skin color picker updates all parts */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Body Color</Label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={avatarData.skinColor}
+                            onChange={(e) =>
+                              updateAllBodyColors(e.target.value)
+                            }
+                            className="w-8 h-8 rounded cursor-pointer border-0"
+                            data-ocid="avatar.input"
+                          />
+                          <code className="text-xs bg-muted px-2 py-1 rounded">
+                            {avatarData.skinColor}
+                          </code>
+                        </div>
+                      </div>
+                      {/* Skin tone presets */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">
+                          Skin Presets
+                        </Label>
+                        <div className="grid grid-cols-4 gap-1">
+                          {[
+                            "#FFDFC4",
+                            "#F0D5BE",
+                            "#EECEB3",
+                            "#E1B899",
+                            "#C68642",
+                            "#8D5524",
+                            "#5D3316",
+                            "#3B1F11",
+                          ].map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              className={`w-full aspect-square rounded border-2 transition-all ${
+                                avatarData.skinColor === c
+                                  ? "border-primary"
+                                  : "border-transparent"
+                              }`}
+                              style={{ backgroundColor: c }}
+                              onClick={() => updateAllBodyColors(c)}
+                              data-ocid="avatar.toggle"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Advanced mode: individual body part color pickers */}
+                      {(
+                        [
+                          { key: "headColor" as const, label: "Head Color" },
+                          { key: "torsoColor" as const, label: "Torso Color" },
+                          {
+                            key: "leftArmColor" as const,
+                            label: "Left Arm Color",
+                          },
+                          {
+                            key: "rightArmColor" as const,
+                            label: "Right Arm Color",
+                          },
+                          {
+                            key: "leftLegColor" as const,
+                            label: "Left Leg Color",
+                          },
+                          {
+                            key: "rightLegColor" as const,
+                            label: "Right Leg Color",
+                          },
+                        ] as { key: keyof BodyPartColors; label: string }[]
+                      ).map(({ key, label }) => {
+                        const bpc = avatarData.bodyPartColors;
+                        const currentColor = bpc?.[key] ?? avatarData.skinColor;
+                        return (
+                          <div key={key} className="space-y-1">
+                            <Label className="text-xs">{label}</Label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={currentColor}
+                                onChange={(e) =>
+                                  updateBodyPartColor(key, e.target.value)
+                                }
+                                className="w-8 h-8 rounded cursor-pointer border-0"
+                                data-ocid="avatar.input"
+                              />
+                              <code className="text-xs bg-muted px-2 py-1 rounded">
+                                {currentColor}
+                              </code>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
 
                   {/* Hair color presets */}
                   <div className="space-y-1.5">

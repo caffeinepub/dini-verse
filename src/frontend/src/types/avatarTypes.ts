@@ -37,6 +37,15 @@ export interface InventoryItem {
   creatorUsername: string;
 }
 
+export interface BodyPartColors {
+  headColor: string;
+  torsoColor: string;
+  leftArmColor: string;
+  rightArmColor: string;
+  leftLegColor: string;
+  rightLegColor: string;
+}
+
 export interface AvatarData {
   skinColor: string;
   hairColor: string;
@@ -56,6 +65,7 @@ export interface AvatarData {
     waist?: string;
   };
   accessoryPositions: Record<string, AccessoryPosition>;
+  bodyPartColors?: BodyPartColors;
 }
 
 export const DEFAULT_FACE_FEATURES: FaceFeatures = {
@@ -67,6 +77,15 @@ export const DEFAULT_FACE_FEATURES: FaceFeatures = {
   hairStyle: 0,
 };
 
+export const DEFAULT_BODY_PART_COLORS: BodyPartColors = {
+  headColor: "#e8e8e8",
+  torsoColor: "#e8e8e8",
+  leftArmColor: "#e8e8e8",
+  rightArmColor: "#e8e8e8",
+  leftLegColor: "#e8e8e8",
+  rightLegColor: "#e8e8e8",
+};
+
 export const DEFAULT_AVATAR_DATA: AvatarData = {
   skinColor: "#f5cba7",
   hairColor: "#5a3e2b",
@@ -74,4 +93,12 @@ export const DEFAULT_AVATAR_DATA: AvatarData = {
   equippedClothing: {},
   equippedAccessories: {},
   accessoryPositions: {},
+  bodyPartColors: {
+    headColor: "#e8e8e8",
+    torsoColor: "#e8e8e8",
+    leftArmColor: "#e8e8e8",
+    rightArmColor: "#e8e8e8",
+    leftLegColor: "#e8e8e8",
+    rightLegColor: "#e8e8e8",
+  },
 };

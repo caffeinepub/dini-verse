@@ -23,6 +23,7 @@ import {
 } from "../../hooks/useSocialMessages";
 import {
   getCurrentUser,
+  getNameTagColor,
   getPrivacySettings,
   getUserVisibility,
   isFriendWith,
@@ -291,7 +292,10 @@ export default function MessagesPanel({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
+                    <p
+                      className="font-medium text-sm truncate"
+                      style={{ color: getNameTagColor(friend.username) }}
+                    >
                       {friend.displayName}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
@@ -341,7 +345,14 @@ export default function MessagesPanel({
                 />
               </div>
               <div>
-                <p className="font-semibold text-sm">
+                <p
+                  className="font-semibold text-sm"
+                  style={{
+                    color: selectedFriend
+                      ? getNameTagColor(selectedFriend)
+                      : undefined,
+                  }}
+                >
                   {selectedFriendInfo?.displayName || selectedFriend}
                 </p>
                 <p className="text-xs text-muted-foreground">

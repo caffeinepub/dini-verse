@@ -50,6 +50,7 @@ import {
   getLocalSettings,
 } from "../hooks/useAccountSettings";
 import {
+  getNameTagColor,
   getPreferences,
   getSocialLinks,
   isFriendWith,
@@ -447,7 +448,10 @@ export default function PublicProfile() {
 
             {/* Name + status + stats */}
             <div className="flex-1 min-w-0 pt-2 sm:pt-10">
-              <h1 className="text-2xl font-bold text-foreground truncate">
+              <h1
+                className="text-2xl font-bold truncate"
+                style={{ color: getNameTagColor(username) }}
+              >
                 {displayName}
               </h1>
               <p className="text-muted-foreground text-sm mb-2">@{username}</p>

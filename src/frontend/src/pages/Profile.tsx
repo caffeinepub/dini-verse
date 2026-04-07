@@ -25,7 +25,11 @@ import {
   getLocalSettings,
 } from "../hooks/useAccountSettings";
 import { useSessionAuth } from "../hooks/useSessionAuth";
-import { getFriends, getSocialLinks } from "../utils/socialStorage";
+import {
+  getFriends,
+  getNameTagColor,
+  getSocialLinks,
+} from "../utils/socialStorage";
 
 // ─── Social Platforms ──────────────────────────────────────────────────────
 
@@ -257,7 +261,12 @@ export default function Profile() {
               <div className="flex-1 pt-2 sm:pt-10">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <h1 className="text-2xl font-bold leading-tight">
+                    <h1
+                      className="text-2xl font-bold leading-tight"
+                      style={{
+                        color: username ? getNameTagColor(username) : undefined,
+                      }}
+                    >
                       {displayName}
                     </h1>
                     <p className="text-sm text-muted-foreground">@{username}</p>

@@ -277,7 +277,7 @@ export default function Settings() {
   const username = getCurrentUsername();
   // Profile picture state
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
-  const isOpen = (key: string) => openSections[key] !== false;
+  const isOpen = (key: string) => openSections[key] === true;
   const toggleSection = (key: string) =>
     setOpenSections((prev) => ({ ...prev, [key]: !isOpen(key) }));
 
@@ -911,84 +911,6 @@ export default function Settings() {
         </CardHeader>
         {isOpen("accountInfo") && (
           <CardContent className="space-y-5">
-            {/* Profile Picture row */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Profile Picture
-              </Label>
-              <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20 border-2 border-border">
-                  {currentAvatarUrl ? (
-                    <AvatarImage
-                      src={currentAvatarUrl}
-                      alt={currentDisplayName}
-                    />
-                  ) : null}
-                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                    {currentDisplayName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    {currentAvatarUrl ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleRemoveAndReupload}
-                        disabled={
-                          updateAvatarMutation.isPending || isUploadingAvatar
-                        }
-                        data-ocid="settings.avatar.delete_button"
-                      >
-                        {updateAvatarMutation.isPending ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                            Removing...
-                          </>
-                        ) : (
-                          <>
-                            <X className="w-4 h-4 mr-1" />
-                            Remove
-                          </>
-                        )}
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploadingAvatar}
-                        data-ocid="settings.avatar.upload_button"
-                      >
-                        {isUploadingAvatar ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                            {t("settings.avatar.uploading")}
-                          </>
-                        ) : (
-                          <>
-                            <Camera className="w-4 h-4 mr-1" />
-                            {t("settings.avatar.upload")}
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.avatar.recommendation")}
-                  </p>
-                </div>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarUpload}
-                data-ocid="settings.avatar.dropzone"
-              />
-            </div>
-            <Separator />
             {/* Display Name row */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1390,6 +1312,84 @@ export default function Settings() {
         </CardHeader>
         {isOpen("preferences") && (
           <CardContent className="space-y-4">
+            {/* Profile Picture */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Profile Picture
+              </Label>
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20 border-2 border-border">
+                  {currentAvatarUrl ? (
+                    <AvatarImage
+                      src={currentAvatarUrl}
+                      alt={currentDisplayName}
+                    />
+                  ) : null}
+                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                    {currentDisplayName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    {currentAvatarUrl ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRemoveAndReupload}
+                        disabled={
+                          updateAvatarMutation.isPending || isUploadingAvatar
+                        }
+                        data-ocid="settings.avatar.delete_button"
+                      >
+                        {updateAvatarMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            Removing...
+                          </>
+                        ) : (
+                          <>
+                            <X className="w-4 h-4 mr-1" />
+                            Remove
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingAvatar}
+                        data-ocid="settings.avatar.upload_button"
+                      >
+                        {isUploadingAvatar ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            {t("settings.avatar.uploading")}
+                          </>
+                        ) : (
+                          <>
+                            <Camera className="w-4 h-4 mr-1" />
+                            {t("settings.avatar.upload")}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.avatar.recommendation")}
+                  </p>
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+                data-ocid="settings.avatar.dropzone"
+              />
+            </div>
+            <Separator />
             {/* Dark Mode */}
             <div className="flex items-center justify-between">
               <div>
@@ -1407,206 +1407,36 @@ export default function Settings() {
               />
             </div>
             <Separator />
-            {/* Public Profile Visibility */}
-            <div className="space-y-2">
-              <Label>Public Profile</Label>
-              <p className="text-sm text-muted-foreground">
-                Choose who can view your full profile details
-              </p>
-              <Select
-                value={preferences.publicProfileVisibility}
-                onValueChange={(val) => {
-                  if (!username) return;
-                  const newPrefs: UserPreferences = {
-                    ...preferences,
-                    publicProfileVisibility:
-                      val as UserPreferences["publicProfileVisibility"],
-                  };
-                  setPreferences(newPrefs);
-                  savePreferences(username, newPrefs);
-                  toast.success("Preferences saved");
-                }}
-              >
-                <SelectTrigger data-ocid="settings.preferences.profile_visibility.select">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-48 overflow-y-auto">
-                  <SelectItem value="everyone">Everyone</SelectItem>
-                  <SelectItem value="friends">Friends</SelectItem>
-                  <SelectItem value="no-one">No one</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Name Tag Color */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Name Tag Color</p>
+                <p className="text-sm text-muted-foreground">
+                  Color of your display name in chat, profile, and game worlds
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={preferences.nameTagColor ?? "#22c55e"}
+                  onChange={(e) => {
+                    if (!username) return;
+                    const newPrefs: UserPreferences = {
+                      ...preferences,
+                      nameTagColor: e.target.value,
+                    };
+                    setPreferences(newPrefs);
+                    savePreferences(username, newPrefs);
+                  }}
+                  className="w-10 h-10 rounded cursor-pointer border border-border bg-transparent p-0.5"
+                  title="Pick name tag color"
+                  data-ocid="settings.preferences.nametag.input"
+                />
+                <span className="text-sm font-mono text-muted-foreground">
+                  {preferences.nameTagColor ?? "#22c55e"}
+                </span>
+              </div>
             </div>
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Promo Codes */}
-      <Card data-ocid="settings.promo.card">
-        <CardHeader
-          className="flex flex-row items-center justify-between cursor-pointer"
-          onClick={() => toggleSection("promoCodes")}
-        >
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Gift className="w-5 h-5" />
-              Promo Codes
-            </CardTitle>
-            <CardDescription>
-              Redeem a promo code to earn Dini Bucks
-            </CardDescription>
-          </div>
-          {isOpen("promoCodes") ? (
-            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
-          )}
-        </CardHeader>
-        {isOpen("promoCodes") && (
-          <CardContent className="space-y-4">
-            <div className="rounded-md bg-muted/50 border px-4 py-3 flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                Your balance
-              </span>
-              <span className="font-bold text-lg text-primary">
-                {diniBucksBalance !== null
-                  ? diniBucksBalance.toLocaleString()
-                  : "—"}{" "}
-                Dini Bucks
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                placeholder="Enter promo code (e.g. WELCOME)"
-                onKeyDown={(e) => e.key === "Enter" && handleRedeemPromo()}
-                data-ocid="settings.promo.input"
-                className="uppercase"
-              />
-              <Button
-                onClick={handleRedeemPromo}
-                disabled={isRedeemingPromo || !promoCode.trim()}
-                data-ocid="settings.promo.submit_button"
-              >
-                {isRedeemingPromo ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Redeem"
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Social Networks */}
-      <Card data-ocid="settings.social.card">
-        <CardHeader
-          className="flex flex-row items-center justify-between cursor-pointer"
-          onClick={() => toggleSection("socialNetworks")}
-        >
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Share2 className="w-5 h-5" />
-              Social Networks
-            </CardTitle>
-            <CardDescription>
-              Link your social profiles to show on your public profile
-            </CardDescription>
-          </div>
-          {isOpen("socialNetworks") ? (
-            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
-          )}
-        </CardHeader>
-        {isOpen("socialNetworks") && (
-          <CardContent className="space-y-4">
-            {SOCIAL_PLATFORMS.map((platform) => {
-              const existing = socialLinks.find(
-                (l) => l.platform === platform.id,
-              );
-              return (
-                <div key={platform.id} className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-                    style={{ background: platform.color }}
-                  >
-                    {platform.label.charAt(0)}
-                  </div>
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <Input
-                      placeholder={`${platform.label} URL`}
-                      value={existing?.url ?? ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setSocialLinks((prev) => {
-                          const filtered = prev.filter(
-                            (l) => l.platform !== platform.id,
-                          );
-                          if (val || existing?.username) {
-                            return [
-                              ...filtered,
-                              {
-                                platform: platform.id,
-                                url: val,
-                                username: existing?.username ?? "",
-                              },
-                            ];
-                          }
-                          return filtered;
-                        });
-                      }}
-                      data-ocid={`settings.social.${platform.id}.input`}
-                    />
-                    <Input
-                      placeholder={`${platform.label} username`}
-                      value={existing?.username ?? ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setSocialLinks((prev) => {
-                          const filtered = prev.filter(
-                            (l) => l.platform !== platform.id,
-                          );
-                          if (val || existing?.url) {
-                            return [
-                              ...filtered,
-                              {
-                                platform: platform.id,
-                                url: existing?.url ?? "",
-                                username: val,
-                              },
-                            ];
-                          }
-                          return filtered;
-                        });
-                      }}
-                      data-ocid={`settings.social.${platform.id}.username.input`}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-            <Button
-              onClick={() => {
-                if (!username) return;
-                setIsSavingSocial(true);
-                saveSocialLinks(username, socialLinks);
-                setTimeout(() => {
-                  setIsSavingSocial(false);
-                  toast.success("Social links saved!");
-                }, 300);
-              }}
-              disabled={isSavingSocial || !username}
-              className="mt-2"
-              data-ocid="settings.social.save_button"
-            >
-              {isSavingSocial ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : null}
-              Save Social Links
-            </Button>
           </CardContent>
         )}
       </Card>
@@ -1632,6 +1462,37 @@ export default function Settings() {
         </CardHeader>
         {isOpen("privacy") && (
           <CardContent className="space-y-4">
+            {/* Public Profile Visibility */}
+            <div className="space-y-2">
+              <Label>Public Profile</Label>
+              <p className="text-sm text-muted-foreground">
+                Choose who can view your full profile details
+              </p>
+              <Select
+                value={preferences.publicProfileVisibility}
+                onValueChange={(val) => {
+                  if (!username) return;
+                  const newPrefs: UserPreferences = {
+                    ...preferences,
+                    publicProfileVisibility:
+                      val as UserPreferences["publicProfileVisibility"],
+                  };
+                  setPreferences(newPrefs);
+                  savePreferences(username, newPrefs);
+                  toast.success("Preferences saved");
+                }}
+              >
+                <SelectTrigger data-ocid="settings.privacy.profile_visibility.select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-48 overflow-y-auto">
+                  <SelectItem value="everyone">Everyone</SelectItem>
+                  <SelectItem value="friends">Friends</SelectItem>
+                  <SelectItem value="no-one">No one</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Separator />
             <div className="space-y-2">
               <Label>Who can message me</Label>
               <Select
@@ -2127,6 +1988,176 @@ export default function Settings() {
                 above.
               </p>
             </div>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Promo Codes */}
+      <Card data-ocid="settings.promo.card">
+        <CardHeader
+          className="flex flex-row items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("promoCodes")}
+        >
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Gift className="w-5 h-5" />
+              Promo Codes
+            </CardTitle>
+            <CardDescription>
+              Redeem a promo code to earn Dini Bucks
+            </CardDescription>
+          </div>
+          {isOpen("promoCodes") ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+          )}
+        </CardHeader>
+        {isOpen("promoCodes") && (
+          <CardContent className="space-y-4">
+            <div className="rounded-md bg-muted/50 border px-4 py-3 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">
+                Your balance
+              </span>
+              <span className="font-bold text-lg text-primary">
+                {diniBucksBalance !== null
+                  ? diniBucksBalance.toLocaleString()
+                  : "—"}{" "}
+                Dini Bucks
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                placeholder="Enter promo code (e.g. WELCOME)"
+                onKeyDown={(e) => e.key === "Enter" && handleRedeemPromo()}
+                data-ocid="settings.promo.input"
+                className="uppercase"
+              />
+              <Button
+                onClick={handleRedeemPromo}
+                disabled={isRedeemingPromo || !promoCode.trim()}
+                data-ocid="settings.promo.submit_button"
+              >
+                {isRedeemingPromo ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Redeem"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Social Networks */}
+      <Card data-ocid="settings.social.card">
+        <CardHeader
+          className="flex flex-row items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("socialNetworks")}
+        >
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Share2 className="w-5 h-5" />
+              Social Networks
+            </CardTitle>
+            <CardDescription>
+              Link your social profiles to show on your public profile
+            </CardDescription>
+          </div>
+          {isOpen("socialNetworks") ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+          )}
+        </CardHeader>
+        {isOpen("socialNetworks") && (
+          <CardContent className="space-y-4">
+            {SOCIAL_PLATFORMS.map((platform) => {
+              const existing = socialLinks.find(
+                (l) => l.platform === platform.id,
+              );
+              return (
+                <div key={platform.id} className="flex items-center gap-3">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                    style={{ background: platform.color }}
+                  >
+                    {platform.label.charAt(0)}
+                  </div>
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Input
+                      placeholder={`${platform.label} URL`}
+                      value={existing?.url ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSocialLinks((prev) => {
+                          const filtered = prev.filter(
+                            (l) => l.platform !== platform.id,
+                          );
+                          if (val || existing?.username) {
+                            return [
+                              ...filtered,
+                              {
+                                platform: platform.id,
+                                url: val,
+                                username: existing?.username ?? "",
+                              },
+                            ];
+                          }
+                          return filtered;
+                        });
+                      }}
+                      data-ocid={`settings.social.${platform.id}.input`}
+                    />
+                    <Input
+                      placeholder={`${platform.label} username`}
+                      value={existing?.username ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSocialLinks((prev) => {
+                          const filtered = prev.filter(
+                            (l) => l.platform !== platform.id,
+                          );
+                          if (val || existing?.url) {
+                            return [
+                              ...filtered,
+                              {
+                                platform: platform.id,
+                                url: existing?.url ?? "",
+                                username: val,
+                              },
+                            ];
+                          }
+                          return filtered;
+                        });
+                      }}
+                      data-ocid={`settings.social.${platform.id}.username.input`}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            <Button
+              onClick={() => {
+                if (!username) return;
+                setIsSavingSocial(true);
+                saveSocialLinks(username, socialLinks);
+                setTimeout(() => {
+                  setIsSavingSocial(false);
+                  toast.success("Social links saved!");
+                }, 300);
+              }}
+              disabled={isSavingSocial || !username}
+              className="mt-2"
+              data-ocid="settings.social.save_button"
+            >
+              {isSavingSocial ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Save Social Links
+            </Button>
           </CardContent>
         )}
       </Card>

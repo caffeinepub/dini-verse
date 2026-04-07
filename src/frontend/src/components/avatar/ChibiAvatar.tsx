@@ -6,33 +6,54 @@ interface ChibiAvatarProps {
   height?: number;
   interactive?: boolean;
   onPartClick?: (part: string) => void;
+  view?: "front" | "side";
+  walking?: boolean;
+}
+
+// ─── Tint Filter ──────────────────────────────────────────────────────────────
+// Applies a color tint to a grayscale/white PNG via SVG filter.
+// Uses feFlood (solid color) + feComposite(in) to cut out shape + feBlend(multiply)
+// so dark areas stay dark and mid-tones take the target color.
+function TintFilter({ id, color }: { id: string; color: string }) {
+  return (
+    <filter
+      id={id}
+      x="0%"
+      y="0%"
+      width="100%"
+      height="100%"
+      colorInterpolationFilters="sRGB"
+    >
+      <feFlood floodColor={color} result="flood" />
+      <feComposite
+        in="flood"
+        in2="SourceGraphic"
+        operator="in"
+        result="coloredImage"
+      />
+      <feBlend in="coloredImage" in2="SourceGraphic" mode="multiply" />
+    </filter>
+  );
 }
 
 // ─── Hair Paths ──────────────────────────────────────────────────────────────
-// hairStyle 0: Short boyish cut
-// hairStyle 1: Long straight
-// hairStyle 2: Twin pigtails
-// hairStyle 3: Bob
-// hairStyle 4: Wavy/curly
-// hairStyle 5: Ponytail
-
 function HairBack({ style, color }: { style: number; color: string }) {
   switch (style) {
-    case 1: // Long straight — back layer
+    case 1:
       return (
         <>
           <rect x="52" y="55" width="12" height="90" rx="6" fill={color} />
           <rect x="136" y="55" width="12" height="90" rx="6" fill={color} />
         </>
       );
-    case 2: // Pigtails — back
+    case 2:
       return (
         <>
           <ellipse cx="50" cy="100" rx="10" ry="30" fill={color} />
           <ellipse cx="150" cy="100" rx="10" ry="30" fill={color} />
         </>
       );
-    case 5: // Ponytail — back
+    case 5:
       return <rect x="94" y="30" width="12" height="75" rx="6" fill={color} />;
     default:
       return null;
@@ -41,35 +62,35 @@ function HairBack({ style, color }: { style: number; color: string }) {
 
 function HairFront({ style, color }: { style: number; color: string }) {
   switch (style) {
-    case 0: // Short boyish
+    case 0:
       return (
         <path
           d="M55 58 Q55 18 100 16 Q145 18 145 58 Q140 50 130 48 Q115 38 100 38 Q85 38 70 48 Q60 50 55 58Z"
           fill={color}
         />
       );
-    case 1: // Long straight
+    case 1:
       return (
         <path
           d="M55 58 Q55 18 100 15 Q145 18 145 58 Q138 46 125 42 Q112 34 100 34 Q88 34 75 42 Q62 46 55 58Z"
           fill={color}
         />
       );
-    case 2: // Pigtails
+    case 2:
       return (
         <path
           d="M55 60 Q55 18 100 15 Q145 18 145 60 Q140 48 130 44 Q115 36 100 36 Q85 36 70 44 Q60 48 55 60Z"
           fill={color}
         />
       );
-    case 3: // Bob
+    case 3:
       return (
         <path
           d="M52 65 Q52 16 100 14 Q148 16 148 65 Q148 80 142 85 Q138 52 125 44 Q112 36 100 36 Q88 36 75 44 Q62 52 58 85 Q52 80 52 65Z"
           fill={color}
         />
       );
-    case 4: // Wavy
+    case 4:
       return (
         <>
           <path
@@ -92,7 +113,7 @@ function HairFront({ style, color }: { style: number; color: string }) {
           />
         </>
       );
-    case 5: // Ponytail
+    case 5:
       return (
         <path
           d="M55 60 Q55 18 100 15 Q145 18 145 60 Q138 46 126 42 Q113 34 100 34 Q87 34 74 42 Q62 46 55 60Z"
@@ -123,7 +144,7 @@ function Eyes({
     );
   }
   switch (style) {
-    case 0: // Round cute
+    case 0:
       return (
         <>
           <ellipse
@@ -139,7 +160,7 @@ function Eyes({
           <circle cx={cx + 1.5} cy={53} r={1.5} fill="#fff" />
         </>
       );
-    case 1: // Cat eyes
+    case 1:
       return (
         <>
           <path
@@ -154,7 +175,7 @@ function Eyes({
           />
         </>
       );
-    case 2: // Sleepy
+    case 2:
       return (
         <>
           <path
@@ -172,7 +193,7 @@ function Eyes({
           <ellipse cx={cx} cy={55} rx={4} ry={2} fill="#2a1a0a" />
         </>
       );
-    case 3: // Sparkle
+    case 3:
       return (
         <>
           <ellipse
@@ -189,7 +210,7 @@ function Eyes({
           <circle cx={cx - 2} cy={57} r={1} fill="#fff" />
         </>
       );
-    case 4: // Dot eyes
+    case 4:
       return <circle cx={cx} cy={55} r={3} fill="#2a1a0a" />;
     default:
       return null;
@@ -203,7 +224,7 @@ function Eyebrow({
   color,
 }: { style: number; cx: number; color: string }) {
   switch (style) {
-    case 0: // Arched
+    case 0:
       return (
         <path
           d={`M${cx - 7} 45 Q${cx} 41 ${cx + 7} 45`}
@@ -213,11 +234,11 @@ function Eyebrow({
           strokeLinecap="round"
         />
       );
-    case 1: // Thick flat
+    case 1:
       return (
         <rect x={cx - 7} y={43} width={14} height={3} rx={1.5} fill={color} />
       );
-    case 2: // Thin curved
+    case 2:
       return (
         <path
           d={`M${cx - 6} 46 Q${cx} 43 ${cx + 6} 46`}
@@ -227,7 +248,7 @@ function Eyebrow({
           strokeLinecap="round"
         />
       );
-    case 3: // Worried
+    case 3:
       return (
         <path
           d={`M${cx - 7} 43 Q${cx} 46 ${cx + 7} 43`}
@@ -245,20 +266,20 @@ function Eyebrow({
 // ─── Nose Styles ─────────────────────────────────────────────────────────────
 function Nose({ style }: { style: number }) {
   switch (style) {
-    case 0: // Dot
+    case 0:
       return <circle cx={100} cy={64} r={2.5} fill="rgba(0,0,0,0.12)" />;
-    case 1: // Button
+    case 1:
       return (
         <>
           <ellipse cx={97} cy={64} rx={2} ry={2.5} fill="rgba(0,0,0,0.10)" />
           <ellipse cx={103} cy={64} rx={2} ry={2.5} fill="rgba(0,0,0,0.10)" />
         </>
       );
-    case 2: // Cat nose
+    case 2:
       return (
         <path d="M97 64 Q100 66 103 64 L100 61Z" fill="rgba(180,80,100,0.5)" />
       );
-    case 3: // Triangle
+    case 3:
       return <path d="M98 63 L100 67 L102 63Z" fill="rgba(0,0,0,0.12)" />;
     default:
       return null;
@@ -280,7 +301,7 @@ function Mouth({ style, customImg }: { style: number; customImg?: string }) {
     );
   }
   switch (style) {
-    case 0: // Smile
+    case 0:
       return (
         <path
           d="M90 73 Q100 80 110 73"
@@ -290,7 +311,7 @@ function Mouth({ style, customImg }: { style: number; customImg?: string }) {
           strokeLinecap="round"
         />
       );
-    case 1: // Happy open
+    case 1:
       return (
         <path
           d="M88 72 Q100 82 112 72"
@@ -300,9 +321,9 @@ function Mouth({ style, customImg }: { style: number; customImg?: string }) {
           strokeLinecap="round"
         />
       );
-    case 2: // Pout
+    case 2:
       return <ellipse cx={100} cy={75} rx={5} ry={3} fill="#c47a5a" />;
-    case 3: // Cat mouth
+    case 3:
       return (
         <>
           <path
@@ -321,7 +342,7 @@ function Mouth({ style, customImg }: { style: number; customImg?: string }) {
           />
         </>
       );
-    case 4: // Neutral
+    case 4:
       return (
         <line
           x1={93}
@@ -345,7 +366,7 @@ function Ear({
   skinColor,
 }: { style: number; cx: number; skinColor: string }) {
   switch (style) {
-    case 0: // Round
+    case 0:
       return (
         <ellipse
           cx={cx}
@@ -357,7 +378,7 @@ function Ear({
           strokeWidth="1.2"
         />
       );
-    case 1: // Pointy (elf)
+    case 1:
       return (
         <path
           d={
@@ -370,7 +391,7 @@ function Ear({
           strokeWidth="1.2"
         />
       );
-    case 2: // Cat ears (decorative)
+    case 2:
       return (
         <>
           <ellipse
@@ -407,6 +428,8 @@ export default function ChibiAvatar({
   height,
   interactive = false,
   onPartClick,
+  view = "front",
+  walking = false,
 }: ChibiAvatarProps) {
   const {
     skinColor,
@@ -416,6 +439,16 @@ export default function ChibiAvatar({
     equippedAccessories,
     accessoryPositions,
   } = avatarData;
+
+  // Resolve per-part colors, falling back to skinColor for all if not set
+  const bpc = avatarData.bodyPartColors;
+  const headColor = bpc?.headColor ?? skinColor;
+  const torsoColor = bpc?.torsoColor ?? skinColor;
+  const leftArmColor = bpc?.leftArmColor ?? skinColor;
+  const rightArmColor = bpc?.rightArmColor ?? skinColor;
+  const leftLegColor = bpc?.leftLegColor ?? skinColor;
+  const rightLegColor = bpc?.rightLegColor ?? skinColor;
+
   const eyebrowColor = hairColor;
 
   function getPos(itemId: string | undefined): {
@@ -461,8 +494,6 @@ export default function ChibiAvatar({
     );
   }
 
-  // We need a way to look up items by id. The caller should provide inventory, but for now we use a placeholder.
-  // avatarData doesn't contain item data, only IDs — so we resolve from localStorage here.
   const itemsById: Record<string, { imageDataUrl: string }> = {};
   try {
     const shopRaw = localStorage.getItem("diniverse_shop_items");
@@ -475,7 +506,6 @@ export default function ChibiAvatar({
         itemsById[item.id] = item;
       }
     }
-    // Also check all user inventories
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key?.startsWith("diniverse_settings_")) {
@@ -501,6 +531,16 @@ export default function ChibiAvatar({
       ? { onClick: () => onPartClick(part), style: { cursor: "pointer" } }
       : {};
 
+  // For side view: flip the whole SVG horizontally
+  const svgTransform =
+    view === "side" ? "scale(-1,1) translate(-200,0)" : undefined;
+
+  // Walking animation class names
+  const walkAnimLeftLeg = walking ? "dini-walk-leg-left" : "";
+  const walkAnimRightLeg = walking ? "dini-walk-leg-right" : "";
+  const walkAnimLeftArm = walking ? "dini-walk-arm-left" : "";
+  const walkAnimRightArm = walking ? "dini-walk-arm-right" : "";
+
   return (
     <svg
       viewBox="0 0 200 280"
@@ -516,242 +556,275 @@ export default function ChibiAvatar({
     >
       <title>Chibi Avatar</title>
 
-      {/* Shadow */}
-      <ellipse cx="100" cy="272" rx="38" ry="5" fill="rgba(0,0,0,0.08)" />
+      {/* Walk animation keyframes — transform-origin updated to match new body part coordinates */}
+      {walking && (
+        <style>{`
+          @keyframes diniWalkLegLeft {
+            0%   { transform: rotate(-12deg); transform-origin: 83px 162px; }
+            100% { transform: rotate(12deg);  transform-origin: 83px 162px; }
+          }
+          @keyframes diniWalkLegRight {
+            0%   { transform: rotate(12deg);  transform-origin: 117px 162px; }
+            100% { transform: rotate(-12deg); transform-origin: 117px 162px; }
+          }
+          @keyframes diniWalkArmLeft {
+            0%   { transform: rotate(15deg);  transform-origin: 49px 100px; }
+            100% { transform: rotate(-15deg); transform-origin: 49px 100px; }
+          }
+          @keyframes diniWalkArmRight {
+            0%   { transform: rotate(-15deg); transform-origin: 151px 100px; }
+            100% { transform: rotate(15deg);  transform-origin: 151px 100px; }
+          }
+          .dini-walk-leg-left  { animation: diniWalkLegLeft  0.5s ease-in-out infinite alternate; }
+          .dini-walk-leg-right { animation: diniWalkLegRight 0.5s ease-in-out infinite alternate; }
+          .dini-walk-arm-left  { animation: diniWalkArmLeft  0.5s ease-in-out infinite alternate; }
+          .dini-walk-arm-right { animation: diniWalkArmRight 0.5s ease-in-out infinite alternate; }
+        `}</style>
+      )}
 
-      {/* ── Layer 1: Back accessories ── */}
-      <AccessoryImage
-        itemId={equippedAccessories.back}
-        items={itemsById}
-        x={68}
-        y={120}
-        w={64}
-        h={70}
-      />
+      {/* ── Tint Filters (one per body part) ── */}
+      <defs>
+        <TintFilter id="tint-head" color={headColor} />
+        <TintFilter id="tint-torso" color={torsoColor} />
+        <TintFilter id="tint-left-arm" color={leftArmColor} />
+        <TintFilter id="tint-right-arm" color={rightArmColor} />
+        <TintFilter id="tint-left-leg" color={leftLegColor} />
+        <TintFilter id="tint-right-leg" color={rightLegColor} />
+      </defs>
 
-      {/* ── Layer 2: Legs / Pants ── */}
-      {/* Left Leg */}
-      <rect
-        x="72"
-        y="175"
-        width="26"
-        height="70"
-        rx="8"
-        fill={skinColor}
-        stroke="#c8a882"
-        strokeWidth="1.2"
-        {...clickProps("leftLeg")}
-      />
-      {/* Right Leg */}
-      <rect
-        x="102"
-        y="175"
-        width="26"
-        height="70"
-        rx="8"
-        fill={skinColor}
-        stroke="#c8a882"
-        strokeWidth="1.2"
-        {...clickProps("rightLeg")}
-      />
-      {/* Pants overlay */}
-      {equippedClothing.pants && itemsById[equippedClothing.pants] && (
+      {/* Optional side-view flip wrapper */}
+      <g transform={svgTransform}>
+        {/* Shadow */}
+        <ellipse cx="100" cy="272" rx="38" ry="5" fill="rgba(0,0,0,0.08)" />
+
+        {/* ── Layer 1: Back accessories ── */}
+        <AccessoryImage
+          itemId={equippedAccessories.back}
+          items={itemsById}
+          x={68}
+          y={120}
+          w={64}
+          h={70}
+        />
+
+        {/* ── Layer 2: Left Leg ── */}
         <image
-          href={itemsById[equippedClothing.pants].imageDataUrl}
+          href="/assets/left.leg-019d5e50-81c2-74ab-a3b1-8a4e65a9c738.png"
           x="68"
-          y="168"
-          width="64"
+          y="162"
+          width="30"
           height="80"
           preserveAspectRatio="xMidYMid meet"
+          filter="url(#tint-left-leg)"
+          className={walkAnimLeftLeg}
+          {...clickProps("leftLeg")}
         />
-      )}
 
-      {/* ── Layer 3: Torso ── */}
-      <rect
-        x="65"
-        y="115"
-        width="70"
-        height="65"
-        rx="10"
-        fill={skinColor}
-        stroke="#c8a882"
-        strokeWidth="1.2"
-        {...clickProps("torso")}
-      />
-      {/* T-Shirt overlay */}
-      {equippedClothing.tshirt && itemsById[equippedClothing.tshirt] && (
+        {/* ── Layer 3: Right Leg (mirrored from left leg sprite) ── */}
+        <g transform="translate(234,0) scale(-1,1)">
+          <image
+            href="/assets/left.leg-019d5e50-81c2-74ab-a3b1-8a4e65a9c738.png"
+            x="102"
+            y="162"
+            width="30"
+            height="80"
+            preserveAspectRatio="xMidYMid meet"
+            filter="url(#tint-right-leg)"
+            className={walkAnimRightLeg}
+            {...clickProps("rightLeg")}
+          />
+        </g>
+
+        {/* ── Layer 4: Pants overlay ── */}
+        {equippedClothing.pants && itemsById[equippedClothing.pants] && (
+          <image
+            href={itemsById[equippedClothing.pants].imageDataUrl}
+            x="68"
+            y="162"
+            width="64"
+            height="80"
+            preserveAspectRatio="xMidYMid meet"
+          />
+        )}
+
+        {/* ── Layer 5: Torso ── */}
         <image
-          href={itemsById[equippedClothing.tshirt].imageDataUrl}
-          x="55"
-          y="108"
-          width="90"
-          height="75"
+          href="/assets/torso-019d5e50-81ca-717e-ad5a-5fdace90678a.png"
+          x="62"
+          y="98"
+          width="76"
+          height="72"
           preserveAspectRatio="xMidYMid meet"
+          filter="url(#tint-torso)"
+          {...clickProps("torso")}
         />
-      )}
-      {/* Shirt overlay (on top of tshirt) */}
-      {equippedClothing.shirt && itemsById[equippedClothing.shirt] && (
+
+        {/* ── Layer 6: T-Shirt overlay ── */}
+        {equippedClothing.tshirt && itemsById[equippedClothing.tshirt] && (
+          <image
+            href={itemsById[equippedClothing.tshirt].imageDataUrl}
+            x="62"
+            y="98"
+            width="76"
+            height="72"
+            preserveAspectRatio="xMidYMid meet"
+          />
+        )}
+
+        {/* ── Layer 6b: Shirt overlay ── */}
+        {equippedClothing.shirt && itemsById[equippedClothing.shirt] && (
+          <image
+            href={itemsById[equippedClothing.shirt].imageDataUrl}
+            x="62"
+            y="98"
+            width="76"
+            height="72"
+            preserveAspectRatio="xMidYMid meet"
+          />
+        )}
+
+        {/* ── Layer 7: Left Arm ── */}
         <image
-          href={itemsById[equippedClothing.shirt].imageDataUrl}
-          x="55"
-          y="108"
-          width="90"
-          height="75"
+          href="/assets/left.arm-019d5e50-81e1-72cb-9d59-a92f2eb8c93d.png"
+          x="32"
+          y="100"
+          width="34"
+          height="68"
           preserveAspectRatio="xMidYMid meet"
+          filter="url(#tint-left-arm)"
+          className={walkAnimLeftArm}
+          {...clickProps("leftArm")}
         />
-      )}
 
-      {/* ── Layer 4: Arms ── */}
-      {/* Left Arm */}
-      <rect
-        x="40"
-        y="118"
-        width="26"
-        height="58"
-        rx="8"
-        fill={skinColor}
-        stroke="#c8a882"
-        strokeWidth="1.2"
-        {...clickProps("leftArm")}
-      />
-      {/* Right Arm */}
-      <rect
-        x="134"
-        y="118"
-        width="26"
-        height="58"
-        rx="8"
-        fill={skinColor}
-        stroke="#c8a882"
-        strokeWidth="1.2"
-        {...clickProps("rightArm")}
-      />
+        {/* ── Layer 8: Right Arm ── */}
+        <image
+          href="/assets/right.arm-019d5e50-81c6-76f8-b6ea-99e716061e46.png"
+          x="134"
+          y="100"
+          width="34"
+          height="68"
+          preserveAspectRatio="xMidYMid meet"
+          filter="url(#tint-right-arm)"
+          className={walkAnimRightArm}
+          {...clickProps("rightArm")}
+        />
 
-      {/* ── Layer 5: Neck ── */}
-      <rect
-        x="89"
-        y="100"
-        width="22"
-        height="20"
-        rx="5"
-        fill={skinColor}
-        stroke="#c8a882"
-        strokeWidth="1.2"
-        {...clickProps("neck")}
-      />
-      {/* Neck accessory */}
-      <AccessoryImage
-        itemId={equippedAccessories.neck}
-        items={itemsById}
-        x={76}
-        y={98}
-        w={48}
-        h={28}
-      />
+        {/* ── Layer 9: Neck accessory ── */}
+        <AccessoryImage
+          itemId={equippedAccessories.neck}
+          items={itemsById}
+          x={76}
+          y={98}
+          w={48}
+          h={28}
+        />
 
-      {/* ── Layer 6: Waist ── */}
-      <AccessoryImage
-        itemId={equippedAccessories.waist}
-        items={itemsById}
-        x={60}
-        y={168}
-        w={80}
-        h={20}
-      />
+        {/* ── Layer 10: Waist ── */}
+        <AccessoryImage
+          itemId={equippedAccessories.waist}
+          items={itemsById}
+          x={62}
+          y={162}
+          w={76}
+          h={20}
+        />
 
-      {/* ── Layer 7: Shoulder ── */}
-      <AccessoryImage
-        itemId={equippedAccessories.shoulder}
-        items={itemsById}
-        x={28}
-        y={110}
-        w={144}
-        h={30}
-      />
+        {/* ── Layer 11: Shoulder ── */}
+        <AccessoryImage
+          itemId={equippedAccessories.shoulder}
+          items={itemsById}
+          x={28}
+          y={100}
+          w={144}
+          h={30}
+        />
 
-      {/* ── Layer 8: Head/skin ── */}
-      {/* Hair back layer */}
-      <HairBack style={faceFeatures.hairStyle} color={hairColor} />
+        {/* ── Layer 12: Hair back layer ── */}
+        <HairBack style={faceFeatures.hairStyle} color={hairColor} />
 
-      {/* Ears */}
-      <Ear style={faceFeatures.earStyle} cx={57} skinColor={skinColor} />
-      <Ear style={faceFeatures.earStyle} cx={143} skinColor={skinColor} />
+        {/* ── Layer 13: Ears — use headColor for skin-matching ── */}
+        <Ear style={faceFeatures.earStyle} cx={57} skinColor={headColor} />
+        <Ear style={faceFeatures.earStyle} cx={143} skinColor={headColor} />
 
-      {/* Head */}
-      <rect
-        x="57"
-        y="22"
-        width="86"
-        height="82"
-        rx="26"
-        fill={skinColor}
-        stroke="#c8a882"
-        strokeWidth="1.2"
-        {...clickProps("head")}
-      />
+        {/* ── Layer 14: Head PNG sprite (top-most body layer, covers arms/torso) ── */}
+        <image
+          href="/assets/head-019d5e50-81bd-7459-a81a-4a0b37b03459.png"
+          x="57"
+          y="12"
+          width="86"
+          height="92"
+          preserveAspectRatio="xMidYMid meet"
+          filter="url(#tint-head)"
+          {...clickProps("head")}
+        />
 
-      {/* ── Layer 9: Face Features ── */}
-      {/* Eyebrows */}
-      <Eyebrow style={faceFeatures.eyebrowStyle} cx={82} color={eyebrowColor} />
-      <Eyebrow
-        style={faceFeatures.eyebrowStyle}
-        cx={118}
-        color={eyebrowColor}
-      />
+        {/* ── Layer 15: Face Features ── */}
+        {/* Eyebrows */}
+        <Eyebrow
+          style={faceFeatures.eyebrowStyle}
+          cx={82}
+          color={eyebrowColor}
+        />
+        <Eyebrow
+          style={faceFeatures.eyebrowStyle}
+          cx={118}
+          color={eyebrowColor}
+        />
 
-      {/* Eyes */}
-      <Eyes
-        style={faceFeatures.eyeStyle}
-        cx={82}
-        customImg={faceFeatures.customEyeImg}
-      />
-      <Eyes
-        style={faceFeatures.eyeStyle}
-        cx={118}
-        customImg={faceFeatures.customEyeImg}
-      />
+        {/* Eyes */}
+        <Eyes
+          style={faceFeatures.eyeStyle}
+          cx={82}
+          customImg={faceFeatures.customEyeImg}
+        />
+        <Eyes
+          style={faceFeatures.eyeStyle}
+          cx={118}
+          customImg={faceFeatures.customEyeImg}
+        />
 
-      {/* Nose */}
-      <Nose style={faceFeatures.noseStyle} />
+        {/* Nose */}
+        <Nose style={faceFeatures.noseStyle} />
 
-      {/* Mouth */}
-      <Mouth
-        style={faceFeatures.mouthStyle}
-        customImg={faceFeatures.customMouthImg}
-      />
+        {/* Mouth */}
+        <Mouth
+          style={faceFeatures.mouthStyle}
+          customImg={faceFeatures.customMouthImg}
+        />
 
-      {/* ── Layer 10: Hair Front ── */}
-      <HairFront style={faceFeatures.hairStyle} color={hairColor} />
+        {/* ── Layer 16: Hair Front ── */}
+        <HairFront style={faceFeatures.hairStyle} color={hairColor} />
 
-      {/* ── Layer 11: Hat ── */}
-      <AccessoryImage
-        itemId={equippedAccessories.hat}
-        items={itemsById}
-        x={52}
-        y={0}
-        w={96}
-        h={44}
-      />
+        {/* ── Layer 17: Hat ── */}
+        <AccessoryImage
+          itemId={equippedAccessories.hat}
+          items={itemsById}
+          x={52}
+          y={0}
+          w={96}
+          h={44}
+        />
 
-      {/* ── Layer 12: Face accessory (glasses etc) ── */}
-      <AccessoryImage
-        itemId={equippedAccessories.face}
-        items={itemsById}
-        x={64}
-        y={44}
-        w={72}
-        h={30}
-      />
+        {/* ── Layer 18: Face accessory (glasses etc) ── */}
+        <AccessoryImage
+          itemId={equippedAccessories.face}
+          items={itemsById}
+          x={64}
+          y={44}
+          w={72}
+          h={30}
+        />
 
-      {/* ── Layer 13: Front accessory ── */}
-      <AccessoryImage
-        itemId={equippedAccessories.front}
-        items={itemsById}
-        x={70}
-        y={120}
-        w={60}
-        h={55}
-      />
+        {/* ── Layer 19: Front accessory ── */}
+        <AccessoryImage
+          itemId={equippedAccessories.front}
+          items={itemsById}
+          x={70}
+          y={120}
+          w={60}
+          h={55}
+        />
+      </g>
     </svg>
   );
 }
