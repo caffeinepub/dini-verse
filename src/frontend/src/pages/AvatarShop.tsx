@@ -33,140 +33,20 @@ import {
 } from "../hooks/useAccountSettings";
 import type { InventoryItem } from "../types/avatarTypes";
 
-// ─── Shop Items Storage ───────────────────────────────────────────────────────
-
+// ─── Shop Items Storage ─────────────────────────────────────────────────────
 const SHOP_KEY = "diniverse_shop_items";
-
-function makeSvgDataUrl(color: string, label: string): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" rx="12" fill="${color}"/><text x="50" y="56" font-size="11" text-anchor="middle" fill="white" font-family="sans-serif" font-weight="bold">${label}</text></svg>`;
-  return `data:image/svg+xml;base64,${btoa(svg)}`;
-}
-
-const DEMO_ITEMS: InventoryItem[] = [
-  {
-    id: "demo_shirt_1",
-    name: "Classic White Shirt",
-    description: "A clean, crisp white shirt perfect for any occasion.",
-    type: "shirt",
-    imageDataUrl: makeSvgDataUrl("#e8e8e8", "Shirt"),
-    price: 50,
-    limitedStock: false,
-    creatorUsername: "DiniVerse",
-  },
-  {
-    id: "demo_shirt_2",
-    name: "Denim Jacket",
-    description: "Cool denim jacket with patches.",
-    type: "shirt",
-    imageDataUrl: makeSvgDataUrl("#4a6fa5", "Denim"),
-    price: 120,
-    limitedStock: false,
-    creatorUsername: "DiniVerse",
-  },
-  {
-    id: "demo_tshirt_1",
-    name: "Striped T-Shirt",
-    description: "Colorful horizontal stripes for a fun look.",
-    type: "tshirt",
-    imageDataUrl: makeSvgDataUrl("#f4a261", "T-Shirt"),
-    price: 35,
-    limitedStock: false,
-    creatorUsername: "DiniVerse",
-  },
-  {
-    id: "demo_tshirt_2",
-    name: "Neon Green Tee",
-    description: "Stand out with this bright neon tee.",
-    type: "tshirt",
-    imageDataUrl: makeSvgDataUrl("#52b788", "Neon Tee"),
-    price: 40,
-    limitedStock: true,
-    stock: 50,
-    creatorUsername: "DiniVerse",
-  },
-  {
-    id: "demo_pants_1",
-    name: "Blue Jeans",
-    description: "Classic straight-cut blue jeans.",
-    type: "pants",
-    imageDataUrl: makeSvgDataUrl("#264653", "Jeans"),
-    price: 45,
-    limitedStock: false,
-    creatorUsername: "DiniVerse",
-  },
-  {
-    id: "demo_pants_2",
-    name: "Plaid Shorts",
-    description: "Fun plaid shorts for summer vibes.",
-    type: "pants",
-    imageDataUrl: makeSvgDataUrl("#e76f51", "Shorts"),
-    price: 30,
-    limitedStock: false,
-    creatorUsername: "DiniVerse",
-  },
-  {
-    id: "demo_hat_1",
-    name: "Top Hat",
-    description: "A classic top hat for distinguished avatars.",
-    type: "hat",
-    imageDataUrl: makeSvgDataUrl("#1d1d1d", "Top Hat"),
-    price: 75,
-    limitedStock: false,
-    creatorUsername: "DiniVerse",
-  },
-  {
-    id: "demo_hat_2",
-    name: "Flower Crown",
-    description: "A beautiful crown made of flowers.",
-    type: "hat",
-    imageDataUrl: makeSvgDataUrl("#e9c46a", "Flowers"),
-    price: 60,
-    limitedStock: true,
-    stock: 25,
-    creatorUsername: "DiniVerse",
-  },
-  {
-    id: "demo_face_1",
-    name: "Star Glasses",
-    description: "Sparkly star-shaped glasses.",
-    type: "face",
-    imageDataUrl: makeSvgDataUrl("#9b2226", "Glasses"),
-    price: 30,
-    limitedStock: false,
-    creatorUsername: "DiniVerse",
-  },
-  {
-    id: "demo_neck_1",
-    name: "Pearl Necklace",
-    description: "Elegant pearl necklace.",
-    type: "neck",
-    imageDataUrl: makeSvgDataUrl("#f8f9fa", "Pearls"),
-    price: 55,
-    limitedStock: false,
-    creatorUsername: "DiniVerse",
-  },
-];
 
 function getShopItems(): InventoryItem[] {
   try {
     const raw = localStorage.getItem(SHOP_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as InventoryItem[];
-      // merge with demo items (demo items always present)
-      const parsedIds = new Set(parsed.map((i) => i.id));
-      const extras = DEMO_ITEMS.filter((d) => !parsedIds.has(d.id));
-      return [
-        ...DEMO_ITEMS.filter((d) => parsedIds.has(d.id)).map(
-          (d) => parsed.find((p) => p.id === d.id) ?? d,
-        ),
-        ...extras,
-        ...parsed.filter((p) => !DEMO_ITEMS.some((d) => d.id === p.id)),
-      ];
+      return parsed;
     }
   } catch {
     // fall through
   }
-  return DEMO_ITEMS;
+  return [];
 }
 
 function saveShopItems(items: InventoryItem[]): void {
@@ -182,8 +62,7 @@ function setDiniBucks(username: string, amount: number): void {
   localStorage.setItem(`diniverse_dini_bucks_${username}`, String(amount));
 }
 
-// ─── Item Card ────────────────────────────────────────────────────────────────
-
+// ─── Item Card ────────────────────────────────────────────────────────────────────
 function ShopItemCard({
   item,
   owned,
@@ -250,8 +129,7 @@ function ShopItemCard({
   );
 }
 
-// ─── Create Modal ─────────────────────────────────────────────────────────────
-
+// ─── Create Modal ──────────────────────────────────────────────────────────────────
 function CreateItemModal({ onCreated }: { onCreated: () => void }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -302,12 +180,10 @@ function CreateItemModal({ onCreated }: { onCreated: () => void }) {
       creatorUsername: username,
     };
 
-    // Add to shop
     const shopItems = getShopItems();
     shopItems.push(newItem);
     saveShopItems(shopItems);
 
-    // Add to creator's inventory for free
     const settings = getLocalSettings(username);
     const newInventory = [...(settings.inventory ?? []), newItem];
     saveLocalSettings(username, { ...settings, inventory: newInventory });
@@ -475,8 +351,7 @@ function CreateItemModal({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
+// ─── Main Page ────────────────────────────────────────────────────────────────────
 const CATEGORIES = [
   { key: "all", label: "All" },
   { key: "shirt", label: "Shirts" },
@@ -533,11 +408,9 @@ export default function AvatarShop() {
       toast.error("You already own this item!");
       return;
     }
-    // Deduct bucks
     const newBalance = balance - item.price;
     setDiniBucks(username, newBalance);
     setDiniBucksState(newBalance);
-    // Add to inventory
     const newInventory = [...(settings.inventory ?? []), item];
     saveLocalSettings(username, { ...settings, inventory: newInventory });
     setOwnedIds((prev) => new Set([...prev, item.id]));
@@ -558,18 +431,20 @@ export default function AvatarShop() {
             <div>
               <h1 className="text-2xl font-bold">Avatar Shop</h1>
               <p className="text-sm text-muted-foreground">
-                Your balance:{" "}
-                <span className="font-semibold text-primary">
-                  {diniBucks} Dini Bucks
-                </span>
+                Browse and buy clothing, accessories, and more
               </p>
             </div>
-            <CreateItemModal onCreated={refreshShop} />
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-primary">
+                {diniBucks} DB
+              </span>
+              <CreateItemModal onCreated={refreshShop} />
+            </div>
           </motion.div>
 
           <Tabs defaultValue="all">
             <ScrollArea className="w-full">
-              <TabsList className="flex w-max gap-0.5">
+              <TabsList className="flex w-max gap-1">
                 {CATEGORIES.map((cat) => (
                   <TabsTrigger
                     key={cat.key}
