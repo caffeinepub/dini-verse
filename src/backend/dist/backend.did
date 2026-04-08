@@ -1,0 +1,102 @@
+type UserSettings = 
+ record {
+   avatar: opt blob;
+   createdAt: Time;
+   displayName: text;
+   gender: Gender;
+   language: Language;
+   languageCode: text;
+   languagePrefix: text;
+   lastDisplayNameChange: Time;
+   lastPasswordChange: Time;
+   lastPasswordResetAttempt: Time;
+   lastUsernameChange: Time;
+   nativeLanguage: Language;
+   passwordResetAttempts: nat;
+   pronunciationLanguage: Language;
+   textDirection: TextDirection;
+   updatedAt: Time;
+   username: text;
+   visibility: variant {
+                 offline;
+                 online;
+               };
+ };
+type UserProfile = 
+ record {
+   avatar: opt blob;
+   displayName: text;
+   gender: Gender;
+   language: Language;
+   languageCode: text;
+   languagePrefix: text;
+   nativeLanguage: Language;
+   textDirection: TextDirection;
+   visibility: variant {
+                 offline;
+                 online;
+               };
+ };
+type Time = int;
+type TextDirection = 
+ variant {
+   leftToRight;
+   rightToLeft;
+ };
+type Language = 
+ variant {
+   de;
+   en;
+   es;
+   fr;
+   ko;
+   nl;
+   pt;
+   ru;
+   tr;
+   vi;
+ };
+type Gender = 
+ variant {
+   female;
+   male;
+   other;
+ };
+type Experience = 
+ record {
+   author: principal;
+   category: Category;
+   description: text;
+   gameplayControls: text;
+   id: text;
+   playerCount: nat;
+   thumbnail: opt blob;
+   thumbsDown: nat;
+   thumbsUp: nat;
+   title: text;
+ };
+type Category = 
+ variant {
+   adventure;
+   roleplay;
+   simulator;
+ };
+service : {
+  deleteAccount: () -> ();
+  getAllExperiences: () -> (vec Experience) query;
+  getCallerUserProfile: () -> (opt UserProfile) query;
+  getExperiencesByAuthor: (author: principal) -> (vec Experience) query;
+  getExperiencesByCategory: (category: Category) -> (vec Experience) query;
+  getSettings: () -> (UserSettings) query;
+  getTrendingExperiences: (category: Category) -> (vec Experience) query;
+  getUserProfile: (user: principal) -> (opt UserProfile) query;
+  searchExperiences: (searchTerm: text) -> (vec Experience) query;
+  setGender: (gender: Gender) -> ();
+  setLanguage: (language: Language, languageCode: text, languagePrefix: 
+   text, textDirection: TextDirection, nativeLanguage: Language) -> ();
+  updateDisplayName: (newDisplayName: text) -> ();
+  updateVisibility: (visibility: variant {
+                                   offline;
+                                   online;
+                                 }) -> ();
+}

@@ -16,7 +16,7 @@ export type Category = { 'roleplay' : null } |
 export interface Experience {
   'id' : string,
   'title' : string,
-  'thumbnail' : [] | [ExternalBlob],
+  'thumbnail' : [] | [Uint8Array],
   'thumbsDown' : bigint,
   'playerCount' : bigint,
   'description' : string,
@@ -25,7 +25,6 @@ export interface Experience {
   'category' : Category,
   'gameplayControls' : string,
 }
-export type ExternalBlob = Uint8Array;
 export type Gender = { 'other' : null } |
   { 'female' : null } |
   { 'male' : null };
@@ -52,11 +51,8 @@ export interface UserProfile {
   'visibility' : { 'offline' : null } |
     { 'online' : null },
   'nativeLanguage' : Language,
-  'avatar' : [] | [ExternalBlob],
+  'avatar' : [] | [Uint8Array],
 }
-export type UserRole = { 'admin' : null } |
-  { 'user' : null } |
-  { 'guest' : null };
 export interface UserSettings {
   'username' : string,
   'displayName' : string,
@@ -76,71 +72,17 @@ export interface UserSettings {
   'lastUsernameChange' : Time,
   'nativeLanguage' : Language,
   'lastPasswordResetAttempt' : Time,
-  'avatar' : [] | [ExternalBlob],
-}
-export type Visibility = { 'offline' : null } |
-  { 'online' : null };
-export interface _CaffeineStorageCreateCertificateResult {
-  'method' : string,
-  'blob_hash' : string,
-}
-export interface _CaffeineStorageRefillInformation {
-  'proposed_top_up_amount' : [] | [bigint],
-}
-export interface _CaffeineStorageRefillResult {
-  'success' : [] | [boolean],
-  'topped_up_amount' : [] | [bigint],
+  'avatar' : [] | [Uint8Array],
 }
 export interface _SERVICE {
-  '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
-  '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
-  '_caffeineStorageConfirmBlobDeletion' : ActorMethod<
-    [Array<Uint8Array>],
-    undefined
-  >,
-  '_caffeineStorageCreateCertificate' : ActorMethod<
-    [string],
-    _CaffeineStorageCreateCertificateResult
-  >,
-  '_caffeineStorageRefillCashier' : ActorMethod<
-    [[] | [_CaffeineStorageRefillInformation]],
-    _CaffeineStorageRefillResult
-  >,
-  '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
-  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
-  'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'deleteAccount' : ActorMethod<[], undefined>,
-  'deleteAvatar' : ActorMethod<[], undefined>,
   'getAllExperiences' : ActorMethod<[], Array<Experience>>,
-  'getAllLanguageSettings' : ActorMethod<[], Array<[Principal, UserSettings]>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
-  'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getExperiencesByAuthor' : ActorMethod<[Principal], Array<Experience>>,
   'getExperiencesByCategory' : ActorMethod<[Category], Array<Experience>>,
-  'getGender' : ActorMethod<[], Gender>,
-  'getLanguageSettings' : ActorMethod<
-    [],
-    [Language, string, string, TextDirection, Language]
-  >,
   'getSettings' : ActorMethod<[], UserSettings>,
   'getTrendingExperiences' : ActorMethod<[Category], Array<Experience>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
-  'isCallerAdmin' : ActorMethod<[], boolean>,
-  'saveCallerUserProfile' : ActorMethod<
-    [
-      string,
-      [] | [ExternalBlob],
-      { 'offline' : null } |
-        { 'online' : null },
-      Gender,
-      Language,
-      string,
-      string,
-      TextDirection,
-      Language,
-    ],
-    undefined
-  >,
   'searchExperiences' : ActorMethod<[string], Array<Experience>>,
   'setGender' : ActorMethod<[Gender], undefined>,
   'setLanguage' : ActorMethod<
@@ -148,11 +90,10 @@ export interface _SERVICE {
     undefined
   >,
   'updateDisplayName' : ActorMethod<[string], undefined>,
-  'updateDisplayNameAndAvatar' : ActorMethod<
-    [string, [] | [ExternalBlob]],
+  'updateVisibility' : ActorMethod<
+    [{ 'offline' : null } | { 'online' : null }],
     undefined
   >,
-  'updateVisibility' : ActorMethod<[Visibility], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

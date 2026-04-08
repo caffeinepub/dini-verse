@@ -19,8 +19,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Category, ExternalBlob } from "../../backend";
+import { ExternalBlob } from "../../backend";
 import { useCreateExperience } from "../../hooks/useExperiences";
+import { Category } from "../../types/backendTypes";
 
 interface ThumbnailEntry {
   id: string;

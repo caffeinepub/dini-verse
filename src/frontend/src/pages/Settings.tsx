@@ -62,12 +62,6 @@ import {
 import { useTheme } from "next-themes";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  Gender,
-  Language,
-  TextDirection,
-  Variant_offline_online,
-} from "../backend";
 import { useTranslationContext } from "../contexts/TranslationContext";
 import {
   getCurrentUsername,
@@ -83,6 +77,12 @@ import {
 } from "../hooks/useAccountSettings";
 import { useSessionAuth } from "../hooks/useSessionAuth";
 import { useTranslation } from "../hooks/useTranslation";
+import {
+  Gender,
+  Language,
+  TextDirection,
+  Variant_offline_online,
+} from "../types/backendTypes";
 import {
   type NotificationPrefs,
   type PrivacySettings,

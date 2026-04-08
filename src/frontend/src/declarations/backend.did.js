@@ -8,23 +8,6 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
-export const _CaffeineStorageCreateCertificateResult = IDL.Record({
-  'method' : IDL.Text,
-  'blob_hash' : IDL.Text,
-});
-export const _CaffeineStorageRefillInformation = IDL.Record({
-  'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
-});
-export const _CaffeineStorageRefillResult = IDL.Record({
-  'success' : IDL.Opt(IDL.Bool),
-  'topped_up_amount' : IDL.Opt(IDL.Nat),
-});
-export const UserRole = IDL.Variant({
-  'admin' : IDL.Null,
-  'user' : IDL.Null,
-  'guest' : IDL.Null,
-});
-export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const Category = IDL.Variant({
   'roleplay' : IDL.Null,
   'simulator' : IDL.Null,
@@ -33,7 +16,7 @@ export const Category = IDL.Variant({
 export const Experience = IDL.Record({
   'id' : IDL.Text,
   'title' : IDL.Text,
-  'thumbnail' : IDL.Opt(ExternalBlob),
+  'thumbnail' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   'thumbsDown' : IDL.Nat,
   'playerCount' : IDL.Nat,
   'description' : IDL.Text,
@@ -42,7 +25,6 @@ export const Experience = IDL.Record({
   'category' : Category,
   'gameplayControls' : IDL.Text,
 });
-export const Time = IDL.Int;
 export const Language = IDL.Variant({
   'de' : IDL.Null,
   'en' : IDL.Null,
@@ -64,6 +46,18 @@ export const TextDirection = IDL.Variant({
   'leftToRight' : IDL.Null,
   'rightToLeft' : IDL.Null,
 });
+export const UserProfile = IDL.Record({
+  'displayName' : IDL.Text,
+  'languageCode' : IDL.Text,
+  'language' : Language,
+  'gender' : Gender,
+  'languagePrefix' : IDL.Text,
+  'textDirection' : TextDirection,
+  'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
+  'nativeLanguage' : Language,
+  'avatar' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+});
+export const Time = IDL.Int;
 export const UserSettings = IDL.Record({
   'username' : IDL.Text,
   'displayName' : IDL.Text,
@@ -82,63 +76,13 @@ export const UserSettings = IDL.Record({
   'lastUsernameChange' : Time,
   'nativeLanguage' : Language,
   'lastPasswordResetAttempt' : Time,
-  'avatar' : IDL.Opt(ExternalBlob),
-});
-export const UserProfile = IDL.Record({
-  'displayName' : IDL.Text,
-  'languageCode' : IDL.Text,
-  'language' : Language,
-  'gender' : Gender,
-  'languagePrefix' : IDL.Text,
-  'textDirection' : TextDirection,
-  'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
-  'nativeLanguage' : Language,
-  'avatar' : IDL.Opt(ExternalBlob),
-});
-export const Visibility = IDL.Variant({
-  'offline' : IDL.Null,
-  'online' : IDL.Null,
+  'avatar' : IDL.Opt(IDL.Vec(IDL.Nat8)),
 });
 
 export const idlService = IDL.Service({
-  '_caffeineStorageBlobIsLive' : IDL.Func(
-      [IDL.Vec(IDL.Nat8)],
-      [IDL.Bool],
-      ['query'],
-    ),
-  '_caffeineStorageBlobsToDelete' : IDL.Func(
-      [],
-      [IDL.Vec(IDL.Vec(IDL.Nat8))],
-      ['query'],
-    ),
-  '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
-      [IDL.Vec(IDL.Vec(IDL.Nat8))],
-      [],
-      [],
-    ),
-  '_caffeineStorageCreateCertificate' : IDL.Func(
-      [IDL.Text],
-      [_CaffeineStorageCreateCertificateResult],
-      [],
-    ),
-  '_caffeineStorageRefillCashier' : IDL.Func(
-      [IDL.Opt(_CaffeineStorageRefillInformation)],
-      [_CaffeineStorageRefillResult],
-      [],
-    ),
-  '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
-  '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-  'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'deleteAccount' : IDL.Func([], [], []),
-  'deleteAvatar' : IDL.Func([], [], []),
   'getAllExperiences' : IDL.Func([], [IDL.Vec(Experience)], ['query']),
-  'getAllLanguageSettings' : IDL.Func(
-      [],
-      [IDL.Vec(IDL.Tuple(IDL.Principal, UserSettings))],
-      ['query'],
-    ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
-  'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getExperiencesByAuthor' : IDL.Func(
       [IDL.Principal],
       [IDL.Vec(Experience)],
@@ -147,12 +91,6 @@ export const idlService = IDL.Service({
   'getExperiencesByCategory' : IDL.Func(
       [Category],
       [IDL.Vec(Experience)],
-      ['query'],
-    ),
-  'getGender' : IDL.Func([], [Gender], ['query']),
-  'getLanguageSettings' : IDL.Func(
-      [],
-      [Language, IDL.Text, IDL.Text, TextDirection, Language],
       ['query'],
     ),
   'getSettings' : IDL.Func([], [UserSettings], ['query']),
@@ -166,22 +104,6 @@ export const idlService = IDL.Service({
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
-  'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'saveCallerUserProfile' : IDL.Func(
-      [
-        IDL.Text,
-        IDL.Opt(ExternalBlob),
-        IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
-        Gender,
-        Language,
-        IDL.Text,
-        IDL.Text,
-        TextDirection,
-        Language,
-      ],
-      [],
-      [],
-    ),
   'searchExperiences' : IDL.Func([IDL.Text], [IDL.Vec(Experience)], ['query']),
   'setGender' : IDL.Func([Gender], [], []),
   'setLanguage' : IDL.Func(
@@ -190,34 +112,16 @@ export const idlService = IDL.Service({
       [],
     ),
   'updateDisplayName' : IDL.Func([IDL.Text], [], []),
-  'updateDisplayNameAndAvatar' : IDL.Func(
-      [IDL.Text, IDL.Opt(ExternalBlob)],
+  'updateVisibility' : IDL.Func(
+      [IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null })],
       [],
       [],
     ),
-  'updateVisibility' : IDL.Func([Visibility], [], []),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
-  const _CaffeineStorageCreateCertificateResult = IDL.Record({
-    'method' : IDL.Text,
-    'blob_hash' : IDL.Text,
-  });
-  const _CaffeineStorageRefillInformation = IDL.Record({
-    'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
-  });
-  const _CaffeineStorageRefillResult = IDL.Record({
-    'success' : IDL.Opt(IDL.Bool),
-    'topped_up_amount' : IDL.Opt(IDL.Nat),
-  });
-  const UserRole = IDL.Variant({
-    'admin' : IDL.Null,
-    'user' : IDL.Null,
-    'guest' : IDL.Null,
-  });
-  const ExternalBlob = IDL.Vec(IDL.Nat8);
   const Category = IDL.Variant({
     'roleplay' : IDL.Null,
     'simulator' : IDL.Null,
@@ -226,7 +130,7 @@ export const idlFactory = ({ IDL }) => {
   const Experience = IDL.Record({
     'id' : IDL.Text,
     'title' : IDL.Text,
-    'thumbnail' : IDL.Opt(ExternalBlob),
+    'thumbnail' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'thumbsDown' : IDL.Nat,
     'playerCount' : IDL.Nat,
     'description' : IDL.Text,
@@ -235,7 +139,6 @@ export const idlFactory = ({ IDL }) => {
     'category' : Category,
     'gameplayControls' : IDL.Text,
   });
-  const Time = IDL.Int;
   const Language = IDL.Variant({
     'de' : IDL.Null,
     'en' : IDL.Null,
@@ -257,6 +160,18 @@ export const idlFactory = ({ IDL }) => {
     'leftToRight' : IDL.Null,
     'rightToLeft' : IDL.Null,
   });
+  const UserProfile = IDL.Record({
+    'displayName' : IDL.Text,
+    'languageCode' : IDL.Text,
+    'language' : Language,
+    'gender' : Gender,
+    'languagePrefix' : IDL.Text,
+    'textDirection' : TextDirection,
+    'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
+    'nativeLanguage' : Language,
+    'avatar' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
+  const Time = IDL.Int;
   const UserSettings = IDL.Record({
     'username' : IDL.Text,
     'displayName' : IDL.Text,
@@ -275,60 +190,13 @@ export const idlFactory = ({ IDL }) => {
     'lastUsernameChange' : Time,
     'nativeLanguage' : Language,
     'lastPasswordResetAttempt' : Time,
-    'avatar' : IDL.Opt(ExternalBlob),
+    'avatar' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const UserProfile = IDL.Record({
-    'displayName' : IDL.Text,
-    'languageCode' : IDL.Text,
-    'language' : Language,
-    'gender' : Gender,
-    'languagePrefix' : IDL.Text,
-    'textDirection' : TextDirection,
-    'visibility' : IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
-    'nativeLanguage' : Language,
-    'avatar' : IDL.Opt(ExternalBlob),
-  });
-  const Visibility = IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null });
   
   return IDL.Service({
-    '_caffeineStorageBlobIsLive' : IDL.Func(
-        [IDL.Vec(IDL.Nat8)],
-        [IDL.Bool],
-        ['query'],
-      ),
-    '_caffeineStorageBlobsToDelete' : IDL.Func(
-        [],
-        [IDL.Vec(IDL.Vec(IDL.Nat8))],
-        ['query'],
-      ),
-    '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
-        [IDL.Vec(IDL.Vec(IDL.Nat8))],
-        [],
-        [],
-      ),
-    '_caffeineStorageCreateCertificate' : IDL.Func(
-        [IDL.Text],
-        [_CaffeineStorageCreateCertificateResult],
-        [],
-      ),
-    '_caffeineStorageRefillCashier' : IDL.Func(
-        [IDL.Opt(_CaffeineStorageRefillInformation)],
-        [_CaffeineStorageRefillResult],
-        [],
-      ),
-    '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
-    '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-    'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'deleteAccount' : IDL.Func([], [], []),
-    'deleteAvatar' : IDL.Func([], [], []),
     'getAllExperiences' : IDL.Func([], [IDL.Vec(Experience)], ['query']),
-    'getAllLanguageSettings' : IDL.Func(
-        [],
-        [IDL.Vec(IDL.Tuple(IDL.Principal, UserSettings))],
-        ['query'],
-      ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
-    'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getExperiencesByAuthor' : IDL.Func(
         [IDL.Principal],
         [IDL.Vec(Experience)],
@@ -337,12 +205,6 @@ export const idlFactory = ({ IDL }) => {
     'getExperiencesByCategory' : IDL.Func(
         [Category],
         [IDL.Vec(Experience)],
-        ['query'],
-      ),
-    'getGender' : IDL.Func([], [Gender], ['query']),
-    'getLanguageSettings' : IDL.Func(
-        [],
-        [Language, IDL.Text, IDL.Text, TextDirection, Language],
         ['query'],
       ),
     'getSettings' : IDL.Func([], [UserSettings], ['query']),
@@ -356,22 +218,6 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
-    'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'saveCallerUserProfile' : IDL.Func(
-        [
-          IDL.Text,
-          IDL.Opt(ExternalBlob),
-          IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null }),
-          Gender,
-          Language,
-          IDL.Text,
-          IDL.Text,
-          TextDirection,
-          Language,
-        ],
-        [],
-        [],
-      ),
     'searchExperiences' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(Experience)],
@@ -384,12 +230,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'updateDisplayName' : IDL.Func([IDL.Text], [], []),
-    'updateDisplayNameAndAvatar' : IDL.Func(
-        [IDL.Text, IDL.Opt(ExternalBlob)],
+    'updateVisibility' : IDL.Func(
+        [IDL.Variant({ 'offline' : IDL.Null, 'online' : IDL.Null })],
         [],
         [],
       ),
-    'updateVisibility' : IDL.Func([Visibility], [], []),
   });
 };
 

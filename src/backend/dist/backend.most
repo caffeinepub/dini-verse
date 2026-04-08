@@ -1,0 +1,91 @@
+// Version: 1.0.0
+type Category__164941945 = {#adventure; #roleplay; #simulator};
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type Experience__35903120 =
+  {
+    author : Principal;
+    category : Category__164941945;
+    description : Text;
+    gameplayControls : Text;
+    id : Text;
+    playerCount : Nat;
+    thumbnail : ?Blob;
+    thumbsDown : Nat;
+    thumbsUp : Nat;
+    title : Text
+  };
+type Gender__579703926 = {#female; #male; #other};
+type Int__270357528 = Int__616954475;
+type Int__616954475 = Int;
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type Language__38428764 = {#de; #en; #es; #fr; #ko; #nl; #pt; #ru; #tr; #vi};
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type Map__158565046<K, V> = Map__297112838<K, V>;
+type Map__297112838<K, V> =
+  {var root : Node__46230540<K, V>; var size : Nat__490723111};
+type Map__605269027<K, V> = Map__158565046<K, V>;
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type TextDirection__722822392 = {#leftToRight; #rightToLeft};
+type Time__796480547 = Int__270357528;
+type Time__900049286 = Time__796480547;
+type UserProfile__491224006 =
+  {
+    avatar : ?Blob;
+    displayName : Text;
+    gender : Gender__579703926;
+    language : Language__38428764;
+    languageCode : Text;
+    languagePrefix : Text;
+    nativeLanguage : Language__38428764;
+    textDirection : TextDirection__722822392;
+    visibility : {#offline; #online}
+  };
+type UserSettings__590554603 =
+  {
+    avatar : ?Blob;
+    createdAt : Time__900049286;
+    displayName : Text;
+    gender : Gender__579703926;
+    language : Language__38428764;
+    languageCode : Text;
+    languagePrefix : Text;
+    lastDisplayNameChange : Time__900049286;
+    lastPasswordChange : Time__900049286;
+    lastPasswordResetAttempt : Time__900049286;
+    lastUsernameChange : Time__900049286;
+    nativeLanguage : Language__38428764;
+    passwordResetAttempts : Nat;
+    pronunciationLanguage : Language__38428764;
+    textDirection : TextDirection__722822392;
+    updatedAt : Time__900049286;
+    username : Text;
+    visibility : {#offline; #online}
+  };
+type _OldUserRole__138114203 = {#admin; #guest; #user};
+actor {
+  stable var accessControlState :
+    {
+      var adminAssigned : Bool;
+      userRoles : Map__605269027<Principal, _OldUserRole__138114203>
+    };
+  stable experiences :
+    {
+      var root : Node__46230540<Text, Experience__35903120>;
+      var size : Nat__490723111
+    };
+  stable userProfiles :
+    {
+      var root : Node__46230540<Principal, UserProfile__491224006>;
+      var size : Nat__490723111
+    };
+  stable userSettings :
+    {
+      var root : Node__46230540<Principal, UserSettings__590554603>;
+      var size : Nat__490723111
+    }
+};

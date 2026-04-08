@@ -5,12 +5,12 @@ import React, {
   useEffect,
   type ReactNode,
 } from "react";
-import { Language } from "../backend";
 import {
   getCurrentUsername,
   getLocalSettings,
 } from "../hooks/useAccountSettings";
 import { translations } from "../i18n/translations";
+import { Language } from "../types/backendTypes";
 
 type TranslationLocale = keyof typeof translations;
 

@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Experience } from "../../backend";
+import type { Experience } from "../../types/backendTypes";
 import ExperienceCard from "./ExperienceCard";
 
 interface ExperienceGridProps {

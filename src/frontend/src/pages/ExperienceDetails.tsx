@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { Principal } from "@icp-sdk/core/principal";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { ArrowLeft, Play, User, Users } from "lucide-react";
 import { useState } from "react";
@@ -220,7 +221,9 @@ export default function ExperienceDetails() {
               </div>
 
               {creator && (
-                <CreatorFollowButton authorPrincipal={experience.author} />
+                <CreatorFollowButton
+                  authorPrincipal={experience.author as unknown as Principal}
+                />
               )}
             </CardContent>
           </Card>

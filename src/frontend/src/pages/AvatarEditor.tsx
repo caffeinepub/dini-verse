@@ -408,7 +408,7 @@ export default function AvatarEditor() {
                   <ChibiAvatar
                     avatarData={avatarData}
                     width={180}
-                    height={220}
+                    height={252}
                   />
                 </CardContent>
               </Card>

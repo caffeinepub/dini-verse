@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import { Category } from "../backend";
 import ExperienceGrid from "../components/experiences/ExperienceGrid";
 import PublishExperienceDialog from "../components/experiences/PublishExperienceDialog";
 import { useCurrentUser } from "../hooks/useCurrentUser";
@@ -13,6 +12,7 @@ import {
   useSearchExperiences,
 } from "../hooks/useExperiences";
 import { useTranslation } from "../hooks/useTranslation";
+import { Category } from "../types/backendTypes";
 
 export default function Discover() {
   const [searchTerm, setSearchTerm] = useState("");

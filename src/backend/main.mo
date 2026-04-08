@@ -1,17 +1,20 @@
 import Nat "mo:core/Nat";
 import Text "mo:core/Text";
-import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import Map "mo:core/Map";
 import Order "mo:core/Order";
 import Time "mo:core/Time";
-import Storage "blob-storage/Storage";
-import AccessControl "authorization/access-control";
-import MixinAuthorization "authorization/MixinAuthorization";
-import MixinStorage "blob-storage/Mixin";
 
 actor {
-  include MixinStorage();
+  // ── Stable variable preserved for backward compatibility ──
+  // Previously used by the authorization mixin; kept here so the
+  // stable type check does not reject the upgrade.
+  type _OldUserRole = { #admin; #guest; #user };
+  stable var accessControlState = {  // keep name to match previous stable state
+    var adminAssigned = false;
+    userRoles = Map.empty<Principal, _OldUserRole>();
+  };
+  // ── End backward-compat ──
 
   type Gender = { #male; #female; #other };
   type Language = {
@@ -30,7 +33,7 @@ actor {
 
   type UserProfile = {
     displayName : Text;
-    avatar : ?Storage.ExternalBlob;
+    avatar : ?(Blob);
     visibility : { #online; #offline };
     gender : Gender;
     language : Language;
@@ -44,7 +47,7 @@ actor {
     username : Text;
     displayName : Text;
     visibility : { #online; #offline };
-    avatar : ?Storage.ExternalBlob;
+    avatar : ?(Blob);
     lastUsernameChange : Time.Time;
     lastDisplayNameChange : Time.Time;
     lastPasswordChange : Time.Time;
@@ -61,9 +64,6 @@ actor {
     textDirection : TextDirection;
   };
 
-  let accessControlState = AccessControl.initState();
-  include MixinAuthorization(accessControlState);
-
   type Category = {
     #adventure;
     #roleplay;
@@ -74,7 +74,7 @@ actor {
     id : Text;
     title : Text;
     description : Text;
-    thumbnail : ?Storage.ExternalBlob;
+    thumbnail : ?(Blob);
     author : Principal;
     category : Category;
     playerCount : Nat;
@@ -96,30 +96,24 @@ actor {
     };
   };
 
-  type Visibility = {
-    #online;
-    #offline;
-  };
-
   let experiences = Map.empty<Text, Experience>();
   let userProfiles = Map.empty<Principal, UserProfile>();
   let userSettings = Map.empty<Principal, UserSettings>();
 
-  public query ({ caller }) func getAllExperiences() : async [Experience] {
+  public query func getAllExperiences() : async [Experience] {
     experiences.values().toArray().sort(Experience.compareByTitle);
   };
 
-  public query ({ caller }) func getExperiencesByAuthor(author : Principal) : async [Experience] {
+  public query func getExperiencesByAuthor(author : Principal) : async [Experience] {
     experiences.values().filter(
       func(exp) { exp.author == author }
     ).toArray();
   };
 
-  public query ({ caller }) func searchExperiences(searchTerm : Text) : async [Experience] {
+  public query func searchExperiences(searchTerm : Text) : async [Experience] {
     if (searchTerm.size() == 0) {
       return experiences.values().toArray();
     };
-
     experiences.values().filter(
       func(exp) {
         exp.title.toLower().contains(#text(searchTerm.toLower())) or exp.description.toLower().contains(#text(searchTerm.toLower()));
@@ -127,27 +121,19 @@ actor {
     ).toArray();
   };
 
-  public query ({ caller }) func getExperiencesByCategory(category : Category) : async [Experience] {
+  public query func getExperiencesByCategory(category : Category) : async [Experience] {
     experiences.values().filter(
       func(exp) { exp.category == category }
     ).toArray();
   };
 
-  public query ({ caller }) func getTrendingExperiences(category : Category) : async [Experience] {
+  public query func getTrendingExperiences(category : Category) : async [Experience] {
     let filtered = experiences.values().filter(
       func(exp) { exp.category == category }
     ).toArray();
     filtered.sort(Experience.compareByPopularity);
   };
 
-  public query ({ caller }) func getAllLanguageSettings() : async [(Principal, UserSettings)] {
-    if (not (AccessControl.isAdmin(accessControlState, caller))) {
-      Runtime.trap("Unauthorized: Only admins can access all language settings");
-    };
-    userSettings.toArray();
-  };
-
-  // Set default language and gender
   private func initializeDefaultSettings(caller : Principal) : UserSettings {
     let now = Time.now();
     let defaultSettings = {
@@ -163,12 +149,12 @@ actor {
       passwordResetAttempts = 0;
       lastPasswordResetAttempt = now;
       gender = #other;
-      language = #de; // Default to German
-      languageCode = "de";
-      languagePrefix = "de";
+      language = #en;
+      languageCode = "en";
+      languagePrefix = "en";
       textDirection = #leftToRight;
-      nativeLanguage = #de; // Default to German
-      pronunciationLanguage = #de; // Default to German
+      nativeLanguage = #en;
+      pronunciationLanguage = #en;
     };
 
     userSettings.add(caller, defaultSettings);
@@ -178,11 +164,11 @@ actor {
       avatar = null;
       visibility = #online;
       gender = #other;
-      language = #de; // Default to German
-      languageCode = "de";
-      languagePrefix = "de";
+      language = #en;
+      languageCode = "en";
+      languagePrefix = "en";
       textDirection = #leftToRight;
-      nativeLanguage = #de; // Default to German
+      nativeLanguage = #en;
     };
     userProfiles.add(caller, defaultProfile);
 
@@ -197,36 +183,23 @@ actor {
   };
 
   public query ({ caller }) func getSettings() : async UserSettings {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can access settings");
-    };
     getOrInitializeSettings(caller);
   };
 
   public shared ({ caller }) func updateDisplayName(newDisplayName : Text) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can update display name");
-    };
     let currentTime = Time.now();
     let settings = getOrInitializeSettings(caller);
-
-    let lastChangeTime = settings.lastDisplayNameChange;
-    if (currentTime < lastChangeTime + 86400000000000) {
-      Runtime.trap("Display name can only be changed once per day");
-    };
-
     let updatedSettings = {
       settings with
       displayName = newDisplayName;
       lastDisplayNameChange = currentTime;
       updatedAt = currentTime;
     };
+    userSettings.add(caller, updatedSettings);
 
-    let existingProfile = userProfiles.get(caller);
-
-    let updatedProfile = switch (existingProfile) {
+    switch (userProfiles.get(caller)) {
       case (null) {
-        {
+        userProfiles.add(caller, {
           displayName = newDisplayName;
           avatar = null;
           visibility = settings.visibility;
@@ -236,246 +209,55 @@ actor {
           nativeLanguage = settings.nativeLanguage;
           languagePrefix = settings.languagePrefix;
           textDirection = settings.textDirection;
-        };
+        });
       };
       case (?profile) {
-        { profile with displayName = newDisplayName };
+        userProfiles.add(caller, { profile with displayName = newDisplayName });
       };
     };
-
-    userSettings.add(caller, updatedSettings);
-    userProfiles.add(caller, updatedProfile);
   };
 
-  public shared ({ caller }) func updateDisplayNameAndAvatar(newDisplayName : Text, avatar : ?Storage.ExternalBlob) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can update display name and avatar");
-    };
+  public shared ({ caller }) func updateVisibility(visibility : { #online; #offline }) : async () {
     let currentTime = Time.now();
     let settings = getOrInitializeSettings(caller);
-
-    let displayNameChanged = newDisplayName != settings.displayName;
-    if (displayNameChanged and currentTime < settings.lastDisplayNameChange + 86400000000000) {
-      Runtime.trap("Display name can only be changed once per day");
-    };
-
-    let updatedSettings = {
-      settings with
-      displayName = newDisplayName;
-      avatar;
-      lastDisplayNameChange = if (displayNameChanged) { currentTime } else { settings.lastDisplayNameChange };
-      updatedAt = currentTime;
-    };
-
-    let existingProfile = userProfiles.get(caller);
-
-    let updatedProfile = switch (existingProfile) {
-      case (null) {
-        {
-          displayName = newDisplayName;
-          avatar;
-          visibility = settings.visibility;
-          gender = settings.gender;
-          language = settings.language;
-          languageCode = settings.languageCode;
-          nativeLanguage = settings.nativeLanguage;
-          languagePrefix = settings.languagePrefix;
-          textDirection = settings.textDirection;
-        };
-      };
-      case (?profile) {
-        { profile with displayName = newDisplayName; avatar };
-      };
-    };
-
-    userSettings.add(caller, updatedSettings);
-    userProfiles.add(caller, updatedProfile);
-  };
-
-  public shared ({ caller }) func updateVisibility(visibility : Visibility) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can update visibility");
-    };
-    let currentTime = Time.now();
-    let settings = getOrInitializeSettings(caller);
-
-    let updatedSettings = {
-      settings with
-      visibility;
-      updatedAt = currentTime;
-    };
-
-    let existingProfile = userProfiles.get(caller);
-
-    let updatedProfile = switch (existingProfile) {
-      case (null) {
-        {
-          displayName = settings.displayName;
-          avatar = settings.avatar;
-          visibility;
-          gender = settings.gender;
-          language = settings.language;
-          languageCode = settings.languageCode;
-          nativeLanguage = settings.nativeLanguage;
-          languagePrefix = settings.languagePrefix;
-          textDirection = settings.textDirection;
-        };
-      };
-      case (?profile) {
-        { profile with visibility };
-      };
-    };
-
-    userSettings.add(caller, updatedSettings);
-    userProfiles.add(caller, updatedProfile);
-  };
-
-  public shared ({ caller }) func deleteAvatar() : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can delete their avatar");
-    };
-    let settings = getOrInitializeSettings(caller);
-
-    let updatedSettings = { settings with avatar = null };
-    userSettings.add(caller, updatedSettings);
+    userSettings.add(caller, { settings with visibility; updatedAt = currentTime });
 
     switch (userProfiles.get(caller)) {
       case (null) {};
       case (?profile) {
-        let updatedProfile = { profile with avatar = null };
-        userProfiles.add(caller, updatedProfile);
+        userProfiles.add(caller, { profile with visibility });
       };
     };
   };
 
   public shared ({ caller }) func deleteAccount() : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can delete their account");
-    };
-    // Remove user profile
     userProfiles.remove(caller);
-    // Remove user settings
     userSettings.remove(caller);
   };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can access their profile");
-    };
     userProfiles.get(caller);
   };
 
-  public shared ({ caller }) func saveCallerUserProfile(
-    displayName : Text,
-    avatar : ?Storage.ExternalBlob,
-    visibility : { #online; #offline },
-    gender : Gender,
-    language : Language,
-    languageCode : Text,
-    languagePrefix : Text,
-    textDirection : TextDirection,
-    nativeLanguage : Language,
-  ) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can save their profile");
-    };
-    let profile : UserProfile = {
-      displayName;
-      avatar;
-      visibility;
-      gender;
-      language;
-      languageCode;
-      languagePrefix;
-      textDirection;
-      nativeLanguage;
-    };
-    userProfiles.add(caller, profile);
-
-    // Also update settings to keep them in sync
-    let currentTime = Time.now();
-    let existingSettings = getOrInitializeSettings(caller);
-    let updatedSettings = {
-      existingSettings with
-      displayName;
-      avatar;
-      visibility;
-      gender;
-      language;
-      languageCode;
-      languagePrefix;
-      textDirection;
-      nativeLanguage;
-      updatedAt = currentTime;
-    };
-    userSettings.add(caller, updatedSettings);
-  };
-
-  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view profiles");
-    };
-    switch (userProfiles.get(user)) {
-      case (null) { null };
-      case (?profile) {
-        switch (userSettings.get(user)) {
-          case (null) { ?profile };
-          case (?settings) {
-            switch (settings.visibility) {
-              case (#offline) {
-                let profileWithOffline = {
-                  profile with visibility = #offline;
-                };
-                ?profileWithOffline;
-              };
-              case (_) { ?profile };
-            };
-          };
-        };
-      };
-    };
-  };
-
-  public query ({ caller }) func getGender() : async Gender {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can access their gender setting");
-    };
-    getOrInitializeSettings(caller).gender;
+  public query func getUserProfile(user : Principal) : async ?UserProfile {
+    userProfiles.get(user);
   };
 
   public shared ({ caller }) func setGender(gender : Gender) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can set their gender");
-    };
     let settings = getOrInitializeSettings(caller);
-    let updatedSettings = { settings with gender; updatedAt = Time.now() };
-    userSettings.add(caller, updatedSettings);
+    userSettings.add(caller, { settings with gender; updatedAt = Time.now() });
 
-    // Also update the profile (if exists) to keep it in sync
     switch (userProfiles.get(caller)) {
       case (null) {};
       case (?profile) {
-        let updatedProfile = { profile with gender };
-        userProfiles.add(caller, updatedProfile);
+        userProfiles.add(caller, { profile with gender });
       };
     };
   };
 
-  // Retrieve full language settings, including code and prefix
-  public query ({ caller }) func getLanguageSettings() : async (Language, Text, Text, TextDirection, Language) {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can access their language settings");
-    };
-    let settings = getOrInitializeSettings(caller);
-    (settings.language, settings.languageCode, settings.languagePrefix, settings.textDirection, settings.nativeLanguage);
-  };
-
   public shared ({ caller }) func setLanguage(language : Language, languageCode : Text, languagePrefix : Text, textDirection : TextDirection, nativeLanguage : Language) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can set their language");
-    };
     let settings = getOrInitializeSettings(caller);
-    let updatedSettings = {
+    userSettings.add(caller, {
       settings with
       language;
       languageCode;
@@ -483,22 +265,19 @@ actor {
       textDirection;
       nativeLanguage;
       updatedAt = Time.now();
-    };
-    userSettings.add(caller, updatedSettings);
+    });
 
-    // Also update the profile (if exists) to keep it in sync
     switch (userProfiles.get(caller)) {
       case (null) {};
       case (?profile) {
-        let updatedProfile = {
+        userProfiles.add(caller, {
           profile with
           language;
           languageCode;
           languagePrefix;
           textDirection;
           nativeLanguage;
-        };
-        userProfiles.add(caller, updatedProfile);
+        });
       };
     };
   };

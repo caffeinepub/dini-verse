@@ -8,8 +8,8 @@ import {
 } from "@/components/ui/card";
 import { useNavigate } from "@tanstack/react-router";
 import { Play, User } from "lucide-react";
-import type { Experience } from "../../backend";
 import { useGetUserProfile } from "../../hooks/useUserProfile";
+import type { Experience } from "../../types/backendTypes";
 
 interface ExperienceCardProps {
   experience: Experience;

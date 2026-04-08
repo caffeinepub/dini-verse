@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Gender, Language, Variant_offline_online } from "../backend";
 import type { AvatarData, InventoryItem } from "../types/avatarTypes";
 import { DEFAULT_AVATAR_DATA } from "../types/avatarTypes";
+import {
+  Gender,
+  Language,
+  Variant_offline_online,
+} from "../types/backendTypes";
 import { getSessionToken } from "../utils/sessionToken";
 import { useSessionAuth } from "./useSessionAuth";
 

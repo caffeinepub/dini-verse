@@ -1,6 +1,5 @@
 import type { Principal } from "@icp-sdk/core/principal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useActor } from "./useActor";
 
 // Placeholder hooks for following system - backend not yet implemented
 export function useGetFollowedCreators() {
@@ -15,12 +14,10 @@ export function useGetFollowedCreators() {
 }
 
 export function useFollowCreator() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (_creatorPrincipal: Principal) => {
-      if (!actor) throw new Error("Actor not available");
       // Backend following methods not yet available
       throw new Error("Follow feature coming soon");
     },
@@ -31,12 +28,10 @@ export function useFollowCreator() {
 }
 
 export function useUnfollowCreator() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (_creatorPrincipal: Principal) => {
-      if (!actor) throw new Error("Actor not available");
       // Backend following methods not yet available
       throw new Error("Unfollow feature coming soon");
     },

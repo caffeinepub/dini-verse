@@ -6,8 +6,8 @@ import { useRateExperience } from "../../hooks/useExperiences";
 
 interface ExperienceRatingControlsProps {
   experienceId: string;
-  thumbsUp: bigint;
-  thumbsDown: bigint;
+  thumbsUp: number;
+  thumbsDown: number;
 }
 
 export default function ExperienceRatingControls({

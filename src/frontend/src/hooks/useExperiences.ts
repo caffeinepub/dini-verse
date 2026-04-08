@@ -1,7 +1,7 @@
 import type { Principal } from "@icp-sdk/core/principal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Experience } from "../backend";
-import type { Category, ExternalBlob } from "../backend";
+import type { ExternalBlob } from "../backend";
+import type { Category, Experience } from "../types/backendTypes";
 import { useActor } from "./useActor";
 
 export function useGetAllExperiences() {
